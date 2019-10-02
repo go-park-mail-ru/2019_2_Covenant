@@ -66,16 +66,17 @@ func (us *UserStore) GetUserByUsername(username string) (*User, error) {
 	return nil, err
 }
 
-func (us *UserStore) CheckUser(email string, password string) (uint, error) {
+func (us *UserStore) CheckUser(email string, password string) (id uint, err error) {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 
 	for _, user := range us.users {
 		if user.Email == email && user.Password == password {
-			return user.ID, nil
+			id = user.ID
+			return
 		}
 	}
 
-	err := fmt.Errorf("email and password are mismatched")
-	return 0, err
+	err = fmt.Errorf("email and password are mismatched")
+	return
 }

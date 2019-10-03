@@ -3,7 +3,9 @@ package handlers
 import (
 	. "../storage"
 	"encoding/json"
+	"golang.org/x/tools/go/ssa/interp/testdata/src/fmt"
 	"net/http"
+	"time"
 )
 
 type Result struct {
@@ -35,7 +37,7 @@ func (api *UsersHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	_, err := api.store.AddUser(newUser)
 	if err != nil {
-		http.Error(w, `{"error":"database"}`, 500)
+		Error(w, err, 500)
 		return
 	}
 
@@ -48,7 +50,7 @@ func (api *UsersHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	id, err := api.store.CheckUser(email, password)
 	if err != nil {
-		http.Error(w, `{"error":"email and password are mismatched"}`, 500)
+		Error(w, err, 500)
 		return
 	}
 
@@ -66,9 +68,31 @@ func (api *UsersHandler) SignIn(w http.ResponseWriter, r *http.Request) {
 		"id": id,
 	}
 
-	err = json.NewEncoder(w).Encode(&Result{Body: body})
+	_ = json.NewEncoder(w).Encode(&Result{Body: body})
+}
+
+func (api *UsersHandler) SignOut(w http.ResponseWriter, r *http.Request) {
+	session, err := r.Cookie("session_id")
 	if err != nil {
-		http.Error(w, `{"error":"wrong data"}`, 500)
+		Error(w, err, 401)
+	}
+
+	_, err = api.session.Get(session.Value)
+	if err != nil {
+		Error(w, err, 401)
 		return
 	}
+
+	api.session.Delete(session.Value)
+
+	session.Expires = time.Now().AddDate(0, 0, -1)
+	http.SetCookie(w, session)
+}
+
+func Error(w http.ResponseWriter, error error, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+
+	_ := json.NewEncoder(w).Encode(&Result{Err: fmt.Sprint(error)})
 }

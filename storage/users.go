@@ -33,9 +33,25 @@ func (us *UserStore) AddUser(newUser *User) (uint, error) {
 	newUser.ID = us.nextID
 	us.nextID++
 
+	newUser.Username = "User" + fmt.Sprint(newUser.ID)
+	newUser.Avatar = "img/user_profile.png"
+
 	us.users = append(us.users, newUser)
 
 	return newUser.ID, nil
+}
+
+func (us *UserStore) IsExist(email string) bool {
+	us.mu.RLock()
+	defer us.mu.RUnlock()
+
+	for _, user := range us.users {
+		if user.Email == email {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (us *UserStore) GetUserByID(userID uint) (*User, error) {

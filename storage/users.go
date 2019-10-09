@@ -26,6 +26,19 @@ func NewUserStore() *UserStore {
 	}
 }
 
+func (us *UserStore) IsExist(email string) bool {
+	us.mu.RLock()
+	defer us.mu.RUnlock()
+
+	for _, user := range us.users {
+		if user.Email == email {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (us *UserStore) AddUser(newUser *User) (uint, error) {
 	us.mu.Lock()
 	defer us.mu.Unlock()
@@ -41,17 +54,20 @@ func (us *UserStore) AddUser(newUser *User) (uint, error) {
 	return newUser.ID, nil
 }
 
-func (us *UserStore) IsExist(email string) bool {
-	us.mu.RLock()
-	defer us.mu.RUnlock()
-
+func (us *UserStore) ChangeUsername(id uint, username string) (user *User, err error) {
 	for _, user := range us.users {
-		if user.Email == email {
-			return true
+		if user.ID == id {
+			if user.Username != username {
+				us.mu.Lock()
+				user.Username = username
+				us.mu.Unlock()
+			}
+
+			return
 		}
 	}
-
-	return false
+	err = fmt.Errorf("user is not exist")
+	return
 }
 
 func (us *UserStore) GetUserByID(userID uint) (*User, error) {

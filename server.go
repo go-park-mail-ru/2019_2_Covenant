@@ -1,30 +1,30 @@
 package main
 
 import (
-	handlers "./handlers"
+	"github.com/gorilla/mux"
+	"log"
 	"net/http"
+	. "./handlers"
+	. "./storage"
 )
 
-type User struct {
-	ID       uint64 `json:"id,uint64"`
-	Username string `json:"username,string"`
-	Email    string `json:"email,string"`
-	Password string `json:"-"`
-	Avatar   string `json:"avatar,string"`
-}
-
-type UserInput struct {
-	Email    string `json:"email,string"`
-	Password string `json:"password,string"`
-}
 
 func main() {
-	http.HandleFunc("/", handlers.HandleMain)
-	http.HandleFunc("/login", handlers.HandleLogin)
-	http.HandleFunc("/logout", handlers.HandleLogout)
-	http.HandleFunc("/signup", handlers.HandleSignUp)
-	http.HandleFunc("/profile", handlers.HandleProfile)
-	http.HandleFunc("/upload/avatar", handlers.HandleUploadAvatar)
+	r := mux.NewRouter()
 
-	http.ListenAndServe(":3000", nil)
+	api := &UsersHandler{
+		Store: NewUserStore(),
+		Session: NewSessionStore(),
+	}
+
+	//r.HandleFunc("/", ____)
+	r.HandleFunc("/login", api.SignIn).Methods("POST")
+	r.HandleFunc("/logout", api.SignOut).Methods("GET")
+	r.HandleFunc("/signup", api.SignUp).Methods("POST")
+	r.HandleFunc("/profile", api.GetProfile).Methods("GET")
+	r.HandleFunc("/profile", api.PostProfile).Methods("POST")
+	//r.HandleFunc("/upload/avatar", ____)
+
+	log.Println("start serving :8080")
+	http.ListenAndServe(":8080", r)
 }

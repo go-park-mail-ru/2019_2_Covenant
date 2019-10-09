@@ -17,6 +17,13 @@ type SessionsStore struct {
 	mu     sync.RWMutex
 }
 
+func NewSessionStore() *SessionsStore {
+	return &SessionsStore{
+		mu:    sync.RWMutex{},
+		sessions: map[string]*Session{},
+	}
+}
+
 func generateSessionID(length uint) (sessionID string) {
 	rand.Seed(time.Now().UnixNano())
 	chars := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")

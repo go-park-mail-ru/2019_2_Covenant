@@ -8,13 +8,16 @@ import (
 )
 
 type Session struct {
-	UserID uint
-	Expires time.Time
+	ID 		  uint
+	UserID    uint
+	Expires   time.Time
+	Data      string
 }
 
 type SessionsStore struct {
 	sessions  map[string]*Session
-	mu     sync.RWMutex
+	mu     	  sync.RWMutex
+	nextID    uint
 }
 
 func NewSessionStore() *SessionsStore {
@@ -31,26 +34,20 @@ func generateSessionID(length uint) (sessionID string) {
 	for i := uint(0); i < length; i++ {
 		sessionID += string(chars[rand.Intn(len(chars))])
 	}
-	return
+
+	return sessionID
 }
 
-func (s *SessionsStore) Set(userID uint) (sessionID string, session *Session) {
-	loc, _ := time.LoadLocation("Europe/Moscow")
-
-	expires := time.Now().In(loc).Add(24 * time.Hour)
-
-	session = &Session{
-		UserID: userID,
-		Expires: expires,
-	}
-
-	sessionID = generateSessionID(10)
-
+func (s *SessionsStore) Set(newSession *Session) (uint, error) {
 	s.mu.Lock()
-	s.sessions[sessionID] = session
-	s.mu.Unlock()
+	defer s.mu.Unlock()
 
-	return
+	newSession.ID = s.nextID
+	s.nextID++
+
+	s.sessions[newSession.Data] = newSession
+
+	return newSession.ID, nil
 }
 
 func (s *SessionsStore) Get(sessionID string) (session *Session, err error) {

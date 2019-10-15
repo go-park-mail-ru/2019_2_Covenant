@@ -1,30 +1,22 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"log"
-	"net/http"
 	. "./handlers"
 	. "./storage"
+	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 )
 
-
 func main() {
-	r := mux.NewRouter()
+	e := echo.New()
 
 	api := &UsersHandler{
 		Store: NewUserStore(),
 		Session: NewSessionStore(),
 	}
 
-	//r.HandleFunc("/", ____)
-	r.HandleFunc("/login", api.SignIn).Methods("POST")
-	r.HandleFunc("/logout", api.SignOut).Methods("GET")
-	r.HandleFunc("/signup", api.SignUp).Methods("POST")
-	r.HandleFunc("/profile", api.GetProfile).Methods("GET")
-	r.HandleFunc("/profile", api.PostProfile).Methods("POST")
-	//r.HandleFunc("/upload/avatar", ____)
+	e.POST("/api/v1/signup", api.SignUp)
+	e.POST("/api/v1/signin", api.SignIn)
 
-	log.Println("start serving :8080")
-	http.ListenAndServe(":8080", r)
+	log.Fatal(e.Start(":8000"))
 }

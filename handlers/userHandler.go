@@ -4,6 +4,8 @@ import (
 	. "../storage"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/labstack/echo"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,68 +22,112 @@ type UsersHandler struct {
 	Session *SessionsStore
 }
 
-func (api *UsersHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+type Body map[string]interface{}
 
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+func (b Body) toString(key string) string {
+	return fmt.Sprint(b[key])
+}
 
-	if api.Store.IsExist(email) {
-		err := fmt.Errorf("user exists")
-		Error(w, false, err, 500)
-		return
+func (b Body) contain(key string) bool {
+	_, exist := b[key]
+	return exist
+}
+
+// curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
+// curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
+func (api *UsersHandler) SignUp(c echo.Context) error {
+	body := make(Body)
+	err := json.NewDecoder(c.Request().Body).Decode(&body)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "internal error",
+		})
+	}
+
+	if !(body.contain("email") && body.contain("password")) {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "bad params",
+		})
+	}
+
+	if api.Store.IsExist(body.toString("email")) {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "user exists",
+		})
 	}
 
 	newUser := &User{
-		Email: email,
-		Password: password,
+		Email: body.toString("email"),
+		Password: body.toString("password"),
 	}
 
-	_, err := api.Store.AddUser(newUser)
-	if err != nil {
-		Error(w, false, err, 500)
-		return
+	_, _ = api.Store.AddUser(newUser)
+
+	cookie := new(http.Cookie)
+	cookie.Name = "Covenant"
+	cookie.Value = uuid.New().String()
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+
+	session := &Session{
+		UserID:  newUser.ID,
+		Expires: cookie.Expires,
+		Data:    cookie.Value,
 	}
 
-	api.SignIn(w, r)
+	_, _ = api.Session.Set(session)
+
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, session)
 }
 
-func (api *UsersHandler) SignIn(w http.ResponseWriter, r *http.Request) {
-	auth := false
+func (api *UsersHandler) SignIn(c echo.Context) error {
+	body := make(Body)
+	err := json.NewDecoder(c.Request().Body).Decode(&body)
 
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-
-	id, err := api.Store.CheckUser(email, password)
 	if err != nil {
-		Error(w, auth, err, 500)
-		return
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "internal error",
+		})
 	}
 
-	user, err := api.Store.GetUserByID(id)
-	if err != nil {
-		Error(w, auth, err, 500)
-		return
+	if !(body.contain("email") && body.contain("password")) {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "bad params",
+		})
 	}
 
-	sessionID, session := api.Session.Set(id)
-
-	cookie := http.Cookie{
-		Name:    "session-id",
-		Value:   sessionID,
-		Expires: session.Expires,
+	if !api.Store.IsExist(body.toString("email")) {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "user does not exist",
+		})
 	}
 
-	http.SetCookie(w, &cookie)
+	user, _ := api.Store.GetUserByEmail(body.toString("email"))
 
-	auth = true
-
-	body := map[string]interface{}{
-		"id": id,
-		"username": user.Username,
-		"avatar": user.Avatar,
+	if body.toString("password") != user.Password {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "wrong password",
+		})
 	}
 
-	_ = json.NewEncoder(w).Encode(&Result{Body: body, Auth: auth})
+	cookie := new(http.Cookie)
+	cookie.Name = "Covenant"
+	cookie.Value = uuid.New().String()
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+
+	session := &Session{
+		UserID:  user.ID,
+		Expires: cookie.Expires,
+		Data:    cookie.Value,
+	}
+
+	_, _ = api.Session.Set(session)
+
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, cookie.Value)
 }
 
 func (api *UsersHandler) SignOut(w http.ResponseWriter, r *http.Request) {

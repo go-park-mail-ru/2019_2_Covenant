@@ -6,11 +6,11 @@ import (
 )
 
 type User struct {
-	ID uint `json:"id"`
+	ID 		 uint   `json:"id"`
 	Username string `json:"username"`
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
-	Avatar string `json:"avatar"`
+	Avatar   string `json:"avatar"`
 }
 
 type UserStore struct {
@@ -27,9 +27,6 @@ func NewUserStore() *UserStore {
 }
 
 func (us *UserStore) IsExist(email string) bool {
-	us.mu.RLock()
-	defer us.mu.RUnlock()
-
 	for _, user := range us.users {
 		if user.Email == email {
 			return true
@@ -63,7 +60,7 @@ func (us *UserStore) ChangeUsername(id uint, username string) (user *User, err e
 				us.mu.Unlock()
 			}
 
-			return
+			//return
 		}
 	}
 	err = fmt.Errorf("user is not exist")
@@ -80,22 +77,20 @@ func (us *UserStore) GetUserByID(userID uint) (*User, error) {
 		}
 	}
 
-	err := fmt.Errorf("user is not exist")
-	return nil, err
+	return nil, fmt.Errorf("user does not exist")
 }
 
-func (us *UserStore) GetUserByUsername(username string) (*User, error) {
+func (us *UserStore) GetUserByEmail(email string) (*User, error) {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 
 	for _, user := range us.users {
-		if user.Username == username {
+		if user.Email == email {
 			return user, nil
 		}
 	}
 
-	err := fmt.Errorf("user is not exist")
-	return nil, err
+	return nil, fmt.Errorf("user does not exist")
 }
 
 func (us *UserStore) CheckUser(email string, password string) (id uint, err error) {

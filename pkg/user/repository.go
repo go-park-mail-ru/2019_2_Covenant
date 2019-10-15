@@ -1,7 +1,7 @@
 package user
 
 import (
-	. "../models"
+	"2019_2_Covenant/pkg/models"
 )
 
 /*
@@ -9,8 +9,8 @@ import (
  */
 
 type Repository interface {
-	Fetch(number int64) ([]*User, error)
-	GetById(id int64) (*User, error)
-	GetByEmail(email string) (*User, error)
-	Store (user *User) error
+	FetchAll() ([]*models.User, error)
+	GetById(id int64) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
+	Store (user *models.User) error
 }

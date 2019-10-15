@@ -48,7 +48,7 @@ func (us *UserStorage) GetByEmail(email string) (*User, error) {
 	return nil, ErrNotFound
 }
 
-func (us *UserStorage) GetByID(userID uint64) (*User, error) {
+func (us *UserStorage) GetByID(usrID uint64) (*User, error) {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 

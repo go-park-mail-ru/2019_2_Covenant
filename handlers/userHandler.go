@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	. "../storage"
+	"2019_2_Covenant/storage"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -18,8 +18,8 @@ type Result struct {
 }
 
 type UsersHandler struct {
-	Store   *UserStore
-	Session *SessionsStore
+	Store   *storage.UserStore
+	Session *storage.SessionsStore
 }
 
 type Body map[string]interface{}
@@ -33,8 +33,6 @@ func (b Body) contain(key string) bool {
 	return exist
 }
 
-// curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
-// curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
 func (api *UsersHandler) SignUp(c echo.Context) error {
 	body := make(Body)
 	err := json.NewDecoder(c.Request().Body).Decode(&body)

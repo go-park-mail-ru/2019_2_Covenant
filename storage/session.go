@@ -1,6 +1,13 @@
 package storage
 
 import (
+	"sync"
+	"time"
+)
+
+//cp -rf ~/Documents/covenant-backend/2019_2_Covenant ~/go/src
+
+import (
 	"fmt"
 	"math/rand"
 	"sync"

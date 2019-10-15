@@ -39,9 +39,9 @@ func (us *UserStorage) GetByEmail(email string) (*User, error) {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 
-	for _, user := range us.users {
-		if user.Email == email {
-			return user, nil
+	for _, usr := range us.users {
+		if usr.Email == email {
+			return usr, nil
 		}
 	}
 
@@ -52,9 +52,9 @@ func (us *UserStorage) GetByID(userID uint64) (*User, error) {
 	us.mu.RLock()
 	defer us.mu.RUnlock()
 
-	for _, user := range us.users {
-		if user.ID == userID {
-			return user, nil
+	for _, usr := range us.users {
+		if usr.ID == usrID {
+			return usr, nil
 		}
 	}
 

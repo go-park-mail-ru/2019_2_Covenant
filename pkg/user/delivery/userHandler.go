@@ -5,6 +5,7 @@ import (
 	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
 	"2019_2_Covenant/pkg/vars"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
@@ -19,12 +20,38 @@ type UserHandler struct {
 
 func NewUserHandler(e *echo.Echo, uUC user.Usecase, sR session.Repository) {
 	handler := &UserHandler{
-		UUsecase: uUC,
+		UUsecase:     uUC,
 		sesssionRepo: sR,
 	}
 
 	e.POST("/api/v1/signup", handler.SignUp)
-	e.POST("/api/v1/signin", handler.SignIn)
+
+	e.POST("/api/v1/signin", handler.SignIn, func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cookie, err := c.Cookie("Covenant")
+
+			if err != nil {
+				err = next(c)
+				return err
+			}
+
+			sess, err := handler.sesssionRepo.Get(cookie.Value)
+
+			if err != nil {
+				err = next(c)
+				return err
+			}
+
+			usr, err := handler.UUsecase.GetByID(sess.UserID)
+
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, err)
+			}
+
+			fmt.Println("authorized")
+			return c.JSON(http.StatusOK, usr)
+		}
+	})
 }
 
 type ResponseError struct {
@@ -75,7 +102,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 	}
 
 	newUser := &models.User{
-		Email: userRegData.Email,
+		Email:    userRegData.Email,
 		Password: userRegData.Password,
 		Username: userRegData.Username,
 	}
@@ -87,9 +114,9 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:       "Covenant",
-		Value:      uuid.New().String(),
-		Expires:    time.Now().Add(24 * time.Hour),
+		Name:    "Covenant",
+		Value:   uuid.New().String(),
+		Expires: time.Now().Add(24 * time.Hour),
 	}
 
 	sess := &models.Session{
@@ -135,9 +162,9 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:       "Covenant",
-		Value:      uuid.New().String(),
-		Expires:    time.Now().Add(24 * time.Hour),
+		Name:    "Covenant",
+		Value:   uuid.New().String(),
+		Expires: time.Now().Add(24 * time.Hour),
 	}
 
 	sess := &models.Session{

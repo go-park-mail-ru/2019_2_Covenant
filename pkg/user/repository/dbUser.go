@@ -4,7 +4,6 @@ import (
 	. "2019_2_Covenant/pkg/models"
 	"2019_2_Covenant/pkg/user"
 	"2019_2_Covenant/pkg/vars"
-	"fmt"
 	"sync"
 )
 
@@ -28,7 +27,6 @@ func (us *UserStorage) Store(newUser *User) error {
 	newUser.ID = us.nextID
 	us.nextID++
 
-	newUser.Username = "User" + fmt.Sprint(newUser.ID)
 	newUser.Avatar = "img/user_profile.png"
 
 	us.users = append(us.users, newUser)

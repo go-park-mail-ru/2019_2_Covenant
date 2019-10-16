@@ -53,6 +53,9 @@ func isValidSignInReq(usr models.UserLogin) (bool, error) {
 	return true, nil
 }
 
+// curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
+// -d '{"email": "m@mail.ru", "username": "Marshal", "password": "12345312"}'
+
 func (uh UserHandler) SignUp(c echo.Context) error {
 	var userRegData models.UserReg
 	err := c.Bind(&userRegData)
@@ -107,6 +110,49 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 }
 
 // curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
-// curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
-// -d '{"email": "m@mail.ru", "username": "Marshal", "password": "12345312"}'
+// -d '{"email": "m@mail.ru", "password": "12345312"}'
 
+func (uh UserHandler) SignIn(c echo.Context) error {
+	var userLoginData models.UserLogin
+	err := c.Bind(&userLoginData)
+
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+	}
+
+	if ok, err := isValidSignInReq(userLoginData); !ok {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	}
+
+	usr, err := uh.UUsecase.GetByEmail(userLoginData.Email)
+
+	if usr == nil {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	}
+
+	if usr.Password != userLoginData.Password {
+		return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrBadParam.Error()})
+	}
+
+	cookie := &http.Cookie{
+		Name:       "Covenant",
+		Value:      uuid.New().String(),
+		Expires:    time.Now().Add(24 * time.Hour),
+	}
+
+	sess := &models.Session{
+		UserID:  usr.ID,
+		Expires: cookie.Expires,
+		Data:    cookie.Value,
+	}
+
+	err = uh.sesssionRepo.Store(sess)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, usr)
+}

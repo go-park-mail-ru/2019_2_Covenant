@@ -3,6 +3,7 @@ package repository
 import (
 	. "2019_2_Covenant/pkg/models"
 	"2019_2_Covenant/pkg/user"
+	"2019_2_Covenant/pkg/vars"
 	"fmt"
 	"sync"
 )
@@ -45,7 +46,7 @@ func (us *UserStorage) GetByEmail(email string) (*User, error) {
 		}
 	}
 
-	return nil, ErrNotFound
+	return nil, vars.ErrNotFound
 }
 
 func (us *UserStorage) GetByID(usrID uint64) (*User, error) {
@@ -58,7 +59,7 @@ func (us *UserStorage) GetByID(usrID uint64) (*User, error) {
 		}
 	}
 
-	return nil, ErrNotFound
+	return nil, vars.ErrNotFound
 }
 
 func (us *UserStorage) FetchAll() ([]*User, error) {

@@ -2,8 +2,9 @@ package delivery
 
 import (
 	"2019_2_Covenant/pkg/models"
+	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
-	"fmt"
+	"2019_2_Covenant/pkg/vars"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
@@ -12,16 +13,18 @@ import (
 )
 
 type UserHandler struct {
-	UUsecase user.Usecase
+	UUsecase     user.Usecase
+	sesssionRepo session.Repository
 }
 
-func NewUserHandler(e *echo.Echo, uUC user.Usecase) {
+func NewUserHandler(e *echo.Echo, uUC user.Usecase, sR session.Repository) {
 	handler := &UserHandler{
 		UUsecase: uUC,
+		sesssionRepo: sR,
 	}
 
 	e.POST("/api/v1/signup", handler.SignUp)
-	//e.POST("/api/v1/signin",
+	e.POST("/api/v1/signin", handler.SignIn)
 }
 
 type ResponseError struct {
@@ -33,7 +36,7 @@ func isValidSignUpReq(usr models.UserReg) (bool, error) {
 	err := v.Struct(usr)
 
 	if err != nil {
-		return false, models.ErrBadParam
+		return false, vars.ErrBadParam
 	}
 
 	return true, nil
@@ -44,7 +47,7 @@ func isValidSignInReq(usr models.UserLogin) (bool, error) {
 	err := v.Struct(usr)
 
 	if err != nil {
-		return false, models.ErrBadParam
+		return false, vars.ErrBadParam
 	}
 
 	return true, nil
@@ -65,8 +68,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 	usr, err := uh.UUsecase.GetByEmail(userRegData.Email)
 
 	if usr != nil {
-		fmt.Println("!")
-		return c.JSON(http.StatusBadRequest, ResponseError{models.ErrAlreadyExist.Error()})
+		return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrAlreadyExist.Error()})
 	}
 
 	newUser := &models.User{
@@ -87,10 +89,16 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 		Expires:    time.Now().Add(24 * time.Hour),
 	}
 
-	session := &models.Session{
+	sess := &models.Session{
 		UserID:  newUser.ID,
 		Expires: cookie.Expires,
 		Data:    cookie.Value,
+	}
+
+	err = uh.sesssionRepo.Store(sess)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	c.SetCookie(cookie)
@@ -100,4 +108,5 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 
 // curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
 // curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
-// -d '{"email": "m1@mail.ru", "username": "Marsha1l", "password": "12345312"}'
+// -d '{"email": "m@mail.ru", "username": "Marshal", "password": "12345312"}'
+

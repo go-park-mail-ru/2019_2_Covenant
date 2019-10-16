@@ -1,4 +1,4 @@
-package models
+package vars
 
 import "errors"
 
@@ -7,4 +7,5 @@ var (
 	ErrBadParam 		    = 	errors.New("bad params")
 	ErrNotFound 		    = 	errors.New("not found")
 	ErrAlreadyExist 	    = 	errors.New("already exist")
+	ErrExpired              =   errors.New("session expired")
 )

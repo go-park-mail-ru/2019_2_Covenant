@@ -16,15 +16,4 @@ func main() {
 	delivery.NewUserHandler(e, userUsecase)
 
 	log.Fatal(e.Start(":8000"))
-
-	//
-	//api := &UsersHandler{
-	//	Store: NewUserStore(),
-	//	Session: NewSessionStore(),
-	//}
-	//
-	//e.POST("/api/v1/signup", api.SignUp)
-	//e.POST("/api/v1/signin", api.SignIn)
-	//
-	//log.Fatal(e.Start(":8000"))
 }

@@ -3,6 +3,7 @@ package delivery
 import (
 	"2019_2_Covenant/pkg/models"
 	"2019_2_Covenant/pkg/user"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
@@ -32,7 +33,7 @@ func isValidSignUpReq(usr models.UserReg) (bool, error) {
 	err := v.Struct(usr)
 
 	if err != nil {
-		return false, err
+		return false, models.ErrBadParam
 	}
 
 	return true, nil
@@ -50,47 +51,47 @@ func isValidSignInReq(usr models.UserLogin) (bool, error) {
 }
 
 func (uh UserHandler) SignUp(c echo.Context) error {
-	var req models.UserReg
-	err := c.Bind(&req)
+	var userRegData models.UserReg
+	err := c.Bind(&userRegData)
 
 	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
 	}
 
-	if ok, err := isValidSignUpReq(req); !ok {
-		return c.JSON(http.StatusBadRequest, ResponseError{Error: err.Error()})
+	if ok, err := isValidSignUpReq(userRegData); !ok {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
-	usr, err := uh.UUsecase.GetByEmail(req.Email)
+	usr, err := uh.UUsecase.GetByEmail(userRegData.Email)
 
 	if usr != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "exist",
-		})
+		fmt.Println("!")
+		return c.JSON(http.StatusBadRequest, ResponseError{models.ErrAlreadyExist.Error()})
 	}
 
 	newUser := &models.User{
-		Email: req.Email,
-		Password: req.Password,
-		Username: req.Username,
+		Email: userRegData.Email,
+		Password: userRegData.Password,
+		Username: userRegData.Username,
 	}
 
 	err = uh.UUsecase.Store(newUser)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{Error: err.Error()})
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
-	cookie := new(http.Cookie)
-	cookie.Name = "Covenant"
-	cookie.Value = uuid.New().String()
-	cookie.Expires = time.Now().Add(24 * time.Hour)
+	cookie := &http.Cookie{
+		Name:       "Covenant",
+		Value:      uuid.New().String(),
+		Expires:    time.Now().Add(24 * time.Hour),
+	}
 
-	//session := &models.Session{
-	//	UserID:  newUser.ID,
-	//	Expires: cookie.Expires,
-	//	Data:    cookie.Value,
-	//}
+	session := &models.Session{
+		UserID:  newUser.ID,
+		Expires: cookie.Expires,
+		Data:    cookie.Value,
+	}
 
 	c.SetCookie(cookie)
 

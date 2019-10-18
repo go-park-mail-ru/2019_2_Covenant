@@ -16,19 +16,21 @@ import (
 type UserHandler struct {
 	UUsecase   user.Usecase
 	SUsecase   session.Usecase
-	Middleware middleware.Middleware
+	MManager   middleware.MiddlewareManager
 }
 
-func NewUserHandler(e *echo.Echo, uUC user.Usecase, sUC session.Usecase, m middleware.Middleware) {
-	handler := &UserHandler{
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
+	return &UserHandler{
 		UUsecase:     uUC,
 		SUsecase: 	  sUC,
-		Middleware:   middleware.NewMiddleware(uUC, sUC),
+		MManager:     middleware.NewMiddlewareManager(uUC, sUC),
 	}
+}
 
-	e.Use(handler.Middleware.CheckAuth)
-	e.POST("/api/v1/signup", handler.SignUp)
-	e.POST("/api/v1/signin", handler.SignIn)
+func (uh UserHandler) Configure(e *echo.Echo) {
+	e.Use(uh.MManager.CheckAuth)
+	e.POST("/api/v1/signup", uh.SignUp)
+	e.POST("/api/v1/signin", uh.SignIn)
 }
 
 type ResponseError struct {
@@ -148,6 +150,15 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, usr)
+}
+
+func (uh UserHandler) editProfile(c echo.Context) error {
+	return nil
+}
+
+func (uh UserHandler) getProfile(c echo.Context) error {
+
+	return nil
 }
 
 

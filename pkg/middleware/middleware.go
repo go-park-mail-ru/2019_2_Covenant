@@ -8,19 +8,19 @@ import (
 	"net/http"
 )
 
-type Middleware struct {
+type MiddlewareManager struct {
 	sUC session.Usecase
 	uUC user.Usecase
 }
 
-func NewMiddleware(uUsecase user.Usecase, sUsecase session.Usecase) Middleware {
-	return Middleware{
+func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase) MiddlewareManager {
+	return MiddlewareManager{
 		sUC: sUsecase,
 		uUC: uUsecase,
 	}
 }
 
-func (m Middleware) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
+func (m MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("Covenant")
 

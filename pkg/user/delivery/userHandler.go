@@ -35,18 +35,7 @@ type ResponseError struct {
 	Error string `json:"error"`
 }
 
-func isValidSignUpReq(usr models.UserReg) (bool, error) {
-	v := validator.New()
-	err := v.Struct(usr)
-
-	if err != nil {
-		return false, vars.ErrBadParam
-	}
-
-	return true, nil
-}
-
-func isValidSignInReq(usr models.UserLogin) (bool, error) {
+func isValidRequest(usr interface{}) (bool, error) {
 	v := validator.New()
 	err := v.Struct(usr)
 
@@ -68,7 +57,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
 	}
 
-	if ok, err := isValidSignUpReq(userRegData); !ok {
+	if ok, err := isValidRequest(userRegData); !ok {
 		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
@@ -124,7 +113,7 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
 	}
 
-	if ok, err := isValidSignInReq(userLoginData); !ok {
+	if ok, err := isValidRequest(userLoginData); !ok {
 		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
@@ -160,3 +149,5 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, usr)
 }
+
+

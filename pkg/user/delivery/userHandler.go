@@ -14,14 +14,14 @@ import (
 )
 
 type UserHandler struct {
-	UUsecase     user.Usecase
-	sesssionRepo session.Repository
+	UUsecase  user.Usecase
+	SUsecase  session.Usecase
 }
 
-func NewUserHandler(e *echo.Echo, uUC user.Usecase, sR session.Repository) {
+func NewUserHandler(e *echo.Echo, uUC user.Usecase, sUC session.Usecase) {
 	handler := &UserHandler{
 		UUsecase:     uUC,
-		sesssionRepo: sR,
+		SUsecase: 	  sUC,
 	}
 
 	e.POST("/api/v1/signup", handler.SignUp)
@@ -35,7 +35,7 @@ func NewUserHandler(e *echo.Echo, uUC user.Usecase, sR session.Repository) {
 				return err
 			}
 
-			sess, err := handler.sesssionRepo.Get(cookie.Value)
+			sess, err := handler.SUsecase.Get(cookie.Value)
 
 			if err != nil {
 				err = next(c)
@@ -125,7 +125,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 		Data:    cookie.Value,
 	}
 
-	err = uh.sesssionRepo.Store(sess)
+	err = uh.SUsecase.Store(sess)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
@@ -173,7 +173,7 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 		Data:    cookie.Value,
 	}
 
-	err = uh.sesssionRepo.Store(sess)
+	err = uh.SUsecase.Store(sess)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})

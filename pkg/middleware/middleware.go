@@ -3,7 +3,6 @@ package middleware
 import (
 	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
-	"fmt"
 	"github.com/labstack/echo"
 	"net/http"
 )
@@ -25,24 +24,27 @@ func (m MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie("Covenant")
 
 		if err != nil {
-			err = next(c)
-			return err
+			return c.JSON(http.StatusUnauthorized, map[string]string{
+				"error": "unauthorized",
+			})
 		}
 
 		sess, err := m.sUC.Get(cookie.Value)
 
 		if err != nil {
-			err = next(c)
-			return err
+			return c.JSON(http.StatusUnauthorized, map[string]string{
+				"error": "unauthorized",
+			})
 		}
 
-		usr, err := m.uUC.GetByID(sess.UserID)
+		_, err = m.uUC.GetByID(sess.UserID)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err)
 		}
 
-		fmt.Println("authorized")
-		return c.JSON(http.StatusOK, usr)
+		c.Set("session", sess)
+
+		return next(c)
 	}
 }

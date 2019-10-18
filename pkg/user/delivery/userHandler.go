@@ -28,9 +28,11 @@ func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
 }
 
 func (uh UserHandler) Configure(e *echo.Echo) {
-	e.Use(uh.MManager.CheckAuth)
+	//e.Use(uh.MManager.CheckAuth)
 	e.POST("/api/v1/signup", uh.SignUp)
 	e.POST("/api/v1/signin", uh.SignIn)
+	e.POST("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
+	e.GET("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
@@ -153,12 +155,62 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 }
 
 func (uh UserHandler) editProfile(c echo.Context) error {
-	return nil
+	sess, ok := c.Get("session").(*models.Session)
+
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	}
+
+	var userEditData models.UserEdit
+	err = c.Bind(&userEditData)
+
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+	}
+
+	if ok, err := isValidRequest(userEditData); !ok {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	}
+
+	usr.Name = userEditData.Name
+	usr.Surname = userEditData.Surname
+
+	return c.JSON(http.StatusOK, usr)
 }
 
 func (uh UserHandler) getProfile(c echo.Context) error {
+	sess, ok := c.Get("session").(models.Session)
 
-	return nil
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, usr)
 }
 
+func (uh UserHandler) Profile(c echo.Context) error {
+	var err error
 
+	switch c.Request().Method {
+	case echo.GET:
+		err = uh.getProfile(c)
+	case echo.POST:
+		err = uh.editProfile(c)
+	default:
+		err = nil
+	}
+
+	return err
+}

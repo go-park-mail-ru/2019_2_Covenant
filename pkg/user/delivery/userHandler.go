@@ -1,11 +1,11 @@
 package delivery
 
 import (
+	"2019_2_Covenant/pkg/middleware"
 	"2019_2_Covenant/pkg/models"
 	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
 	"2019_2_Covenant/pkg/vars"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
@@ -14,44 +14,21 @@ import (
 )
 
 type UserHandler struct {
-	UUsecase  user.Usecase
-	SUsecase  session.Usecase
+	UUsecase   user.Usecase
+	SUsecase   session.Usecase
+	Middleware middleware.Middleware
 }
 
-func NewUserHandler(e *echo.Echo, uUC user.Usecase, sUC session.Usecase) {
+func NewUserHandler(e *echo.Echo, uUC user.Usecase, sUC session.Usecase, m middleware.Middleware) {
 	handler := &UserHandler{
 		UUsecase:     uUC,
 		SUsecase: 	  sUC,
+		Middleware:   middleware.NewMiddleware(uUC, sUC),
 	}
 
+	e.Use(handler.Middleware.CheckAuth)
 	e.POST("/api/v1/signup", handler.SignUp)
-
-	e.POST("/api/v1/signin", handler.SignIn, func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			cookie, err := c.Cookie("Covenant")
-
-			if err != nil {
-				err = next(c)
-				return err
-			}
-
-			sess, err := handler.SUsecase.Get(cookie.Value)
-
-			if err != nil {
-				err = next(c)
-				return err
-			}
-
-			usr, err := handler.UUsecase.GetByID(sess.UserID)
-
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, err)
-			}
-
-			fmt.Println("authorized")
-			return c.JSON(http.StatusOK, usr)
-		}
-	})
+	e.POST("/api/v1/signin", handler.SignIn)
 }
 
 type ResponseError struct {

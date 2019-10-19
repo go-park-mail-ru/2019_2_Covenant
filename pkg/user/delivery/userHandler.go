@@ -6,10 +6,15 @@ import (
 	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
 	"2019_2_Covenant/pkg/vars"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
+	"io/ioutil"
+	"mime"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -28,11 +33,12 @@ func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
 }
 
 func (uh UserHandler) Configure(e *echo.Echo) {
-	//e.Use(uh.MManager.CheckAuth)
 	e.POST("/api/v1/signup", uh.SignUp)
 	e.POST("/api/v1/signin", uh.SignIn)
 	e.POST("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
+	e.POST("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
+	e.GET("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
@@ -185,7 +191,7 @@ func (uh UserHandler) editProfile(c echo.Context) error {
 }
 
 func (uh UserHandler) getProfile(c echo.Context) error {
-	sess, ok := c.Get("session").(models.Session)
+	sess, ok := c.Get("session").(*models.Session)
 
 	if !ok {
 		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
@@ -208,6 +214,89 @@ func (uh UserHandler) Profile(c echo.Context) error {
 		err = uh.getProfile(c)
 	case echo.POST:
 		err = uh.editProfile(c)
+	default:
+		err = nil
+	}
+
+	return err
+}
+
+func (uh UserHandler) getAvatar(c echo.Context) error {
+	return nil
+}
+
+func (uh UserHandler) setAvatar(c echo.Context) error {
+	file, err := c.FormFile("avatar")
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrRetrievingError.Error()})
+	}
+
+	src, err := file.Open()
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	defer src.Close()
+
+	rootPath, _ := os.Getwd()
+	avatarsPath := "/resources/avatars/"
+	destPath := filepath.Join(rootPath, avatarsPath)
+
+	if _, err := os.Stat(destPath); os.IsNotExist(err) {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	bytes, err := ioutil.ReadAll(src)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	fileType := http.DetectContentType(bytes)
+	extensions, err := mime.ExtensionsByType(fileType)
+
+	sess, ok := c.Get("session").(*models.Session)
+
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
+	destFile, err := os.Create(filepath.Join(destPath, avatarName))
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	defer destFile.Close()
+
+	_, err = destFile.Write(bytes)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+	}
+
+	usr.Avatar = filepath.Join(avatarsPath, avatarName)
+
+	return c.JSON(http.StatusOK, usr)
+}
+
+func (uh UserHandler) Avatar(c echo.Context) error {
+	var err error
+
+	switch c.Request().Method {
+	case echo.GET:
+		err = uh.getAvatar(c)
+	case echo.POST:
+		err = uh.setAvatar(c)
 	default:
 		err = nil
 	}

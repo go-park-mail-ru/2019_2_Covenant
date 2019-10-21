@@ -27,7 +27,7 @@ func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
 	}
 }
 
-func (uh UserHandler) Configure(e *echo.Echo) {
+func (uh *UserHandler) Configure(e *echo.Echo) {
 	//e.Use(uh.MManager.CheckAuth)
 	e.POST("/api/v1/signup", uh.SignUp)
 	e.POST("/api/v1/signin", uh.SignIn)
@@ -53,7 +53,7 @@ func isValidRequest(usr interface{}) (bool, error) {
 // curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
 // -d '{"email": "m@mail.ru", "username": "Marshal", "password": "12345312"}'
 
-func (uh UserHandler) SignUp(c echo.Context) error {
+func (uh *UserHandler) SignUp(c echo.Context) error {
 	var userRegData models.UserReg
 	err := c.Bind(&userRegData)
 
@@ -109,7 +109,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 // curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
 // -d '{"email": "m@mail.ru", "password": "12345312"}'
 
-func (uh UserHandler) SignIn(c echo.Context) error {
+func (uh *UserHandler) SignIn(c echo.Context) error {
 	var userLoginData models.UserLogin
 	err := c.Bind(&userLoginData)
 
@@ -154,7 +154,7 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 	return c.JSON(http.StatusOK, usr)
 }
 
-func (uh UserHandler) editProfile(c echo.Context) error {
+func (uh *UserHandler) editProfile(c echo.Context) error {
 	sess, ok := c.Get("session").(*models.Session)
 
 	if !ok {
@@ -184,7 +184,7 @@ func (uh UserHandler) editProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, usr)
 }
 
-func (uh UserHandler) getProfile(c echo.Context) error {
+func (uh *UserHandler) getProfile(c echo.Context) error {
 	sess, ok := c.Get("session").(models.Session)
 
 	if !ok {
@@ -200,7 +200,7 @@ func (uh UserHandler) getProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, usr)
 }
 
-func (uh UserHandler) Profile(c echo.Context) error {
+func (uh *UserHandler) Profile(c echo.Context) error {
 	var err error
 
 	switch c.Request().Method {

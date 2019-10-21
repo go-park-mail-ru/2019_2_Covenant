@@ -21,7 +21,7 @@ func NewSessionStorage() session.Repository {
 	}
 }
 
-func (ss SessionStorage) Get(value string) (*Session, error) {
+func (ss *SessionStorage) Get(value string) (*Session, error) {
 	item := &Session{}
 	var isFound bool
 

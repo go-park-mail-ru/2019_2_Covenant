@@ -19,7 +19,7 @@ func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase) Middl
 	}
 }
 
-func (m MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
+func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("Covenant")
 

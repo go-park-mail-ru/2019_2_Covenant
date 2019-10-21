@@ -15,7 +15,7 @@ func NewSessionUsecase(sr session.Repository) session.Usecase {
 	}
 }
 
-func (sUC sessionUsecase) Get(value string) (*models.Session, error) {
+func (sUC *sessionUsecase) Get(value string) (*models.Session, error) {
 	sess, err := sUC.sessionRepo.Get(value)
 
 	if err != nil {

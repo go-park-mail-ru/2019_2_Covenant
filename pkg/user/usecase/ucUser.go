@@ -16,7 +16,7 @@ func NewUserUsecase(ur user.Repository) user.Usecase {
 	}
 }
 
-func (uUC userUsecase) FetchAll() ([]*User, error) {
+func (uUC *userUsecase) FetchAll() ([]*User, error) {
 	users, err := uUC.userRepo.FetchAll()
 
 	if err != nil {
@@ -42,7 +42,7 @@ func (uUC *userUsecase) Store(newUser *User) error {
 	return nil
 }
 
-func (uUC userUsecase) GetByEmail(email string) (*User, error) {
+func (uUC *userUsecase) GetByEmail(email string) (*User, error) {
 	usr, err := uUC.userRepo.GetByEmail(email)
 
 	if err != nil {
@@ -52,7 +52,7 @@ func (uUC userUsecase) GetByEmail(email string) (*User, error) {
 	return usr, nil
 }
 
-func (uUC userUsecase) GetByID(userID uint64) (*User, error) {
+func (uUC *userUsecase) GetByID(userID uint64) (*User, error) {
 	usr, err := uUC.userRepo.GetByID(userID)
 
 	if err != nil {

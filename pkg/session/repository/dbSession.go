@@ -9,19 +9,19 @@ import (
 )
 
 type SessionStorage struct {
-	sessions  []*Session
-	mu     	  sync.RWMutex
-	nextID    uint64
+	sessions []*Session
+	mu       sync.RWMutex
+	nextID   uint64
 }
 
 func NewSessionStorage() session.Repository {
 	return &SessionStorage{
-		mu:    sync.RWMutex{},
+		mu:       sync.RWMutex{},
 		sessions: []*Session{},
 	}
 }
 
-func (ss SessionStorage) Get(value string) (*Session, error) {
+func (ss *SessionStorage) Get(value string) (*Session, error) {
 	item := &Session{}
 	var isFound bool
 

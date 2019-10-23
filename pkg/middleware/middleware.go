@@ -3,7 +3,7 @@ package middleware
 import (
 	"2019_2_Covenant/pkg/session"
 	"2019_2_Covenant/pkg/user"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 

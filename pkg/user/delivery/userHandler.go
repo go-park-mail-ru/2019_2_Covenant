@@ -8,7 +8,7 @@ import (
 	"2019_2_Covenant/pkg/vars"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"mime"
@@ -38,10 +38,16 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/signin", uh.SignIn)
 	e.POST("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
+	e.POST("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
+	e.GET("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
 	Error string `json:"error"`
+}
+
+type Response struct {
+	Body interface{} `json:"body"`
 }
 
 func isValidRequest(usr interface{}) (bool, error) {
@@ -108,7 +114,7 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	return c.JSON(http.StatusOK, newUser)
+	return c.JSON(http.StatusOK, Response{newUser})
 }
 
 // curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
@@ -156,7 +162,7 @@ func (uh *UserHandler) SignIn(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	return c.JSON(http.StatusOK, usr)
+	return c.JSON(http.StatusOK, Response{usr})
 }
 
 func (uh *UserHandler) editProfile(c echo.Context) error {
@@ -186,11 +192,11 @@ func (uh *UserHandler) editProfile(c echo.Context) error {
 	usr.Name = userEditData.Name
 	usr.Surname = userEditData.Surname
 
-	return c.JSON(http.StatusOK, usr)
+	return c.JSON(http.StatusOK, Response{usr})
 }
 
 func (uh *UserHandler) getProfile(c echo.Context) error {
-	sess, ok := c.Get("session").(models.Session)
+	sess, ok := c.Get("session").(*models.Session)
 
 	if !ok {
 		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
@@ -202,7 +208,7 @@ func (uh *UserHandler) getProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, usr)
+	return c.JSON(http.StatusOK, Response{usr})
 }
 
 func (uh *UserHandler) Profile(c echo.Context) error {
@@ -285,7 +291,7 @@ func (uh *UserHandler) setAvatar(c echo.Context) error {
 
 	usr.Avatar = filepath.Join(avatarsPath, avatarName)
 
-	return c.JSON(http.StatusOK, usr)
+	return c.JSON(http.StatusOK, Response{usr})
 }
 
 func (uh *UserHandler) Avatar(c echo.Context) error {

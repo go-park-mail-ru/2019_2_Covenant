@@ -6,7 +6,7 @@ import (
 	"2019_2_Covenant/pkg/user/delivery"
 	_userRepo "2019_2_Covenant/pkg/user/repository"
 	_userUsecase "2019_2_Covenant/pkg/user/usecase"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"log"
 )
 

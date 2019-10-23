@@ -61,9 +61,17 @@ func isValidRequest(usr interface{}) (bool, error) {
 	return true, nil
 }
 
-// curl -X POST 127.0.0.1:8000/api/v1/signup -H 'Content-Type: application/json' \
-// -d '{"email": "m@mail.ru", "username": "Marshal", "password": "12345312"}'
-
+// @Summary SignUp Route
+// @Description Signing user up
+// @ID sign-up-user
+// @Accept json
+// @Produce json
+// @Param Data body models.UserReg true "JSON that contains user sign up data"
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/signup [post]
 func (uh *UserHandler) SignUp(c echo.Context) error {
 	var userRegData models.UserReg
 	err := c.Bind(&userRegData)
@@ -117,9 +125,18 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response{newUser})
 }
 
-// curl -X POST 127.0.0.1:8000/api/v1/signin -H 'Content-Type: application/json' \
-// -d '{"email": "m@mail.ru", "password": "12345312"}'
 
+// @Summary SignIn Route
+// @Description Signing user in
+// @ID sign-in-user
+// @Accept json
+// @Produce json
+// @Param Data body models.UserLogin true "JSON that contains user login data"
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/signin [post]
 func (uh *UserHandler) SignIn(c echo.Context) error {
 	var userLoginData models.UserLogin
 	err := c.Bind(&userLoginData)
@@ -165,6 +182,17 @@ func (uh *UserHandler) SignIn(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response{usr})
 }
 
+// @Summary Edit Profile Route
+// @Description Signing user in
+// @ID edit-profile
+// @Accept json
+// @Produce json
+// @Param Data body models.UserEdit true "JSON that contains user data to edit"
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/profile [post]
 func (uh *UserHandler) editProfile(c echo.Context) error {
 	sess, ok := c.Get("session").(*models.Session)
 
@@ -195,6 +223,15 @@ func (uh *UserHandler) editProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response{usr})
 }
 
+// @Summary Get Profile Route
+// @Description Signing user in
+// @ID get-profile
+// @Accept json
+// @Produce json
+// @Success 200 object models.User
+// @Failure 401 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/profile [get]
 func (uh *UserHandler) getProfile(c echo.Context) error {
 	sess, ok := c.Get("session").(*models.Session)
 
@@ -205,7 +242,7 @@ func (uh *UserHandler) getProfile(c echo.Context) error {
 	usr, err := uh.UUsecase.GetByID(sess.UserID)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		return c.JSON(http.StatusUnauthorized, ResponseError{err.Error()})
 	}
 
 	return c.JSON(http.StatusOK, Response{usr})
@@ -230,6 +267,17 @@ func (uh *UserHandler) getAvatar(c echo.Context) error {
 	return nil
 }
 
+// @Summary Set Avatar Route
+// @Description Signing user in
+// @ID set-avatar
+// @Accept multipart/form-data
+// @Produce json
+// @Param Data body string true "multipart/form-data"
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/avatar [post]
 func (uh *UserHandler) setAvatar(c echo.Context) error {
 	file, err := c.FormFile("avatar")
 

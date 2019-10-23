@@ -1,0 +1,223 @@
+basePath: /api/v1
+definitions:
+  delivery.ResponseError:
+    properties:
+      error:
+        type: string
+    type: object
+  models.User:
+    properties:
+      access:
+        description: 0 - public; 1 - private;
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      role:
+        description: 0 - user; 1 - admin;
+        type: integer
+      surname:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserEdit:
+    properties:
+      name:
+        type: string
+      surname:
+        type: string
+    required:
+    - name
+    - surname
+    type: object
+  models.UserLogin:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UserReg:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+info:
+  contact: {}
+  description: Covenant backend server
+  license: {}
+  title: Covenant API
+  version: "1.0"
+paths:
+  /api/v1/avatar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Signing user in
+      operationId: set-avatar
+      parameters:
+      - description: multipart/form-data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Set Avatar Route
+  /api/v1/profile:
+    get:
+      consumes:
+      - application/json
+      description: Signing user in
+      operationId: get-profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Get Profile Route
+    post:
+      consumes:
+      - application/json
+      description: Signing user in
+      operationId: edit-profile
+      parameters:
+      - description: JSON that contains user data to edit
+        in: body
+        name: Data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserEdit'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Edit Profile Route
+  /api/v1/signin:
+    post:
+      consumes:
+      - application/json
+      description: Signing user in
+      operationId: sign-in-user
+      parameters:
+      - description: JSON that contains user login data
+        in: body
+        name: Data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserLogin'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: SignIn Route
+  /api/v1/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signing user up
+      operationId: sign-up-user
+      parameters:
+      - description: JSON that contains user sign up data
+        in: body
+        name: Data
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserReg'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: SignUp Route
+swagger: "2.0"

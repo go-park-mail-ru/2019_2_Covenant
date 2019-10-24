@@ -1,33 +1,36 @@
 package main
 
 import (
-	_sessionRepo "2019_2_Covenant/internal/session/repository"
-	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
-	"2019_2_Covenant/internal/user/delivery"
-	_userRepo "2019_2_Covenant/internal/user/repository"
-	_userUsecase "2019_2_Covenant/internal/user/usecase"
-	"github.com/labstack/echo/v4"
+	"2019_2_Covenant/internal/app/apiserver"
+	"flag"
+	"github.com/BurntSushi/toml"
 	"log"
-
-	_ "2019_2_Covenant/docs"
-	"github.com/swaggo/echo-swagger"
 )
+
+var (
+	configPath string
+)
+
+func init() {
+	flag.StringVar(&configPath, "conf", "configs/apiserver.toml", "path to server config")
+}
 
 // @title Covenant API
 // @version 1.0
 // @description Covenant backend server
 // @BasePath /api/v1
 func main() {
-	e := echo.New()
-	e.GET("/docs/*", echoSwagger.WrapHandler)
+	flag.Parse()
 
-	userStorage := _userRepo.NewUserStorage()
-	userUsecase := _userUsecase.NewUserUsecase(userStorage)
-	sessionStorage := _sessionRepo.NewSessionStorage()
-	sessionUsecase := _sessionUsecase.NewSessionUsecase(sessionStorage)
+	config := apiserver.NewConfig()
 
-	handler := delivery.NewUserHandler(userUsecase, sessionUsecase)
-	handler.Configure(e)
+	if _, err := toml.DecodeFile(configPath, config); err != nil {
+		log.Fatal(err)
+	}
 
-	log.Fatal(e.Start(":8000"))
+	server := apiserver.NewAPIServer(config)
+
+	if err := server.Start(); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -1,14 +1,8 @@
 package user
 
-import (
-	"2019_2_Covenant/pkg/models"
-)
+import "2019_2_Covenant/internal/models"
 
-/*
- *	Repository interface represents the user's repository contract
- */
-
-type Repository interface {
+type Usecase interface {
 	FetchAll() ([]*models.User, error)
 	GetByID(id uint64) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)

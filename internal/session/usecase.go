@@ -1,6 +1,6 @@
 package session
 
-import "2019_2_Covenant/pkg/models"
+import "2019_2_Covenant/internal/models"
 
 type Usecase interface {
 	Get(value string) (*models.Session, error)

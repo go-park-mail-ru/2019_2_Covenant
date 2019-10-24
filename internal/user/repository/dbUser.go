@@ -1,9 +1,9 @@
 package repository
 
 import (
-	. "2019_2_Covenant/pkg/models"
-	"2019_2_Covenant/pkg/user"
-	"2019_2_Covenant/pkg/vars"
+	. "2019_2_Covenant/internal/models"
+	user2 "2019_2_Covenant/internal/user"
+	vars2 "2019_2_Covenant/internal/vars"
 	"sync"
 )
 
@@ -13,7 +13,7 @@ type UserStorage struct {
 	nextID uint64
 }
 
-func NewUserStorage() user.Repository {
+func NewUserStorage() user2.Repository {
 	return &UserStorage{
 		mu:    sync.RWMutex{},
 		users: []*User{},
@@ -44,7 +44,7 @@ func (us *UserStorage) GetByEmail(email string) (*User, error) {
 		}
 	}
 
-	return nil, vars.ErrNotFound
+	return nil, vars2.ErrNotFound
 }
 
 func (us *UserStorage) GetByID(usrID uint64) (*User, error) {
@@ -57,7 +57,7 @@ func (us *UserStorage) GetByID(usrID uint64) (*User, error) {
 		}
 	}
 
-	return nil, vars.ErrNotFound
+	return nil, vars2.ErrNotFound
 }
 
 func (us *UserStorage) FetchAll() ([]*User, error) {

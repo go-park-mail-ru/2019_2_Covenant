@@ -1,11 +1,11 @@
 package main
 
 import (
-	_sessionRepo "2019_2_Covenant/pkg/session/repository"
-	_sessionUsecase "2019_2_Covenant/pkg/session/usecase"
-	"2019_2_Covenant/pkg/user/delivery"
-	_userRepo "2019_2_Covenant/pkg/user/repository"
-	_userUsecase "2019_2_Covenant/pkg/user/usecase"
+	_sessionRepo "2019_2_Covenant/internal/session/repository"
+	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
+	"2019_2_Covenant/internal/user/delivery"
+	_userRepo "2019_2_Covenant/internal/user/repository"
+	_userUsecase "2019_2_Covenant/internal/user/usecase"
 	"github.com/labstack/echo/v4"
 	"log"
 

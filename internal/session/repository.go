@@ -1,7 +1,7 @@
 package session
 
 import (
-	"2019_2_Covenant/pkg/models"
+	"2019_2_Covenant/internal/models"
 )
 
 /*

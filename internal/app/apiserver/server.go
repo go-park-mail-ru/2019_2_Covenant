@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"2019_2_Covenant/internal/app/storage"
 	_sessionRepo "2019_2_Covenant/internal/session/repository"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
 	"2019_2_Covenant/internal/user/delivery"
@@ -14,6 +15,7 @@ import (
 type APIServer struct {
 	conf   *Config
 	router *echo.Echo
+	storage *storage.Storage
 }
 
 func NewAPIServer(conf *Config) *APIServer {
@@ -25,6 +27,10 @@ func NewAPIServer(conf *Config) *APIServer {
 
 func (api *APIServer) Start() error {
 	api.configureRouter()
+
+	if err := api.configureStorage(); err != nil {
+		return err
+	}
 
 	return api.router.Start(fmt.Sprintf("%s:%s", api.conf.Address, api.conf.Port))
 }
@@ -39,4 +45,16 @@ func (api *APIServer) configureRouter() {
 
 	handler := delivery.NewUserHandler(userUsecase, sessionUsecase)
 	handler.Configure(api.router)
+}
+
+func (api *APIServer) configureStorage() error {
+	st := storage.NewStorage(api.conf.Storage)
+
+	if err := st.Open(); err != nil {
+		return err
+	}
+
+	api.storage = st
+
+	return nil
 }

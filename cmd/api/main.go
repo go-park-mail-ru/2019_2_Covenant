@@ -3,6 +3,7 @@ package main
 import (
 	"2019_2_Covenant/internal/app/apiserver"
 	"flag"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"log"
 )
@@ -27,6 +28,8 @@ func main() {
 	if _, err := toml.DecodeFile(configPath, config); err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println(config.Address, config.Port, config.Storage)
 
 	server := apiserver.NewAPIServer(config)
 

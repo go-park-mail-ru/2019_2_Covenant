@@ -58,7 +58,6 @@ func TestUserUsecase_FetchAll(t *testing.T) {
 			t2.Fail()
 		}
 	})
-
 }
 
 func TestUserUsecase_GetByEmail(t *testing.T) {
@@ -132,14 +131,11 @@ func TestUserUsecase_GetByIDOk(t *testing.T) {
 			t2.Fail()
 		}
 	})
-
 }
 
 func TestUserUsecase_StoreOk(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-
 
 	userRepo := mock.NewMockRepository(ctrl)
 

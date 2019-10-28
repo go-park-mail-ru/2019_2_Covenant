@@ -23,65 +23,79 @@ var users = Users{
 	},
 }
 
-func TestUserUsecase_FetchAllOK(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().FetchAll().Return(users.User, nil)
-	usecase := userUsecase{userRepo: userRepo}
-
-	expUsers, err := usecase.FetchAll()
-
-	if gomock.Not(users.User).Matches(expUsers) || err != nil {
-		t.Fail()
-	}
+func configUserUsecase(userRepo *mock.MockRepository) userUsecase {
+	return userUsecase{userRepo: userRepo}
 }
 
-
-func TestUserUsecase_FetchAllErr(t *testing.T) {
+func TestUserUsecase_FetchAll(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().FetchAll().Return(nil, fmt.Errorf("error"))
-	usecase := userUsecase{userRepo: userRepo}
 
-	expUsers, err := usecase.FetchAll()
-
-	if expUsers != nil || err == nil {
-		t.Fail()
+	exe := func (usecase userUsecase) ([]*User, error) {
+		return usecase.FetchAll()
 	}
+
+	t.Run("Test OK", func (t1 *testing.T) {
+		userRepo.EXPECT().FetchAll().Return(users.User, nil)
+		usecase := configUserUsecase(userRepo)
+
+		expUsers, err := exe(usecase)
+
+		if gomock.Not(users.User).Matches(expUsers) || err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func (t2 *testing.T) {
+		userRepo.EXPECT().FetchAll().Return(nil, fmt.Errorf("error"))
+		usecase := configUserUsecase(userRepo)
+
+		expUsers, err := exe(usecase)
+
+		if expUsers != nil || err == nil {
+			t2.Fail()
+		}
+	})
+
 }
 
-func TestUserUsecase_GetByEmailOk(t *testing.T) {
+func TestUserUsecase_GetByEmail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByEmail("m1@ya.ru").Return(users.User[0], nil)
-	usecase := userUsecase{userRepo: userRepo}
 
-	expUser, err := usecase.GetByEmail("m1@ya.ru")
-
-	if expUser != users.User[0] || err != nil {
-		t.Fail()
+	exe := func (usecase userUsecase, email string) (*User, error) {
+		return usecase.GetByEmail(email)
 	}
-}
 
-func TestUserUsecase_GetByEmailErr(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Run("Test OK", func (t1 *testing.T) {
+		setEmail := "m1@ya.ru"
 
-	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByEmail("notfound@ya.ru").Return(nil, vars.ErrNotFound)
-	usecase := userUsecase{userRepo: userRepo}
+		userRepo.EXPECT().GetByEmail(setEmail).Return(users.User[0], nil)
+		usecase := configUserUsecase(userRepo)
 
-	expUser, err := usecase.GetByEmail("notfound@ya.ru")
+		expUser, err := exe(usecase, setEmail)
 
-	if expUser != nil || err != vars.ErrNotFound {
-		t.Fail()
-	}
+		if expUser != users.User[0] || err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func (t2 *testing.T) {
+		setEmail := "notfound@ya.ru"
+
+		userRepo.EXPECT().GetByEmail(setEmail).Return(nil, vars.ErrNotFound)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, setEmail)
+
+		if expUser != nil || err != vars.ErrNotFound {
+			t2.Fail()
+		}
+	})
 }
 
 func TestUserUsecase_GetByIDOk(t *testing.T) {
@@ -89,82 +103,88 @@ func TestUserUsecase_GetByIDOk(t *testing.T) {
 	defer ctrl.Finish()
 
 	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByID(uint64(1)).Return(users.User[0], nil)
-	usecase := userUsecase{userRepo: userRepo}
 
-	expUser, err := usecase.GetByID(1)
-
-	if expUser != users.User[0] || err != nil {
-		t.Fail()
+	exe := func (usecase userUsecase, ID uint64) (*User, error) {
+		return usecase.GetByID(ID)
 	}
+
+	t.Run("Test OK", func (t1 *testing.T) {
+		setID := uint64(1)
+
+		userRepo.EXPECT().GetByID(setID).Return(users.User[0], nil)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, setID)
+
+		if expUser != users.User[0] || err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func (t2 *testing.T) {
+		setID := uint64(5)
+		userRepo.EXPECT().GetByID(setID).Return(nil, vars.ErrNotFound)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, setID)
+
+		if expUser != nil || err != vars.ErrNotFound {
+			t2.Fail()
+		}
+	})
+
 }
 
-func TestUserUsecase_GetByIDErr(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByID(uint64(5)).Return(nil, vars.ErrNotFound)
-	usecase := userUsecase{userRepo: userRepo}
-
-	expUser, err := usecase.GetByID(5)
-
-	if expUser != nil || err != vars.ErrNotFound {
-		t.Fail()
-	}
-}
 func TestUserUsecase_StoreOk(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	newUser := User{Username: "newUser", Email: "n4@ya.ru", Password: "123456"}
+
 
 	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByEmail("n4@ya.ru").Return(nil, vars.ErrNotFound)
-	userRepo.EXPECT().Store(&newUser).Return(nil)
 
-	usecase := userUsecase{userRepo: userRepo}
-
-	err := usecase.Store(&newUser)
-
-	if err != nil {
-		t.Fail()
+	exe := func (usecase userUsecase, newUser *User) error {
+		return usecase.Store(newUser)
 	}
-}
 
-func TestUserUsecase_StoreErr1(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	t.Run("Test OK", func (t1 *testing.T) {
+		newUser := User{Username: "newUser", Email: "n4@ya.ru", Password: "123456"}
 
-	newUser := User{Username: "newUser", Email: "m1@ya.ru", Password: "123456"}
+		userRepo.EXPECT().GetByEmail(newUser.Email).Return(nil, vars.ErrNotFound)
+		userRepo.EXPECT().Store(&newUser).Return(nil)
+		usecase := configUserUsecase(userRepo)
 
-	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByEmail("m1@ya.ru").Return(users.User[0], nil)
+		err := exe(usecase, &newUser)
 
-	usecase := userUsecase{userRepo: userRepo}
+		if err != nil {
+			t1.Fail()
+		}
+	})
 
-	err := usecase.Store(&newUser)
+	t.Run("Test with error ErrAlreadyExist", func (t2 *testing.T) {
+		newUser := User{Username: "newUser", Email: "m1@ya.ru", Password: "123456"}
 
-	if err != vars.ErrAlreadyExist {
-		t.Fail()
-	}
-}
+		userRepo.EXPECT().GetByEmail("m1@ya.ru").Return(users.User[0], nil)
+		usecase := configUserUsecase(userRepo)
 
-func TestUserUsecase_StoreErr2(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+		err := exe(usecase, &newUser)
 
-	newUser := User{Username: "newUser", Email: "n4@ya.ru", Password: "123456"}
+		if err != vars.ErrAlreadyExist {
+			t2.Fail()
+		}
+	})
 
-	userRepo := mock.NewMockRepository(ctrl)
-	userRepo.EXPECT().GetByEmail("n4@ya.ru").Return(nil, vars.ErrNotFound)
-	userRepo.EXPECT().Store(&newUser).Return(fmt.Errorf("some error"))
+	t.Run("Test with some error", func (t3 *testing.T) {
+		newUser := User{Username: "newUser", Email: "n4@ya.ru", Password: "123456"}
 
-	usecase := userUsecase{userRepo: userRepo}
+		userRepo.EXPECT().GetByEmail("n4@ya.ru").Return(nil, vars.ErrNotFound)
+		userRepo.EXPECT().Store(&newUser).Return(fmt.Errorf("some error"))
+		usecase := configUserUsecase(userRepo)
 
-	err := usecase.Store(&newUser)
+		err := exe(usecase, &newUser)
 
-	if err != vars.ErrInternalServerError {
-		t.Fail()
-	}
+		if err != vars.ErrInternalServerError {
+			t3.Fail()
+		}
+	})
 }

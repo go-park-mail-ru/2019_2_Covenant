@@ -2,7 +2,7 @@ package models
 
 type User struct {
 	ID       uint64 `json:"-"`
-	Username string `json:"username"`
+	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
 	Name     string `json:"name"`
 	Surname  string `json:"surname"`

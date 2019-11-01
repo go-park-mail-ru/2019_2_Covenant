@@ -92,7 +92,7 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 	newUser := &models.User{
 		Email:    userRegData.Email,
 		Password: userRegData.Password,
-		Username: userRegData.Username,
+		Nickname: userRegData.Username,
 	}
 
 	err = uh.UUsecase.Store(newUser)

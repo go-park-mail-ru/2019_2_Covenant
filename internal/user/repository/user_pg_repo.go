@@ -4,6 +4,7 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
 	"database/sql"
+	"fmt"
 )
 
 type UserRepository struct {
@@ -22,9 +23,9 @@ func (ur *UserRepository) Store(newUser *models.User) (*models.User, error) {
 		newUser.Email,
 		newUser.Password,
 	).Scan(&newUser.ID); err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
-
 	return newUser, nil
 }
 
@@ -37,6 +38,7 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 		&u.ID,
 		&u.Nickname,
 		&u.Email,
+		&u.Password,
 	); err != nil {
 		return nil, err
 	}
@@ -47,12 +49,13 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, password FROM users WHERE email = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, password FROM users WHERE id = $1",
 		usrID,
 	).Scan(
 		&u.ID,
 		&u.Nickname,
 		&u.Email,
+		&u.Password,
 	); err != nil {
 		return nil, err
 	}
@@ -61,8 +64,57 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 }
 
 func (ur *UserRepository) FetchAll(count uint64) ([]*models.User, error) {
-	users := new([]models.User)
+	var users []*models.User
 
-	rows, err := ur.db.QueryRow("s")
+	rows, err := ur.db.Query("SELECT id, nickname, email, password FROM users LIMIT $1", count)
+	if err != nil {
+		return nil, err
+	}
 
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id       uint64
+			nickname string
+			email    string
+			password string
+		)
+
+		if err := rows.Scan(&id, &nickname, &email, &password); err != nil {
+			return nil, err
+		}
+
+		users = append(users, &models.User{
+			ID: id,
+			Nickname: nickname,
+			Email: email,
+			Password: password,
+		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (ur *UserRepository) Update(id uint64, name string, surname string) (*models.User, error) {
+	u := &models.User{}
+
+	if err := ur.db.QueryRow("UPDATE users SET name = $1, surname = $2 WHERE id = $3 RETURNING nickname, email, name, surname",
+		name,
+		surname,
+		id,
+	).Scan(
+		&u.Nickname,
+		&u.Email,
+		&u.Name,
+		&u.Surname,
+	); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }

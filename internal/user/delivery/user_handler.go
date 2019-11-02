@@ -95,7 +95,7 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 		Nickname: userRegData.Username,
 	}
 
-	err = uh.UUsecase.Store(newUser)
+	user, err := uh.UUsecase.Store(newUser)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
@@ -108,7 +108,7 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 	}
 
 	sess := &models.Session{
-		UserID:  newUser.ID,
+		UserID:  user.ID,
 		Expires: cookie.Expires,
 		Data:    cookie.Value,
 	}
@@ -216,8 +216,9 @@ func (uh *UserHandler) editProfile(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 	}
 
-	usr.Name = userEditData.Name
-	usr.Surname = userEditData.Surname
+	if usr, err = uh.UUsecase.Update(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
+		return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
+	}
 
 	return c.JSON(http.StatusOK, Response{usr})
 }

@@ -1,23 +1,23 @@
 package usecase
 
 import (
-	. "2019_2_Covenant/internal/models"
-	user2 "2019_2_Covenant/internal/user"
-	vars2 "2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/vars"
 )
 
 type userUsecase struct {
-	userRepo user2.Repository
+	userRepo user.Repository
 }
 
-func NewUserUsecase(ur user2.Repository) user2.Usecase {
+func NewUserUsecase(ur user.Repository) user.Usecase {
 	return &userUsecase{
 		userRepo: ur,
 	}
 }
 
-func (uUC *userUsecase) FetchAll() ([]*User, error) {
-	users, err := uUC.userRepo.FetchAll()
+func (uUC *userUsecase) FetchAll(count uint64) ([]*models.User, error) {
+	users, err := uUC.userRepo.FetchAll(count)
 
 	if err != nil {
 		return nil, err
@@ -26,37 +26,47 @@ func (uUC *userUsecase) FetchAll() ([]*User, error) {
 	return users, nil
 }
 
-func (uUC *userUsecase) Store(newUser *User) error {
+func (uUC *userUsecase) Store(newUser *models.User) (*models.User, error) {
 	exist, _ := uUC.userRepo.GetByEmail(newUser.Email)
 
 	if exist != nil {
-		return vars2.ErrAlreadyExist
+		return nil, vars.ErrAlreadyExist
 	}
 
-	err := uUC.userRepo.Store(newUser)
+	usr, err := uUC.userRepo.Store(newUser)
 
 	if err != nil {
-		return vars2.ErrInternalServerError
-	}
-
-	return nil
-}
-
-func (uUC *userUsecase) GetByEmail(email string) (*User, error) {
-	usr, err := uUC.userRepo.GetByEmail(email)
-
-	if err != nil {
-		return nil, vars2.ErrNotFound
+		return nil, vars.ErrInternalServerError
 	}
 
 	return usr, nil
 }
 
-func (uUC *userUsecase) GetByID(userID uint64) (*User, error) {
+func (uUC *userUsecase) GetByEmail(email string) (*models.User, error) {
+	usr, err := uUC.userRepo.GetByEmail(email)
+
+	if err != nil {
+		return nil, vars.ErrNotFound
+	}
+
+	return usr, nil
+}
+
+func (uUC *userUsecase) GetByID(userID uint64) (*models.User, error) {
 	usr, err := uUC.userRepo.GetByID(userID)
 
 	if err != nil {
-		return nil, vars2.ErrNotFound
+		return nil, vars.ErrNotFound
+	}
+
+	return usr, nil
+}
+
+func (uUC *userUsecase) Update(id uint64, name string, surname string) (*models.User, error) {
+	usr, err := uUC.userRepo.Update(id, name, surname)
+
+	if err != nil {
+		return nil, vars.ErrInternalServerError
 	}
 
 	return usr, nil

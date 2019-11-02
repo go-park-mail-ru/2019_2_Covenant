@@ -33,6 +33,8 @@ func NewUserHandler(uUC user2.Usecase, sUC session.Usecase) *UserHandler {
 }
 
 func (uh *UserHandler) Configure(e *echo.Echo) {
+	e.Use(uh.MManager.PanicRecovering)
+
 	e.POST("/api/v1/signup", uh.SignUp)
 	e.POST("/api/v1/signin", uh.SignIn)
 	e.POST("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)

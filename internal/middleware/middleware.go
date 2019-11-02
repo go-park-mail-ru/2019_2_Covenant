@@ -3,6 +3,7 @@ package middleware
 import (
 	"2019_2_Covenant/internal/session"
 	user2 "2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -17,6 +18,18 @@ func NewMiddlewareManager(uUsecase user2.Usecase, sUsecase session.Usecase) Midd
 		sUC: sUsecase,
 		uUC: uUsecase,
 	}
+}
+
+func (m *MiddlewareManager) PanicRecovering(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		defer func() {
+			if err := recover(); err != nil {
+				c.Error(vars.ErrInternalServerError)
+			}
+		}()
+
+		return next(c)
+	})
 }
 
 func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {

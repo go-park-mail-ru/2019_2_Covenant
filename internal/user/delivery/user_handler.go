@@ -4,8 +4,8 @@ import (
 	"2019_2_Covenant/internal/middleware"
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
-	user2 "2019_2_Covenant/internal/user"
-	vars2 "2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/vars"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -19,12 +19,12 @@ import (
 )
 
 type UserHandler struct {
-	UUsecase user2.Usecase
+	UUsecase user.Usecase
 	SUsecase session.Usecase
 	MManager middleware.MiddlewareManager
 }
 
-func NewUserHandler(uUC user2.Usecase, sUC session.Usecase) *UserHandler {
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
 	return &UserHandler{
 		UUsecase: uUC,
 		SUsecase: sUC,
@@ -35,12 +35,12 @@ func NewUserHandler(uUC user2.Usecase, sUC session.Usecase) *UserHandler {
 func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.Use(uh.MManager.PanicRecovering)
 
-	e.POST("/api/v1/signup", uh.SignUp)
-	e.POST("/api/v1/signin", uh.SignIn)
-	e.POST("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
-	e.GET("/api/v1/profile", uh.Profile, uh.MManager.CheckAuth)
-	e.POST("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
-	e.GET("/api/v1/avatar", uh.Avatar, uh.MManager.CheckAuth)
+	e.POST("/api/v1/signup", uh.SignUp())
+	e.POST("/api/v1/signin", uh.SignIn())
+	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/profile", uh.GetProfile, uh.MManager.CheckAuth)
+	e.POST("/api/v1/avatar", uh.SetAvatar, uh.MManager.CheckAuth)
+	e.GET("/api/v1/avatar", uh.GetAvatar, uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
@@ -56,7 +56,7 @@ func isValidRequest(usr interface{}) (bool, error) {
 	err := v.Struct(usr)
 
 	if err != nil {
-		return false, vars2.ErrBadParam
+		return false, vars.ErrBadParam
 	}
 
 	return true, nil
@@ -73,57 +73,65 @@ func isValidRequest(usr interface{}) (bool, error) {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/signup [post]
-func (uh *UserHandler) SignUp(c echo.Context) error {
-	var userRegData models.UserReg
-	err := c.Bind(&userRegData)
-
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+func (uh *UserHandler) SignUp() echo.HandlerFunc {
+	type UserReg struct {
+		Username string `json:"username" validate:"required"`
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required,gte=6"`
 	}
 
-	if ok, err := isValidRequest(userRegData); !ok {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	return func(c echo.Context) error {
+		var userRegData UserReg
+		err := c.Bind(&userRegData)
+
+		if err != nil {
+			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+		}
+
+		if ok, err := isValidRequest(userRegData); !ok {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByEmail(userRegData.Email)
+
+		if usr != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrAlreadyExist.Error()})
+		}
+
+		newUser := &models.User{
+			Email:    userRegData.Email,
+			Password: userRegData.Password,
+			Nickname: userRegData.Username,
+		}
+
+		user, err := uh.UUsecase.Store(newUser)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		cookie := &http.Cookie{
+			Name:    "Covenant",
+			Value:   uuid.New().String(),
+			Expires: time.Now().Add(24 * time.Hour),
+		}
+
+		sess := &models.Session{
+			UserID:  user.ID,
+			Expires: cookie.Expires,
+			Data:    cookie.Value,
+		}
+
+		err = uh.SUsecase.Store(sess)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		c.SetCookie(cookie)
+
+		return c.JSON(http.StatusOK, Response{newUser})
 	}
-
-	usr, err := uh.UUsecase.GetByEmail(userRegData.Email)
-
-	if usr != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{vars2.ErrAlreadyExist.Error()})
-	}
-
-	newUser := &models.User{
-		Email:    userRegData.Email,
-		Password: userRegData.Password,
-		Username: userRegData.Username,
-	}
-
-	err = uh.UUsecase.Store(newUser)
-
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-	}
-
-	cookie := &http.Cookie{
-		Name:    "Covenant",
-		Value:   uuid.New().String(),
-		Expires: time.Now().Add(24 * time.Hour),
-	}
-
-	sess := &models.Session{
-		UserID:  newUser.ID,
-		Expires: cookie.Expires,
-		Data:    cookie.Value,
-	}
-
-	err = uh.SUsecase.Store(sess)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
-	}
-
-	c.SetCookie(cookie)
-
-	return c.JSON(http.StatusOK, Response{newUser})
 }
 
 
@@ -138,49 +146,56 @@ func (uh *UserHandler) SignUp(c echo.Context) error {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/signin [post]
-func (uh *UserHandler) SignIn(c echo.Context) error {
-	var userLoginData models.UserLogin
-	err := c.Bind(&userLoginData)
-
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+func (uh *UserHandler) SignIn() echo.HandlerFunc {
+	type UserLogin struct {
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required"`
 	}
 
-	if ok, err := isValidRequest(userLoginData); !ok {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+	return func(c echo.Context) error {
+		var userLoginData UserLogin
+		err := c.Bind(&userLoginData)
+
+		if err != nil {
+			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+		}
+
+		if ok, err := isValidRequest(userLoginData); !ok {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByEmail(userLoginData.Email)
+
+		if usr == nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		if usr.Password != userLoginData.Password {
+			return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrBadParam.Error()})
+		}
+
+		cookie := &http.Cookie{
+			Name:    "Covenant",
+			Value:   uuid.New().String(),
+			Expires: time.Now().Add(24 * time.Hour),
+		}
+
+		sess := &models.Session{
+			UserID:  usr.ID,
+			Expires: cookie.Expires,
+			Data:    cookie.Value,
+		}
+
+		err = uh.SUsecase.Store(sess)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		c.SetCookie(cookie)
+
+		return c.JSON(http.StatusOK, Response{usr})
 	}
-
-	usr, err := uh.UUsecase.GetByEmail(userLoginData.Email)
-
-	if usr == nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-	}
-
-	if usr.Password != userLoginData.Password {
-		return c.JSON(http.StatusBadRequest, ResponseError{vars2.ErrBadParam.Error()})
-	}
-
-	cookie := &http.Cookie{
-		Name:    "Covenant",
-		Value:   uuid.New().String(),
-		Expires: time.Now().Add(24 * time.Hour),
-	}
-
-	sess := &models.Session{
-		UserID:  usr.ID,
-		Expires: cookie.Expires,
-		Data:    cookie.Value,
-	}
-
-	err = uh.SUsecase.Store(sess)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
-	}
-
-	c.SetCookie(cookie)
-
-	return c.JSON(http.StatusOK, Response{usr})
 }
 
 // @Summary Edit Profile Route
@@ -194,34 +209,42 @@ func (uh *UserHandler) SignIn(c echo.Context) error {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/profile [post]
-func (uh *UserHandler) editProfile(c echo.Context) error {
-	sess, ok := c.Get("session").(*models.Session)
-
-	if !ok {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+func (uh *UserHandler) EditProfile() echo.HandlerFunc {
+	type UserEdit struct {
+		Name    string `json:"name" validate:"required"`
+		Surname string `json:"surname" validate:"required"`
 	}
 
-	usr, err := uh.UUsecase.GetByID(sess.UserID)
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		var userEditData UserEdit
+		err = c.Bind(&userEditData)
+
+		if err != nil {
+			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+		}
+
+		if ok, err := isValidRequest(userEditData); !ok {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		if usr, err = uh.UUsecase.Update(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, Response{usr})
 	}
-
-	var userEditData models.UserEdit
-	err = c.Bind(&userEditData)
-
-	if err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
-	}
-
-	if ok, err := isValidRequest(userEditData); !ok {
-		return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-	}
-
-	usr.Name = userEditData.Name
-	usr.Surname = userEditData.Surname
-
-	return c.JSON(http.StatusOK, Response{usr})
 }
 
 // @Summary Get Profile Route
@@ -233,11 +256,11 @@ func (uh *UserHandler) editProfile(c echo.Context) error {
 // @Failure 401 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/profile [get]
-func (uh *UserHandler) getProfile(c echo.Context) error {
+func (uh *UserHandler) GetProfile(c echo.Context) error {
 	sess, ok := c.Get("session").(*models.Session)
 
 	if !ok {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	usr, err := uh.UUsecase.GetByID(sess.UserID)
@@ -249,22 +272,7 @@ func (uh *UserHandler) getProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, Response{usr})
 }
 
-func (uh *UserHandler) Profile(c echo.Context) error {
-	var err error
-
-	switch c.Request().Method {
-	case echo.GET:
-		err = uh.getProfile(c)
-	case echo.POST:
-		err = uh.editProfile(c)
-	default:
-		err = nil
-	}
-
-	return err
-}
-
-func (uh *UserHandler) getAvatar(c echo.Context) error {
+func (uh *UserHandler) GetAvatar(c echo.Context) error {
 	return nil
 }
 
@@ -279,17 +287,17 @@ func (uh *UserHandler) getAvatar(c echo.Context) error {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/avatar [post]
-func (uh *UserHandler) setAvatar(c echo.Context) error {
+func (uh *UserHandler) SetAvatar(c echo.Context) error {
 	file, err := c.FormFile("avatar")
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{vars2.ErrRetrievingError.Error()})
+		return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrRetrievingError.Error()})
 	}
 
 	src, err := file.Open()
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	defer src.Close()
@@ -299,13 +307,13 @@ func (uh *UserHandler) setAvatar(c echo.Context) error {
 	destPath := filepath.Join(rootPath, avatarsPath)
 
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	bytes, err := ioutil.ReadAll(src)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	fileType := http.DetectContentType(bytes)
@@ -314,14 +322,14 @@ func (uh *UserHandler) setAvatar(c echo.Context) error {
 	sess, ok := c.Get("session").(*models.Session)
 
 	if !ok {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
 	destFile, err := os.Create(filepath.Join(destPath, avatarName))
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	defer destFile.Close()
@@ -329,31 +337,16 @@ func (uh *UserHandler) setAvatar(c echo.Context) error {
 	_, err = destFile.Write(bytes)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	usr, err := uh.UUsecase.GetByID(sess.UserID)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars2.ErrInternalServerError.Error()})
+		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 	}
 
 	usr.Avatar = filepath.Join(avatarsPath, avatarName)
 
 	return c.JSON(http.StatusOK, Response{usr})
-}
-
-func (uh *UserHandler) Avatar(c echo.Context) error {
-	var err error
-
-	switch c.Request().Method {
-	case echo.GET:
-		err = uh.getAvatar(c)
-	case echo.POST:
-		err = uh.setAvatar(c)
-	default:
-		err = nil
-	}
-
-	return err
 }

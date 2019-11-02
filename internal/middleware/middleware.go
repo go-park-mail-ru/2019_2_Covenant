@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"2019_2_Covenant/internal/session"
-	user2 "2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -10,10 +10,10 @@ import (
 
 type MiddlewareManager struct {
 	sUC session.Usecase
-	uUC user2.Usecase
+	uUC user.Usecase
 }
 
-func NewMiddlewareManager(uUsecase user2.Usecase, sUsecase session.Usecase) MiddlewareManager {
+func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase) MiddlewareManager {
 	return MiddlewareManager{
 		sUC: sUsecase,
 		uUC: uUsecase,
@@ -29,7 +29,7 @@ func (m *MiddlewareManager) PanicRecovering(next echo.HandlerFunc) echo.HandlerF
 		}()
 
 		return next(c)
-	})
+	}
 }
 
 func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {

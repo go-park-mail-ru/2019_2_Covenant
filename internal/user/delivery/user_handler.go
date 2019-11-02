@@ -38,9 +38,9 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/signup", uh.SignUp())
 	e.POST("/api/v1/signin", uh.SignIn())
 	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
-	e.GET("/api/v1/profile", uh.GetProfile, uh.MManager.CheckAuth)
-	e.POST("/api/v1/avatar", uh.SetAvatar, uh.MManager.CheckAuth)
-	e.GET("/api/v1/avatar", uh.GetAvatar, uh.MManager.CheckAuth)
+	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
+	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
@@ -256,24 +256,28 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 // @Failure 401 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/profile [get]
-func (uh *UserHandler) GetProfile(c echo.Context) error {
-	sess, ok := c.Get("session").(*models.Session)
+func (uh *UserHandler) GetProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
 
-	if !ok {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, ResponseError{err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, Response{usr})
 	}
-
-	usr, err := uh.UUsecase.GetByID(sess.UserID)
-
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, ResponseError{err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, Response{usr})
 }
 
-func (uh *UserHandler) GetAvatar(c echo.Context) error {
-	return nil
+func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return nil
+	}
 }
 
 // @Summary Set Avatar Route
@@ -287,66 +291,68 @@ func (uh *UserHandler) GetAvatar(c echo.Context) error {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/avatar [post]
-func (uh *UserHandler) SetAvatar(c echo.Context) error {
-	file, err := c.FormFile("avatar")
+func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		file, err := c.FormFile("avatar")
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrRetrievingError.Error()})
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrRetrievingError.Error()})
+		}
+
+		src, err := file.Open()
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		defer src.Close()
+
+		rootPath, _ := os.Getwd()
+		avatarsPath := "/resources/avatars/"
+		destPath := filepath.Join(rootPath, avatarsPath)
+
+		if _, err := os.Stat(destPath); os.IsNotExist(err) {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		bytes, err := ioutil.ReadAll(src)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		fileType := http.DetectContentType(bytes)
+		extensions, err := mime.ExtensionsByType(fileType)
+
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
+		destFile, err := os.Create(filepath.Join(destPath, avatarName))
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		defer destFile.Close()
+
+		_, err = destFile.Write(bytes)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr.Avatar = filepath.Join(avatarsPath, avatarName)
+
+		return c.JSON(http.StatusOK, Response{usr})
 	}
-
-	src, err := file.Open()
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	defer src.Close()
-
-	rootPath, _ := os.Getwd()
-	avatarsPath := "/resources/avatars/"
-	destPath := filepath.Join(rootPath, avatarsPath)
-
-	if _, err := os.Stat(destPath); os.IsNotExist(err) {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	bytes, err := ioutil.ReadAll(src)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	fileType := http.DetectContentType(bytes)
-	extensions, err := mime.ExtensionsByType(fileType)
-
-	sess, ok := c.Get("session").(*models.Session)
-
-	if !ok {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
-	destFile, err := os.Create(filepath.Join(destPath, avatarName))
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	defer destFile.Close()
-
-	_, err = destFile.Write(bytes)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	usr, err := uh.UUsecase.GetByID(sess.UserID)
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-	}
-
-	usr.Avatar = filepath.Join(avatarsPath, avatarName)
-
-	return c.JSON(http.StatusOK, Response{usr})
 }

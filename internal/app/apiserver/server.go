@@ -25,11 +25,11 @@ func NewAPIServer(conf *Config, st storage.Storage) *APIServer {
 }
 
 func (api *APIServer) Start() error {
-	api.configureRouter()
-
 	if err := api.configureStorage(); err != nil {
 		return err
 	}
+
+	api.configureRouter()
 
 	return api.router.Start(fmt.Sprintf("%s:%s", api.conf.Address, api.conf.Port))
 }

@@ -5,7 +5,7 @@ create table users (
     name varchar,
     surname varchar,
     password varchar not null,
-    avatar varchar not null,
+    avatar varchar,
     role int not null default 0,
     access int not null default 0,
     created_at timestamp not null default now(),

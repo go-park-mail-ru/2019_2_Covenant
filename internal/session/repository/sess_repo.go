@@ -3,7 +3,7 @@ package repository
 import (
 	. "2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
-	vars2 "2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/internal/vars"
 	"sync"
 	"time"
 )
@@ -33,7 +33,7 @@ func (ss *SessionStorage) Get(value string) (*Session, error) {
 	}
 
 	if !isFound {
-		return nil, vars2.ErrNotFound
+		return nil, vars.ErrNotFound
 	}
 
 	timeNow := time.Now()
@@ -46,7 +46,7 @@ func (ss *SessionStorage) Get(value string) (*Session, error) {
 			return nil, err
 		}
 
-		return nil, vars2.ErrExpired
+		return nil, vars.ErrExpired
 	}
 
 	return item, nil
@@ -67,7 +67,7 @@ func (ss *SessionStorage) Store(newSession *Session) error {
 func (ss *SessionStorage) DeleteByID(id uint64) error {
 	remove := func(id uint64) ([]*Session, error) {
 		if len(ss.sessions) == 0 {
-			return nil, vars2.ErrNotFound
+			return nil, vars.ErrNotFound
 		}
 		ss.sessions[len(ss.sessions)-1], ss.sessions[id] = ss.sessions[id], ss.sessions[len(ss.sessions)-1]
 		return ss.sessions[:len(ss.sessions)-1], nil

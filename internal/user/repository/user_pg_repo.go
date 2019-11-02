@@ -4,7 +4,6 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
 	"database/sql"
-	"fmt"
 )
 
 type UserRepository struct {
@@ -23,7 +22,6 @@ func (ur *UserRepository) Store(newUser *models.User) (*models.User, error) {
 		newUser.Email,
 		newUser.Password,
 	).Scan(&newUser.ID); err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return newUser, nil

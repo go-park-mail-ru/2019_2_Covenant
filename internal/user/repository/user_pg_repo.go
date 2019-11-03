@@ -24,6 +24,7 @@ func (ur *UserRepository) Store(newUser *models.User) (*models.User, error) {
 	).Scan(&newUser.ID); err != nil {
 		return nil, err
 	}
+
 	return newUser, nil
 }
 

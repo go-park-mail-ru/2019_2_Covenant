@@ -63,7 +63,7 @@ func (s *PGStorage) Session() session.Repository {
 		return s.sessRepo
 	}
 
-	s.sessRepo = _sessRepo.NewSessionStorage()
+	s.sessRepo = _sessRepo.NewSessionRepository(s.db)
 
 	return s.sessRepo
 }

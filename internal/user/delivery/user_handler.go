@@ -104,7 +104,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 			Nickname: userRegData.Username,
 		}
 
-		user, err := uh.UUsecase.Store(newUser)
+		usr, err = uh.UUsecase.Store(newUser)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
@@ -117,7 +117,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		}
 
 		sess := &models.Session{
-			UserID:  user.ID,
+			UserID:  usr.ID,
 			Expires: cookie.Expires,
 			Data:    cookie.Value,
 		}

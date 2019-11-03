@@ -36,7 +36,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.Use(uh.MManager.PanicRecovering)
 
 	e.POST("/api/v1/signup", uh.SignUp())
-	e.POST("/api/v1/signin", uh.SignIn())
+	e.POST("/api/v1/signin", uh.LogIn())
 	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
@@ -147,7 +147,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/signin [post]
-func (uh *UserHandler) SignIn() echo.HandlerFunc {
+func (uh *UserHandler) LogIn() echo.HandlerFunc {
 	type UserLogin struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`

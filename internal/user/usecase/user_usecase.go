@@ -71,3 +71,17 @@ func (uUC *userUsecase) UpdateAvatar(id uint64, avatarPath string) (*models.User
 
 	return usr, nil
 }
+
+func (uUC *userUsecase) UpdateNickname(id uint64, nickname string) (*models.User, error) {
+	usr, err := uUC.userRepo.UpdateNickname(id, nickname)
+
+	if err == vars.ErrAlreadyExist {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return usr, nil
+}

@@ -3,6 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/vars"
 	"database/sql"
 )
 
@@ -52,6 +53,18 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	return u, nil
 }
 
+func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
+	u := &models.User{}
+
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE nickname = $1",
+		nickname,
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func (ur *UserRepository) FetchAll(count uint64) ([]*models.User, error) {
 	var users []*models.User
 
@@ -89,6 +102,43 @@ func (ur *UserRepository) FetchAll(count uint64) ([]*models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (ur *UserRepository) NicknameExists(nickname string) (bool, error) {
+	usr, err := ur.GetByNickname(nickname)
+
+	if err != nil {
+		return false, err
+	}
+
+	if usr != nil {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (ur *UserRepository) UpdateNickname(id uint64, nickname string) (*models.User, error) {
+	u := &models.User{}
+
+	exist, _ := ur.NicknameExists(nickname)
+
+	if exist {
+		return nil, vars.ErrAlreadyExist
+	}
+
+	if err := ur.db.QueryRow("UPDATE users SET nickname = $1 WHERE id = $2 RETURNING nickname, email, avatar",
+		nickname,
+		id,
+	).Scan(
+		&u.Nickname,
+		&u.Email,
+		&u.Avatar,
+	); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {

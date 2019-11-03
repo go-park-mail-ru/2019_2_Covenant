@@ -37,7 +37,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 
 	e.POST("/api/v1/signup", uh.SignUp())
 	e.POST("/api/v1/login", uh.LogIn())
-	//e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
+	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
@@ -76,7 +76,7 @@ func isValidRequest(usr interface{}) (bool, error) {
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) SignUp() echo.HandlerFunc {
 	type UserReg struct {
-		Username string `json:"username" validate:"required"`
+		Nickname string `json:"nickname" validate:"required"`
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required,gte=6"`
 	}
@@ -102,7 +102,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		newUser := &models.User{
 			Email:    userRegData.Email,
 			Password: userRegData.Password,
-			Nickname: userRegData.Username,
+			Nickname: userRegData.Nickname,
 		}
 
 		usr, err = uh.UUsecase.Store(newUser)
@@ -210,43 +210,42 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/profile [post]
-//func (uh *UserHandler) EditProfile() echo.HandlerFunc {
-//	type UserEdit struct {
-//		Name    string `json:"name" validate:"required"`
-//		Surname string `json:"surname" validate:"required"`
-//	}
-//
-//	return func(c echo.Context) error {
-//		sess, ok := c.Get("session").(*models.Session)
-//
-//		if !ok {
-//			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-//		}
-//
-//		usr, err := uh.UUsecase.GetByID(sess.UserID)
-//
-//		if err != nil {
-//			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-//		}
-//
-//		var userEditData UserEdit
-//		err = c.Bind(&userEditData)
-//
-//		if err != nil {
-//			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
-//		}
-//
-//		if ok, err := isValidRequest(userEditData); !ok {
-//			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-//		}
-//
-//		if usr, err = uh.UUsecase.UpdateName(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
-//			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
-//		}
-//
-//		return c.JSON(http.StatusOK, Response{usr})
-//	}
-//}
+func (uh *UserHandler) EditProfile() echo.HandlerFunc {
+	type UserEdit struct {
+		Nickname    string `json:"nickname" validate:"required"`
+	}
+
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		var userEditData UserEdit
+		err = c.Bind(&userEditData)
+
+		if err != nil {
+			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+		}
+
+		if ok, err := isValidRequest(userEditData); !ok {
+			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+		}
+
+		if usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname); err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, Response{usr})
+	}
+}
 
 // @Summary Get Profile Route
 // @Description Get user profile

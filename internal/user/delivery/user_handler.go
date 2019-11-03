@@ -41,6 +41,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/logout", uh.LogOut(), uh.MManager.CheckAuth)
 }
 
 type ResponseError struct {
@@ -354,5 +355,31 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		usr.Avatar = filepath.Join(avatarsPath, avatarName)
 
 		return c.JSON(http.StatusOK, Response{usr})
+	}
+}
+
+func (uh *UserHandler) LogOut() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		if err := uh.SUsecase.DeleteByID(sess.ID); err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		cookie := &http.Cookie{
+			Name: "Covenant",
+			Value: sess.Data,
+			Expires: time.Now().AddDate(0, 0, -1),
+		}
+
+		c.SetCookie(cookie)
+
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "logout",
+		})
 	}
 }

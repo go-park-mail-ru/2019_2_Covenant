@@ -36,7 +36,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.Use(uh.MManager.PanicRecovering)
 
 	e.POST("/api/v1/signup", uh.SignUp())
-	e.POST("/api/v1/signin", uh.LogIn())
+	e.POST("/api/v1/login", uh.LogIn())
 	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
@@ -240,7 +240,7 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 		}
 
-		if usr, err = uh.UUsecase.Update(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
+		if usr, err = uh.UUsecase.UpdateName(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
 			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
 		}
 
@@ -293,6 +293,10 @@ func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
 // @Failure 500 object ResponseError
 // @Router /api/v1/avatar [post]
 func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
+	rootPath, _ := os.Getwd()
+	avatarsPath := "/resources/avatars/"
+	destPath := filepath.Join(rootPath, avatarsPath)
+
 	return func(c echo.Context) error {
 		file, err := c.FormFile("avatar")
 
@@ -308,10 +312,6 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		defer src.Close()
 
-		rootPath, _ := os.Getwd()
-		avatarsPath := "/resources/avatars/"
-		destPath := filepath.Join(rootPath, avatarsPath)
-
 		if _, err := os.Stat(destPath); os.IsNotExist(err) {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 		}
@@ -323,7 +323,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		}
 
 		fileType := http.DetectContentType(bytes)
-		extensions, err := mime.ExtensionsByType(fileType)
+		extensions, _ := mime.ExtensionsByType(fileType)
 
 		sess, ok := c.Get("session").(*models.Session)
 
@@ -346,13 +346,11 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 		}
 
-		usr, err := uh.UUsecase.GetByID(sess.UserID)
+		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filepath.Join(avatarsPath, avatarName))
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 		}
-
-		usr.Avatar = filepath.Join(avatarsPath, avatarName)
 
 		return c.JSON(http.StatusOK, Response{usr})
 	}

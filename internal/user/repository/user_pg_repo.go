@@ -99,7 +99,7 @@ func (ur *UserRepository) FetchAll(count uint64) ([]*models.User, error) {
 	return users, nil
 }
 
-func (ur *UserRepository) Update(id uint64, name string, surname string) (*models.User, error) {
+func (ur *UserRepository) UpdateName(id uint64, name string, surname string) (*models.User, error) {
 	u := &models.User{}
 
 	if err := ur.db.QueryRow("UPDATE users SET name = $1, surname = $2 WHERE id = $3 RETURNING nickname, email, name, surname",
@@ -111,6 +111,23 @@ func (ur *UserRepository) Update(id uint64, name string, surname string) (*model
 		&u.Email,
 		&u.Name,
 		&u.Surname,
+	); err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
+	u := &models.User{}
+
+	if err := ur.db.QueryRow("UPDATE users SET avatar = $1 WHERE id = $2 RETURNING nickname, email, avatar",
+		avatarPath,
+		id,
+	).Scan(
+		&u.Nickname,
+		&u.Email,
+		&u.Avatar,
 	); err != nil {
 		return nil, err
 	}

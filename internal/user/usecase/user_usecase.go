@@ -62,8 +62,18 @@ func (uUC *userUsecase) GetByID(userID uint64) (*models.User, error) {
 	return usr, nil
 }
 
-func (uUC *userUsecase) Update(id uint64, name string, surname string) (*models.User, error) {
-	usr, err := uUC.userRepo.Update(id, name, surname)
+func (uUC *userUsecase) UpdateName(id uint64, name string, surname string) (*models.User, error) {
+	usr, err := uUC.userRepo.UpdateName(id, name, surname)
+
+	if err != nil {
+		return nil, vars.ErrInternalServerError
+	}
+
+	return usr, nil
+}
+
+func (uUC *userUsecase) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
+	usr, err := uUC.userRepo.UpdateAvatar(id, avatarPath)
 
 	if err != nil {
 		return nil, vars.ErrInternalServerError

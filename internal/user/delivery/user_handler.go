@@ -37,7 +37,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 
 	e.POST("/api/v1/signup", uh.SignUp())
 	e.POST("/api/v1/login", uh.LogIn())
-	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
+	//e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
@@ -136,9 +136,9 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 }
 
 
-// @Summary SignIn Route
-// @Description Signing user in
-// @ID sign-in-user
+// @Summary LogIn Route
+// @Description Logging user in
+// @ID log-in-user
 // @Accept json
 // @Produce json
 // @Param Data body models.UserLogin true "JSON that contains user login data"
@@ -146,7 +146,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 // @Failure 400 object ResponseError
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
-// @Router /api/v1/signin [post]
+// @Router /api/v1/login [post]
 func (uh *UserHandler) LogIn() echo.HandlerFunc {
 	type UserLogin struct {
 		Email    string `json:"email" validate:"required,email"`
@@ -200,7 +200,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 }
 
 // @Summary Edit Profile Route
-// @Description Signing user in
+// @Description Edit user profile
 // @ID edit-profile
 // @Accept json
 // @Produce json
@@ -210,46 +210,46 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
 // @Router /api/v1/profile [post]
-func (uh *UserHandler) EditProfile() echo.HandlerFunc {
-	type UserEdit struct {
-		Name    string `json:"name" validate:"required"`
-		Surname string `json:"surname" validate:"required"`
-	}
-
-	return func(c echo.Context) error {
-		sess, ok := c.Get("session").(*models.Session)
-
-		if !ok {
-			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
-		}
-
-		usr, err := uh.UUsecase.GetByID(sess.UserID)
-
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-		}
-
-		var userEditData UserEdit
-		err = c.Bind(&userEditData)
-
-		if err != nil {
-			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
-		}
-
-		if ok, err := isValidRequest(userEditData); !ok {
-			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
-		}
-
-		if usr, err = uh.UUsecase.UpdateName(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
-			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
-		}
-
-		return c.JSON(http.StatusOK, Response{usr})
-	}
-}
+//func (uh *UserHandler) EditProfile() echo.HandlerFunc {
+//	type UserEdit struct {
+//		Name    string `json:"name" validate:"required"`
+//		Surname string `json:"surname" validate:"required"`
+//	}
+//
+//	return func(c echo.Context) error {
+//		sess, ok := c.Get("session").(*models.Session)
+//
+//		if !ok {
+//			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+//		}
+//
+//		usr, err := uh.UUsecase.GetByID(sess.UserID)
+//
+//		if err != nil {
+//			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+//		}
+//
+//		var userEditData UserEdit
+//		err = c.Bind(&userEditData)
+//
+//		if err != nil {
+//			return c.JSON(http.StatusUnprocessableEntity, ResponseError{err.Error()})
+//		}
+//
+//		if ok, err := isValidRequest(userEditData); !ok {
+//			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
+//		}
+//
+//		if usr, err = uh.UUsecase.UpdateName(usr.ID, userEditData.Name, userEditData.Surname); err != nil {
+//			return c.JSON(http.StatusInternalServerError, ResponseError{err.Error()})
+//		}
+//
+//		return c.JSON(http.StatusOK, Response{usr})
+//	}
+//}
 
 // @Summary Get Profile Route
-// @Description Signing user in
+// @Description Get user profile
 // @ID get-profile
 // @Accept json
 // @Produce json
@@ -275,14 +275,46 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 	}
 }
 
+// @Summary Get Avatar Route
+// @Description Signing user in
+// @ID get-avatar
+// @Accept json
+// @Produce json
+// @Param Data body string true "multipart/form-data"
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/avatar [get]
 func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
+	rootPath, _ := os.Getwd()
+
 	return func(c echo.Context) error {
-		return nil
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		usr, err := uh.UUsecase.GetByID(sess.UserID)
+
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, ResponseError{err.Error()})
+		}
+
+		avatarPath := usr.Avatar
+
+		destPath := filepath.Join(rootPath, avatarPath)
+		//src, err := os.Open(destPath)
+
+		//defer src.Close()
+
+		return c.File(destPath)
 	}
 }
 
 // @Summary Set Avatar Route
-// @Description Signing user in
+// @Description Set user avatar
 // @ID set-avatar
 // @Accept multipart/form-data
 // @Produce json
@@ -356,6 +388,16 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 	}
 }
 
+// @Summary Log Out Route
+// @Description Logging user out
+// @ID log-out-user
+// @Accept json
+// @Produce json
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/logout [get]
 func (uh *UserHandler) LogOut() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, ok := c.Get("session").(*models.Session)

@@ -34,6 +34,7 @@ type Response struct {
 	Body interface{} `json:"body"`
 }
 
+// @Tags Track
 // @Summary Get Popular Tracks Route
 // @Description Getting popular tracks
 // @ID get-popular-tracks
@@ -43,7 +44,7 @@ type Response struct {
 // @Failure 400 object ResponseError
 // @Failure 404 object ResponseError
 // @Failure 500 object ResponseError
-// @Router /api/v1/signup [post]
+// @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tracks, err := th.TUsecase.Fetch(25)

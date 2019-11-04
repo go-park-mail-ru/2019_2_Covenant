@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "2019_2_Covenant/docs"
 	"2019_2_Covenant/internal/app/apiserver"
 	"2019_2_Covenant/internal/app/storage"
 	"flag"

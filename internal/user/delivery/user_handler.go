@@ -61,12 +61,13 @@ func isValidRequest(usr interface{}) (bool, error) {
 	return true, nil
 }
 
+// @Tags User
 // @Summary SignUp Route
 // @Description Signing user up
 // @ID sign-up-user
 // @Accept json
 // @Produce json
-// @Param Data body models.UserReg true "JSON that contains user sign up data"
+// @Param Data body object true "JSON that contains user sign up data"
 // @Success 200 object models.User
 // @Failure 400 object ResponseError
 // @Failure 404 object ResponseError
@@ -133,13 +134,13 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 	}
 }
 
-
+// @Tags User
 // @Summary LogIn Route
 // @Description Logging user in
 // @ID log-in-user
 // @Accept json
 // @Produce json
-// @Param Data body models.UserLogin true "JSON that contains user login data"
+// @Param Data body object true "JSON that contains user login data"
 // @Success 200 object models.User
 // @Failure 400 object ResponseError
 // @Failure 404 object ResponseError
@@ -197,12 +198,13 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 	}
 }
 
+// @Tags User
 // @Summary Edit Profile Route
 // @Description Edit user profile
 // @ID edit-profile
 // @Accept json
 // @Produce json
-// @Param Data body models.UserEdit true "JSON that contains user data to edit"
+// @Param Data body object true "JSON that contains user data to edit"
 // @Success 200 object models.User
 // @Failure 400 object ResponseError
 // @Failure 404 object ResponseError
@@ -245,6 +247,7 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 	}
 }
 
+// @Tags User
 // @Summary Get Profile Route
 // @Description Get user profile
 // @ID get-profile
@@ -272,6 +275,7 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 	}
 }
 
+// @Tags User
 // @Summary Get Avatar Route
 // @Description Signing user in
 // @ID get-avatar
@@ -310,6 +314,7 @@ func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
 	}
 }
 
+// @Tags User
 // @Summary Set Avatar Route
 // @Description Set user avatar
 // @ID set-avatar
@@ -385,6 +390,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 	}
 }
 
+// @Tags User
 // @Summary Log Out Route
 // @Description Logging user out
 // @ID log-out-user

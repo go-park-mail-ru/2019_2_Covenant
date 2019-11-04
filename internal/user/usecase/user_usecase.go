@@ -33,6 +33,10 @@ func (uUC *userUsecase) Store(newUser *models.User) (*models.User, error) {
 		return nil, vars.ErrAlreadyExist
 	}
 
+	if err := newUser.BeforeStore(); err != nil {
+		return nil, vars.ErrInternalServerError
+	}
+
 	usr, err := uUC.userRepo.Store(newUser)
 
 	if err != nil {

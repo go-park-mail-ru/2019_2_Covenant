@@ -79,8 +79,8 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 		var (
 			id       uint64
 			nickname string
-			email   string
-			avatar    string
+			email    string
+			avatar   string
 			password string
 		)
 
@@ -89,10 +89,10 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 		}
 
 		users = append(users, &models.User{
-			ID: id,
+			ID:       id,
 			Nickname: nickname,
-			Avatar: avatar,
-			Email: email,
+			Avatar:   avatar,
+			Email:    email,
 			Password: password,
 		})
 	}

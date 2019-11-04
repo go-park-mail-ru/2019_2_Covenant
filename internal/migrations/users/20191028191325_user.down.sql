@@ -1,1 +1,1 @@
-drop table users;
+drop table users cascade;

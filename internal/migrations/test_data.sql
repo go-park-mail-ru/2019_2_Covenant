@@ -1,5 +1,3 @@
-insert into users (nickname, email, password) values ('TestNick', 'test@mail.ru', '123456');
-
 insert into artists (name) values ('Rihanna');
 insert into artists (name) values ('Jay-Z');
 insert into artists (name) values ('Ivan Dorn');

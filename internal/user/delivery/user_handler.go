@@ -99,9 +99,9 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		}
 
 		newUser := &models.User{
-			Email:    userRegData.Email,
-			Password: userRegData.Password,
-			Nickname: userRegData.Nickname,
+			Email:         userRegData.Email,
+			PlainPassword: userRegData.Password,
+			Nickname:      userRegData.Nickname,
 		}
 
 		usr, err = uh.UUsecase.Store(newUser)
@@ -170,7 +170,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, ResponseError{err.Error()})
 		}
 
-		if usr.Password != userLoginData.Password {
+		if !usr.Verify(userLoginData.Password) {
 			return c.JSON(http.StatusBadRequest, ResponseError{vars.ErrBadParam.Error()})
 		}
 
@@ -212,7 +212,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 // @Router /api/v1/profile [post]
 func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 	type UserEdit struct {
-		Nickname    string `json:"nickname" validate:"required"`
+		Nickname string `json:"nickname" validate:"required"`
 	}
 
 	return func(c echo.Context) error {
@@ -414,8 +414,8 @@ func (uh *UserHandler) LogOut() echo.HandlerFunc {
 		}
 
 		cookie := &http.Cookie{
-			Name: "Covenant",
-			Value: sess.Data,
+			Name:    "Covenant",
+			Value:   sess.Data,
 			Expires: time.Now().AddDate(0, 0, -1),
 		}
 

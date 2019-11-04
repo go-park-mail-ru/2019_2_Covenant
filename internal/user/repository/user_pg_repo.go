@@ -65,7 +65,7 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	return u, nil
 }
 
-func (ur *UserRepository) FetchAll(count uint64) ([]*models.User, error) {
+func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	var users []*models.User
 
 	rows, err := ur.db.Query("SELECT id, nickname, email, avatar, password FROM users LIMIT $1", count)

@@ -16,8 +16,8 @@ func NewUserUsecase(ur user.Repository) user.Usecase {
 	}
 }
 
-func (uUC *userUsecase) FetchAll(count uint64) ([]*models.User, error) {
-	users, err := uUC.userRepo.FetchAll(count)
+func (uUC *userUsecase) Fetch(count uint64) ([]*models.User, error) {
+	users, err := uUC.userRepo.Fetch(count)
 
 	if err != nil {
 		return nil, err

@@ -1,1 +1,1 @@
-drop table artists;
+drop table artists cascade;

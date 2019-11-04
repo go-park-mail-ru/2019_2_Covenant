@@ -3,6 +3,8 @@ package storage
 import (
 	"2019_2_Covenant/internal/session"
 	_sessRepo "2019_2_Covenant/internal/session/repository"
+	"2019_2_Covenant/internal/track"
+	_trackRepo "2019_2_Covenant/internal/track/repository"
 	"2019_2_Covenant/internal/user"
 	_userRepo "2019_2_Covenant/internal/user/repository"
 	"database/sql"
@@ -16,8 +18,9 @@ type BaseStorage struct {
 
 type PGStorage struct {
 	BaseStorage
-	userRepo user.Repository
-	sessRepo session.Repository
+	userRepo  user.Repository
+	sessRepo  session.Repository
+	trackRepo track.Repository
 }
 
 func NewPGStorage(conf *Config) Storage {
@@ -66,4 +69,14 @@ func (s *PGStorage) Session() session.Repository {
 	s.sessRepo = _sessRepo.NewSessionRepository(s.db)
 
 	return s.sessRepo
+}
+
+func (s *PGStorage) Track() track.Repository {
+	if s.trackRepo != nil {
+		return s.trackRepo
+	}
+
+	s.trackRepo = _trackRepo.NewTrackRepository(s.db)
+
+	return s.trackRepo
 }

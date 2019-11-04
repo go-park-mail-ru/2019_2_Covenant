@@ -2,8 +2,11 @@ package apiserver
 
 import (
 	"2019_2_Covenant/internal/app/storage"
+	"2019_2_Covenant/internal/middleware"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
-	"2019_2_Covenant/internal/user/delivery"
+	_trackDelivery "2019_2_Covenant/internal/track/delivery"
+	_trackUsecase "2019_2_Covenant/internal/track/usecase"
+	_userDelivery "2019_2_Covenant/internal/user/delivery"
 	_userUsecase "2019_2_Covenant/internal/user/usecase"
 	"fmt"
 	"github.com/labstack/echo/v4"
@@ -39,9 +42,15 @@ func (api *APIServer) configureRouter() {
 
 	userUsecase := _userUsecase.NewUserUsecase(api.storage.User())
 	sessionUsecase := _sessionUsecase.NewSessionUsecase(api.storage.Session())
+	trackUsecase := _trackUsecase.NewTrackUsecase(api.storage.Track())
 
-	handler := delivery.NewUserHandler(userUsecase, sessionUsecase)
-	handler.Configure(api.router)
+	middlewareManager := middleware.NewMiddlewareManager(userUsecase, sessionUsecase)
+	api.router.Use(middlewareManager.PanicRecovering)
+
+	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager)
+	userHandler.Configure(api.router)
+	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager)
+	trackHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

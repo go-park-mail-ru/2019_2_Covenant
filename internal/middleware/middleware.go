@@ -4,6 +4,7 @@ import (
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -24,6 +25,7 @@ func (m *MiddlewareManager) PanicRecovering(next echo.HandlerFunc) echo.HandlerF
 	return func(c echo.Context) error {
 		defer func() {
 			if err := recover(); err != nil {
+				fmt.Println(err)
 				c.Error(vars.ErrInternalServerError)
 			}
 		}()

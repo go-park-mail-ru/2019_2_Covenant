@@ -24,17 +24,15 @@ type UserHandler struct {
 	MManager middleware.MiddlewareManager
 }
 
-func NewUserHandler(uUC user.Usecase, sUC session.Usecase) *UserHandler {
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middleware.MiddlewareManager) *UserHandler {
 	return &UserHandler{
 		UUsecase: uUC,
 		SUsecase: sUC,
-		MManager: middleware.NewMiddlewareManager(uUC, sUC),
+		MManager: mManager,
 	}
 }
 
 func (uh *UserHandler) Configure(e *echo.Echo) {
-	e.Use(uh.MManager.PanicRecovering)
-
 	e.POST("/api/v1/signup", uh.SignUp())
 	e.POST("/api/v1/login", uh.LogIn())
 	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)

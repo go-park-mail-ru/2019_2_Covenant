@@ -1,29 +1,53 @@
 package models
 
+import (
+	"crypto/rand"
+	"crypto/sha1"
+	"golang.org/x/crypto/pbkdf2"
+)
+
 type User struct {
-	ID       uint64 `json:"-"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Surname  string `json:"surname"`
-	Password string `json:"-"`
-	Avatar   string `json:"avatar"`
-	Role     int8   `json:"role"`   // 0 - user; 1 - admin;
-	Access   int8   `json:"access"` // 0 - public; 1 - private;
+	ID            uint64 `json:"-"`
+	Nickname      string `json:"nickname"`
+	Email         string `json:"email"`
+	PlainPassword string `json:"-"`
+	Password      string `json:"-"`
+	Avatar        string `json:"avatar"`
+	Role          int8   `json:"role"`   // 0 - user; 1 - admin;
+	Access        int8   `json:"access"` // 0 - public; 1 - private;
 }
 
-type UserReg struct {
-	Username string `json:"username" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,gte=6"`
+func (u *User) BeforeStore() error {
+	if len(u.PlainPassword) > 0 {
+		pass, err := encryptPassword(u.PlainPassword)
+
+		if err != nil {
+			return err
+		}
+
+		u.Password = pass
+	}
+
+	return nil
 }
 
-type UserLogin struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+func encryptPassword(plainPassword string) (string, error) {
+	salt := make([]byte, 8)
+
+	if _, err := rand.Read(salt); err != nil {
+		return "", err
+	}
+
+	dk := pbkdf2.Key([]byte(plainPassword), salt, 4096, 32, sha1.New)
+
+	result := append(salt, dk...)
+
+	return string(result), nil
 }
 
-type UserEdit struct {
-	Name    string `json:"name" validate:"required"`
-	Surname string `json:"surname" validate:"required"`
+func (u *User) Verify(plainPassword string) bool {
+	salt := u.Password[0:8]
+	dk := pbkdf2.Key([]byte(plainPassword), []byte(salt), 4096, 32, sha1.New)
+
+	return string(dk) == u.Password[8:]
 }

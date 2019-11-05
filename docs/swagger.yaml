@@ -5,6 +5,19 @@ definitions:
       error:
         type: string
     type: object
+  models.Track:
+    properties:
+      album:
+        type: string
+      artist:
+        type: string
+      duration:
+        type: string
+      name:
+        type: string
+      photo:
+        type: string
+    type: object
   models.User:
     properties:
       access:
@@ -14,48 +27,11 @@ definitions:
         type: string
       email:
         type: string
-      name:
+      nickname:
         type: string
       role:
         description: 0 - user; 1 - admin;
         type: integer
-      surname:
-        type: string
-      username:
-        type: string
-    type: object
-  models.UserEdit:
-    properties:
-      name:
-        type: string
-      surname:
-        type: string
-    required:
-    - name
-    - surname
-    type: object
-  models.UserLogin:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  models.UserReg:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - email
-    - password
-    - username
     type: object
 info:
   contact: {}
@@ -65,10 +41,44 @@ info:
   version: "1.0"
 paths:
   /api/v1/avatar:
+    get:
+      consumes:
+      - application/json
+      description: Signing user in
+      operationId: get-avatar
+      parameters:
+      - description: multipart/form-data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Get Avatar Route
+      tags:
+      - User
     post:
       consumes:
       - multipart/form-data
-      description: Signing user in
+      description: Set user avatar
       operationId: set-avatar
       parameters:
       - description: multipart/form-data
@@ -97,11 +107,76 @@ paths:
           schema:
             $ref: '#/definitions/delivery.ResponseError'
       summary: Set Avatar Route
+      tags:
+      - User
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Logging user in
+      operationId: log-in-user
+      parameters:
+      - description: JSON that contains user login data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: LogIn Route
+      tags:
+      - User
+  /api/v1/logout:
+    get:
+      consumes:
+      - application/json
+      description: Logging user out
+      operationId: log-out-user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Log Out Route
+      tags:
+      - User
   /api/v1/profile:
     get:
       consumes:
       - application/json
-      description: Signing user in
+      description: Get user profile
       operationId: get-profile
       produces:
       - application/json
@@ -119,10 +194,12 @@ paths:
           schema:
             $ref: '#/definitions/delivery.ResponseError'
       summary: Get Profile Route
+      tags:
+      - User
     post:
       consumes:
       - application/json
-      description: Signing user in
+      description: Edit user profile
       operationId: edit-profile
       parameters:
       - description: JSON that contains user data to edit
@@ -130,7 +207,6 @@ paths:
         name: Data
         required: true
         schema:
-          $ref: '#/definitions/models.UserEdit'
           type: object
       produces:
       - application/json
@@ -152,40 +228,8 @@ paths:
           schema:
             $ref: '#/definitions/delivery.ResponseError'
       summary: Edit Profile Route
-  /api/v1/signin:
-    post:
-      consumes:
-      - application/json
-      description: Signing user in
-      operationId: sign-in-user
-      parameters:
-      - description: JSON that contains user login data
-        in: body
-        name: Data
-        required: true
-        schema:
-          $ref: '#/definitions/models.UserLogin'
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.User'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/delivery.ResponseError'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/delivery.ResponseError'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/delivery.ResponseError'
-      summary: SignIn Route
+      tags:
+      - User
   /api/v1/signup:
     post:
       consumes:
@@ -198,7 +242,6 @@ paths:
         name: Data
         required: true
         schema:
-          $ref: '#/definitions/models.UserReg'
           type: object
       produces:
       - application/json
@@ -220,4 +263,34 @@ paths:
           schema:
             $ref: '#/definitions/delivery.ResponseError'
       summary: SignUp Route
+      tags:
+      - User
+  /api/v1/tracks/popular:
+    post:
+      consumes:
+      - application/json
+      description: Getting popular tracks
+      operationId: get-popular-tracks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Track'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/delivery.ResponseError'
+      summary: Get Popular Tracks Route
+      tags:
+      - Track
 swagger: "2.0"

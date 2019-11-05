@@ -1,18 +1,22 @@
 package main
 
 import (
+	_ "2019_2_Covenant/docs"
 	"2019_2_Covenant/internal/app/apiserver"
+	"2019_2_Covenant/internal/app/storage"
 	"flag"
 	"github.com/BurntSushi/toml"
 	"log"
 )
 
 var (
-	configPath string
+	serverConfPath  string
+	storageConfPath string
 )
 
 func init() {
-	flag.StringVar(&configPath, "conf", "configs/apiserver.toml", "path to server config")
+	flag.StringVar(&serverConfPath, "server", "configs/server.toml", "path to server config")
+	flag.StringVar(&storageConfPath, "storage", "configs/storage.toml", "path to storage config")
 }
 
 // @title Covenant API
@@ -22,13 +26,20 @@ func init() {
 func main() {
 	flag.Parse()
 
-	config := apiserver.NewConfig()
+	serverConfig := apiserver.NewConfig()
 
-	if _, err := toml.DecodeFile(configPath, config); err != nil {
+	if _, err := toml.DecodeFile(serverConfPath, serverConfig); err != nil {
 		log.Fatal(err)
 	}
 
-	server := apiserver.NewAPIServer(config)
+	storageConfig := storage.NewConfig()
+
+	if _, err := toml.DecodeFile(storageConfPath, storageConfig); err != nil {
+		log.Fatal(err)
+	}
+
+	st := storage.NewPGStorage(storageConfig)
+	server := apiserver.NewAPIServer(serverConfig, st)
 
 	if err := server.Start(); err != nil {
 		log.Fatal(err)

@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
@@ -21,10 +22,35 @@ func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase) Middl
 	}
 }
 
+func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		token := c.Request().Header.Get("X-Csrf-Token")
+
+		usr := c.Get("user").(*models.User)
+		sess := c.Get("session").(*models.Session)
+
+		ok, err := models.NewCSRFTokenManager("Covenant").Verify(usr, sess, token)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
+				Error: err.Error(),
+			})
+		}
+
+		if !ok {
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{
+				Error: vars.ErrExpired.Error(),
+			})
+		}
+
+		return next(c)
+	}
+}
+
 func (m *MiddlewareManager) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "*")
-		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+		c.Response().Header().Set("Access-Control-Allow-Origin", "http://front.covenant.fun:8000/")
 		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -67,13 +93,16 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
-		_, err = m.uUC.GetByID(sess.UserID)
+		usr, err := m.uUC.GetByID(sess.UserID)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err)
+			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
+				Error: err.Error(),
+			})
 		}
 
 		c.Set("session", sess)
+		c.Set("user", usr)
 
 		return next(c)
 	}

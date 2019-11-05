@@ -18,19 +18,19 @@ type Session struct {
 	Data    string
 }
 
-type CSRFToken struct {
+type CSRFTokenManager struct {
 	Secret []byte
 }
 
-func NewCSRFToken(secret string) *CSRFToken {
-	return &CSRFToken{
+func NewCSRFTokenManager(secret string) *CSRFTokenManager {
+	return &CSRFTokenManager{
 		Secret: []byte(secret),
 	}
 }
 
-func (tk *CSRFToken) Create(usr *User, sess *Session, expires time.Time) (string, error) {
+func (tk *CSRFTokenManager) Create(usr *User, sess *Session, expires time.Time) (string, error) {
 	h := hmac.New(sha1.New, tk.Secret)
-	data := fmt.Sprintf("%s:%s:%d", usr.ID, sess.Data, expires)
+	data := fmt.Sprintf("%s:%s:%d", usr.ID, sess.Data, expires.Unix())
 	h.Write([]byte(data))
 
 	token := hex.EncodeToString(h.Sum(nil)) + ":" + strconv.FormatInt(expires.Unix(), 10)
@@ -38,7 +38,7 @@ func (tk *CSRFToken) Create(usr *User, sess *Session, expires time.Time) (string
 	return token, nil
 }
 
-func (tk *CSRFToken) Verify(usr *User, sess *Session, token string) (bool, error) {
+func (tk *CSRFTokenManager) Verify(usr *User, sess *Session, token string) (bool, error) {
 	tokenData := strings.Split(token, ":")
 
 	if len(tokenData) != 2 {

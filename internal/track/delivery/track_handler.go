@@ -26,14 +26,6 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/tracks/popular", th.GetPopularTracks())
 }
 
-type ResponseError struct {
-	Error string `json:"error"`
-}
-
-type Response struct {
-	Body interface{} `json:"body"`
-}
-
 // @Tags Track
 // @Summary Get Popular Tracks Route
 // @Description Getting popular tracks
@@ -51,7 +43,9 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 
 		if err != nil {
 			fmt.Println(err)
-			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
+				Error: vars.ErrInternalServerError.Error(),
+			})
 		}
 
 		for _, item := range tracks {
@@ -60,6 +54,6 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			item.Duration = item.Duration[start+1 : end]
 		}
 
-		return c.JSON(http.StatusOK, Response{tracks})
+		return c.JSON(http.StatusOK, vars.Response{Body: tracks})
 	}
 }

@@ -31,7 +31,6 @@ func (sr *SessionRepository) Get(value string) (*models.Session, error) {
 	); err != nil {
 		return nil, err
 	}
-
 	timeNow := time.Now()
 	diffTime := item.Expires.Sub(timeNow)
 

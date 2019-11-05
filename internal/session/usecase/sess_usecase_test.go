@@ -2,6 +2,7 @@ package usecase
 
 import (
 	. "2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/session"
 	mock "2019_2_Covenant/internal/session/mocks"
 	"fmt"
 	"testing"
@@ -25,8 +26,8 @@ var sessions = Sessions{
 	},
 }
 
-func configSessionUsecase(sessRepo *mock.MockRepository) sessionUsecase {
-	return sessionUsecase{sessionRepo: sessRepo}
+func configSessionUsecase(sessRepo *mock.MockRepository) session.Usecase {
+	return NewSessionUsecase(sessRepo)
 }
 
 func TestSessionUsecase_Get(t *testing.T) {
@@ -35,7 +36,7 @@ func TestSessionUsecase_Get(t *testing.T) {
 
 	sessRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase sessionUsecase, value string) (*Session, error) {
+	exe := func(usecase session.Usecase, value string) (*Session, error) {
 		return usecase.Get(value)
 	}
 
@@ -69,7 +70,7 @@ func TestSessionUsecase_DeleteByID(t *testing.T) {
 
 	sessRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase sessionUsecase, id uint64) error {
+	exe := func(usecase session.Usecase, id uint64) error {
 		return usecase.DeleteByID(id)
 	}
 
@@ -103,7 +104,7 @@ func TestSessionUsecase_Store(t *testing.T) {
 
 	sessRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase sessionUsecase, newSess *Session) error {
+	exe := func(usecase session.Usecase, newSess *Session) error {
 		return usecase.Store(newSess)
 	}
 

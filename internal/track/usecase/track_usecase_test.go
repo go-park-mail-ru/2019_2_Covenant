@@ -2,10 +2,12 @@ package usecase
 
 import (
 	. "2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/track"
 	mock "2019_2_Covenant/internal/track/mocks"
 	"fmt"
-	"github.com/golang/mock/gomock"
 	"testing"
+
+	"github.com/golang/mock/gomock"
 )
 
 //go:generate mockgen -source=../repository.go -destination=../mocks/mock_repository.go -package=mock
@@ -22,8 +24,8 @@ var tracks = Tracks{
 	},
 }
 
-func configTrackUsecase(trackRepo *mock.MockRepository) trackUsecase {
-	return trackUsecase{trackRepo: trackRepo}
+func configTrackUsecase(trackRepo *mock.MockRepository) track.Usecase {
+	return NewTrackUsecase(trackRepo)
 }
 
 func TestTrackUsecase_Fetch(t *testing.T) {
@@ -32,7 +34,7 @@ func TestTrackUsecase_Fetch(t *testing.T) {
 
 	trackRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase trackUsecase, count uint64) ([]*Track, error) {
+	exe := func(usecase track.Usecase, count uint64) ([]*Track, error) {
 		return usecase.Fetch(count)
 	}
 

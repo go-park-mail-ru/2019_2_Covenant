@@ -2,6 +2,7 @@ package usecase
 
 import (
 	. "2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/user"
 	mock "2019_2_Covenant/internal/user/mocks"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
@@ -24,8 +25,8 @@ var users = Users{
 	},
 }
 
-func configUserUsecase(userRepo *mock.MockRepository) userUsecase {
-	return userUsecase{userRepo: userRepo}
+func configUserUsecase(userRepo *mock.MockRepository) user.Usecase {
+	return NewUserUsecase(userRepo)
 }
 
 func TestUserUsecase_Fetch(t *testing.T) {
@@ -34,7 +35,7 @@ func TestUserUsecase_Fetch(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, count uint64) ([]*User, error) {
+	exe := func(usecase user.Usecase, count uint64) ([]*User, error) {
 		return usecase.Fetch(count)
 	}
 
@@ -71,7 +72,7 @@ func TestUserUsecase_GetByEmail(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, email string) (*User, error) {
+	exe := func(usecase user.Usecase, email string) (*User, error) {
 		return usecase.GetByEmail(email)
 	}
 
@@ -108,7 +109,7 @@ func TestUserUsecase_GetByID(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, ID uint64) (*User, error) {
+	exe := func(usecase user.Usecase, ID uint64) (*User, error) {
 		return usecase.GetByID(ID)
 	}
 
@@ -144,7 +145,7 @@ func TestUserUsecase_Store(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, newUser *User) (*User, error) {
+	exe := func(usecase user.Usecase, newUser *User) (*User, error) {
 		return usecase.Store(newUser)
 	}
 
@@ -196,7 +197,7 @@ func TestUserUsecase_UpdateAvatar(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, ID uint64, avatarPath string) (*User, error) {
+	exe := func(usecase user.Usecase, ID uint64, avatarPath string) (*User, error) {
 		return usecase.UpdateAvatar(ID, avatarPath)
 	}
 
@@ -235,7 +236,7 @@ func TestUserUsecase_UpdateNickname(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase userUsecase, ID uint64, nickname string) (*User, error) {
+	exe := func(usecase user.Usecase, ID uint64, nickname string) (*User, error) {
 		return usecase.UpdateNickname(ID, nickname)
 	}
 

@@ -60,8 +60,8 @@ func TestSessionRepository_Get(t *testing.T) {
 		sess, err := sessRepo.Get(data)
 
 		if sess != nil || err == nil {
-			fmt.Println("Session -> expected not nil, got: ", sess)
-			fmt.Println("Error -> expected nil, got: ", err)
+			fmt.Println("Session -> expected nil, got: ", sess)
+			fmt.Println("Error -> expected not nil, got: ", err)
 			t2.Fail()
 		}
 
@@ -89,7 +89,7 @@ func TestSessionRepository_Get(t *testing.T) {
 
 		if sess != nil || err == nil {
 			fmt.Println("Session -> expected nil, got: ", sess)
-			fmt.Println("Error -> expected nil, got: ", err)
+			fmt.Println("Error -> expected not nil, got: ", err)
 			t3.Fail()
 		}
 
@@ -113,7 +113,7 @@ func TestSessionRepository_Get(t *testing.T) {
 
 		if sess != nil || err == nil {
 			fmt.Println("Session -> expected nil, got: ", sess)
-			fmt.Println("Error -> expected nil, got: ", err)
+			fmt.Println("Error -> expected not nil, got: ", err)
 			t4.Fail()
 		}
 
@@ -168,7 +168,7 @@ func TestSessionRepository_Store(t *testing.T) {
 
 		err := sessRepo.Store(&newSession)
 		if err == nil {
-			fmt.Println("Error -> expected nil, got: ", err)
+			fmt.Println("Error -> expected not nil, got: ", err)
 			t2.Fail()
 		}
 

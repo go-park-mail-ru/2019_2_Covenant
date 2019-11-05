@@ -32,7 +32,7 @@ func NewPGStorage(conf *Config) Storage {
 }
 
 func (s *PGStorage) Open() error {
-	db, err := sql.Open("postgres", s.config.DBUrl)
+	db, err := sql.Open("postgres", s.config.GetURL())
 
 	if err != nil {
 		return err

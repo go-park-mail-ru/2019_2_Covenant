@@ -33,9 +33,9 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 // @Accept json
 // @Produce json
 // @Success 200 object models.Track
-// @Failure 400 object ResponseError
-// @Failure 404 object ResponseError
-// @Failure 500 object ResponseError
+// @Failure 400 object vars.ResponseError
+// @Failure 404 object vars.ResponseError
+// @Failure 500 object vars.ResponseError
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	return func(c echo.Context) error {

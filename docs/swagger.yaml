@@ -1,10 +1,5 @@
 basePath: /api/v1
 definitions:
-  delivery.ResponseError:
-    properties:
-      error:
-        type: string
-    type: object
   models.Track:
     properties:
       album:
@@ -14,6 +9,8 @@ definitions:
       duration:
         type: string
       name:
+        type: string
+      path:
         type: string
       photo:
         type: string
@@ -32,6 +29,11 @@ definitions:
       role:
         description: 0 - user; 1 - admin;
         type: integer
+    type: object
+  vars.ResponseError:
+    properties:
+      error:
+        type: string
     type: object
 info:
   contact: {}
@@ -63,15 +65,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Get Avatar Route
       tags:
       - User
@@ -97,15 +99,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Set Avatar Route
       tags:
       - User
@@ -132,15 +134,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: LogIn Route
       tags:
       - User
@@ -160,15 +162,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Log Out Route
       tags:
       - User
@@ -188,11 +190,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Get Profile Route
       tags:
       - User
@@ -218,15 +220,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Edit Profile Route
       tags:
       - User
@@ -253,15 +255,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: SignUp Route
       tags:
       - User
@@ -281,15 +283,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ResponseError'
+            $ref: '#/definitions/vars.ResponseError'
       summary: Get Popular Tracks Route
       tags:
       - Track

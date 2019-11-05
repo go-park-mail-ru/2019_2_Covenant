@@ -44,19 +44,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -95,19 +95,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -148,19 +148,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -190,19 +190,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -232,13 +232,13 @@
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -277,19 +277,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -330,19 +330,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -372,19 +372,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ResponseError"
+                            "$ref": "#/definitions/vars.ResponseError"
                         }
                     }
                 }
@@ -392,14 +392,6 @@
         }
     },
     "definitions": {
-        "delivery.ResponseError": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
         "models.Track": {
             "type": "object",
             "properties": {
@@ -413,6 +405,9 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "path": {
                     "type": "string"
                 },
                 "photo": {
@@ -439,6 +434,14 @@
                 "role": {
                     "description": "0 - user; 1 - admin;",
                     "type": "integer"
+                }
+            }
+        },
+        "vars.ResponseError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
                 }
             }
         }

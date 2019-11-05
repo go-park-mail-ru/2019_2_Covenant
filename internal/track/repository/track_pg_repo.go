@@ -20,7 +20,7 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 	var tracks []*models.Track
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name FROM tracks T " +
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
 		"JOIN albums Al ON T.album_id = Al.id " +
 		"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $1",
 		count)
@@ -41,9 +41,10 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 			photo    string
 			artist   string
 			album    string
+			path     string
 		)
 
-		if err := rows.Scan(&id, &albumID, &artistID, &name, &duration, &photo, &artist, &album); err != nil {
+		if err := rows.Scan(&id, &albumID, &artistID, &name, &duration, &photo, &artist, &album, &path); err != nil {
 			return nil, err
 		}
 
@@ -56,6 +57,7 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 			Photo: photo,
 			Artist: artist,
 			Album: album,
+			Path: path,
 		})
 	}
 

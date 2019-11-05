@@ -66,6 +66,16 @@ func (uUC *userUsecase) GetByID(userID uint64) (*models.User, error) {
 	return usr, nil
 }
 
+func (uUC *userUsecase) GetByNickname(nickname string) (*models.User, error) {
+	usr, err := uUC.userRepo.GetByNickname(nickname)
+
+	if err != nil {
+		return nil, vars.ErrNotFound
+	}
+
+	return usr, nil
+}
+
 func (uUC *userUsecase) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
 	usr, err := uUC.userRepo.UpdateAvatar(id, avatarPath)
 

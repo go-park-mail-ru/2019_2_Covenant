@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	"2019_2_Covenant/internal/middleware"
+	_middleware "2019_2_Covenant/internal/middleware"
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
@@ -21,10 +21,10 @@ import (
 type UserHandler struct {
 	UUsecase user.Usecase
 	SUsecase session.Usecase
-	MManager middleware.MiddlewareManager
+	MManager _middleware.MiddlewareManager
 }
 
-func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middleware.MiddlewareManager) *UserHandler {
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager _middleware.MiddlewareManager) *UserHandler {
 	return &UserHandler{
 		UUsecase: uUC,
 		SUsecase: sUC,

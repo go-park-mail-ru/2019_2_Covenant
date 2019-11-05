@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	"2019_2_Covenant/internal/middleware"
+	_middleware "2019_2_Covenant/internal/middleware"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
@@ -12,10 +12,10 @@ import (
 
 type TrackHandler struct {
 	TUsecase track.Usecase
-	MManager middleware.MiddlewareManager
+	MManager _middleware.MiddlewareManager
 }
 
-func NewTrackHandler(tUC track.Usecase, mManager middleware.MiddlewareManager) *TrackHandler {
+func NewTrackHandler(tUC track.Usecase, mManager _middleware.MiddlewareManager) *TrackHandler {
 	return &TrackHandler{
 		TUsecase: tUC,
 		MManager: mManager,
@@ -54,10 +54,10 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 		}
 
-		for _, track := range tracks {
-			start := strings.Index(track.Duration, "T")
-			end := strings.Index(track.Duration, "Z")
-			track.Duration = track.Duration[start+1 : end]
+		for _, item := range tracks {
+			start := strings.Index(item.Duration, "T")
+			end := strings.Index(item.Duration, "Z")
+			item.Duration = item.Duration[start+1 : end]
 		}
 
 		return c.JSON(http.StatusOK, Response{tracks})

@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	storageConfig := storage.NewConfig("prod")
+	storageConfig := storage.NewConfig("dev")
 
 	if _, err := toml.DecodeFile(storageConfPath, storageConfig); err != nil {
 		log.Fatal(err)

@@ -104,7 +104,7 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	return users, nil
 }
 
-func (ur *UserRepository) NicknameExists(nickname string) (bool, error) {
+func (ur *UserRepository) nicknameExists(nickname string) (bool, error) {
 	usr, err := ur.GetByNickname(nickname)
 
 	if err != nil {
@@ -121,7 +121,7 @@ func (ur *UserRepository) NicknameExists(nickname string) (bool, error) {
 func (ur *UserRepository) UpdateNickname(id uint64, nickname string) (*models.User, error) {
 	u := &models.User{}
 
-	exist, _ := ur.NicknameExists(nickname)
+	exist, _ := ur.nicknameExists(nickname)
 
 	if exist {
 		return nil, vars.ErrAlreadyExist

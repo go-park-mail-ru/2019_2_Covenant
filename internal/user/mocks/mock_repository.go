@@ -6,8 +6,9 @@ package mock
 
 import (
 	models "2019_2_Covenant/internal/models"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRepository is a mock of Repository interface
@@ -33,19 +34,19 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// FetchAll mocks base method
-func (m *MockRepository) FetchAll() ([]*models.User, error) {
+// Fetch mocks base method
+func (m *MockRepository) Fetch(count uint64) ([]*models.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAll")
+	ret := m.ctrl.Call(m, "Fetch", count)
 	ret0, _ := ret[0].([]*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FetchAll indicates an expected call of FetchAll
-func (mr *MockRepositoryMockRecorder) FetchAll() *gomock.Call {
+// Fetch indicates an expected call of Fetch
+func (mr *MockRepositoryMockRecorder) Fetch(count interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAll", reflect.TypeOf((*MockRepository)(nil).FetchAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockRepository)(nil).Fetch), count)
 }
 
 // GetByID mocks base method
@@ -79,15 +80,46 @@ func (mr *MockRepositoryMockRecorder) GetByEmail(email interface{}) *gomock.Call
 }
 
 // Store mocks base method
-func (m *MockRepository) Store(user *models.User) error {
+func (m *MockRepository) Store(user *models.User) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", user)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Store indicates an expected call of Store
 func (mr *MockRepositoryMockRecorder) Store(user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockRepository)(nil).Store), user)
+}
+
+// UpdateAvatar mocks base method
+func (m *MockRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAvatar", id, avatarPath)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAvatar indicates an expected call of UpdateAvatar
+func (mr *MockRepositoryMockRecorder) UpdateAvatar(id, avatarPath interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAvatar", reflect.TypeOf((*MockRepository)(nil).UpdateAvatar), id, avatarPath)
+}
+
+// UpdateNickname mocks base method
+func (m *MockRepository) UpdateNickname(id uint64, nickname string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateNickname", id, nickname)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateNickname indicates an expected call of UpdateNickname
+func (mr *MockRepositoryMockRecorder) UpdateNickname(id, nickname interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateNickname", reflect.TypeOf((*MockRepository)(nil).UpdateNickname), id, nickname)
 }

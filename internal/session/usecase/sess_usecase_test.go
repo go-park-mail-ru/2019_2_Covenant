@@ -4,10 +4,11 @@ import (
 	. "2019_2_Covenant/internal/models"
 	mock "2019_2_Covenant/internal/session/mocks"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 )
 
 //go:generate mockgen -source=../repository.go -destination=../mocks/mock_repository.go -package=mock
@@ -20,7 +21,7 @@ var sessions = Sessions{
 	Session: []*Session{
 		{ID: 1, UserID: 1, Expires: time.Now().Add(24 * time.Hour), Data: uuid.New().String()},
 		{ID: 2, UserID: 2, Expires: time.Now().Add(1 * time.Hour), Data: uuid.New().String()},
-		{ID: 3, UserID: 3, Expires: time.Date(2019, 10, 10,0,0,0,0, time.UTC), Data: uuid.New().String()},
+		{ID: 3, UserID: 3, Expires: time.Date(2019, 10, 10, 0, 0, 0, 0, time.UTC), Data: uuid.New().String()},
 	},
 }
 

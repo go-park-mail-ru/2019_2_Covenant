@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	_middleware "2019_2_Covenant/internal/middleware"
+	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
@@ -21,10 +21,10 @@ import (
 type UserHandler struct {
 	UUsecase user.Usecase
 	SUsecase session.Usecase
-	MManager _middleware.MiddlewareManager
+	MManager middlewares.MiddlewareManager
 }
 
-func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager _middleware.MiddlewareManager) *UserHandler {
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middlewares.MiddlewareManager) *UserHandler {
 	return &UserHandler{
 		UUsecase: uUC,
 		SUsecase: sUC,
@@ -128,6 +128,13 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
 		}
 
+		token, err := models.NewCSRFToken("Covenant").Create(usr, sess, time.Now().Add(24 * time.Hour))
+		c.Response().Header().Set("X-CSRF-Token", token)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
 		c.SetCookie(cookie)
 
 		return c.JSON(http.StatusOK, Response{newUser})
@@ -187,6 +194,13 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 		}
 
 		err = uh.SUsecase.Store(sess)
+
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})
+		}
+
+		token, err := models.NewCSRFToken("Covenant").Create(usr, sess, time.Now().Add(24 * time.Hour))
+		c.Response().Header().Set("X-CSRF-Token", token)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, ResponseError{vars.ErrInternalServerError.Error()})

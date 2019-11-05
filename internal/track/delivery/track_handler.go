@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	_middleware "2019_2_Covenant/internal/middleware"
+	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
@@ -12,10 +12,10 @@ import (
 
 type TrackHandler struct {
 	TUsecase track.Usecase
-	MManager _middleware.MiddlewareManager
+	MManager middlewares.MiddlewareManager
 }
 
-func NewTrackHandler(tUC track.Usecase, mManager _middleware.MiddlewareManager) *TrackHandler {
+func NewTrackHandler(tUC track.Usecase, mManager middlewares.MiddlewareManager) *TrackHandler {
 	return &TrackHandler{
 		TUsecase: tUC,
 		MManager: mManager,

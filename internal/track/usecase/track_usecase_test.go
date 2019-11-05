@@ -17,8 +17,8 @@ type Tracks struct {
 var tracks = Tracks{
 	Track: []*Track{
 		{ID: 1, Name: "We Are the Champions", Artist: "Queen", Album: "News of the World"},
-		{ID: 1, Name: "bad guy", Artist: "Billie Eilish", Album: "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?"},
-		{ID: 1, Name: "Still Loving You", Artist: "Scorpions", Album: "Love at First Sting"},
+		{ID: 2, Name: "bad guy", Artist: "Billie Eilish", Album: "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?"},
+		{ID: 3, Name: "Still Loving You", Artist: "Scorpions", Album: "Love at First Sting"},
 	},
 }
 

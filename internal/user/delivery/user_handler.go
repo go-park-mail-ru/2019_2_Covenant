@@ -235,7 +235,6 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 
 	return func(c echo.Context) error {
 		sess, ok := c.Get("session").(*models.Session)
-
 		if !ok {
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),

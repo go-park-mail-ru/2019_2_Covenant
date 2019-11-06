@@ -48,6 +48,5 @@ func encryptPassword(plainPassword string) (string, error) {
 func (u *User) Verify(plainPassword string) bool {
 	salt := u.Password[0:8]
 	dk := pbkdf2.Key([]byte(plainPassword), []byte(salt), 4096, 32, sha1.New)
-
 	return string(dk) == u.Password[8:]
 }

@@ -35,10 +35,10 @@ func TestTrackHandler_GetPopularTracks(t *testing.T) {
 		c := e.NewContext(req, rec)
 		c.SetPath("/tracks/popular")
 
-		//tracks := []*Track{
-		//	{ID: 1, Name: "Still loving you", Duration: "T06:28Z"},
-		//}
-		TUsecase.EXPECT().Fetch(count).Return([]*Track{}, nil)
+		tracks := []*Track{
+			{ID: 1, Name: "Still loving you", Duration: "2019-10-31T00:06:28Z"},
+		}
+		TUsecase.EXPECT().Fetch(count).Return(tracks, nil)
 		err := handler.GetPopularTracks()(c)
 
 		if err != nil {
@@ -46,7 +46,7 @@ func TestTrackHandler_GetPopularTracks(t *testing.T) {
 		}
 
 		body, _ := ioutil.ReadAll(rec.Body)
-		if strings.Trim(string(body), "\n") != `{"body":[]}` {
+		if strings.Trim(string(body), "\n") != `{"body":[{"name":"Still loving you","duration":"00:06:28","photo":"","artist":"","album":"","path":""}]}` {
 			t1.Fail()
 		}
 	})
@@ -68,7 +68,6 @@ func TestTrackHandler_GetPopularTracks(t *testing.T) {
 		}
 
 		body, _ := ioutil.ReadAll(rec.Body)
-		fmt.Println(string(body))
 
 		if strings.Trim(string(body), "\n") != `{"error":"internal server error"}` {
 			t2.Fail()

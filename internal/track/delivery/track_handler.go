@@ -4,10 +4,10 @@ import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
-	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type TrackHandler struct {
@@ -42,7 +42,6 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 		tracks, err := th.TUsecase.Fetch(25)
 
 		if err != nil {
-			fmt.Println(err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})

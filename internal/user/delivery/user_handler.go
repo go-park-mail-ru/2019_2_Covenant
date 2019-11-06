@@ -7,15 +7,16 @@ import (
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type UserHandler struct {
@@ -160,7 +161,6 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var userLoginData UserLogin
 		err := c.Bind(&userLoginData)
-
 		if err != nil {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"mime"
@@ -22,13 +23,15 @@ type UserHandler struct {
 	UUsecase user.Usecase
 	SUsecase session.Usecase
 	MManager middlewares.MiddlewareManager
+	Logger   *logrus.Logger
 }
 
-func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middlewares.MiddlewareManager) *UserHandler {
+func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middlewares.MiddlewareManager, logger *logrus.Logger) *UserHandler {
 	return &UserHandler{
 		UUsecase: uUC,
 		SUsecase: sUC,
 		MManager: mManager,
+		Logger:   logger,
 	}
 }
 

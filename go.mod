@@ -11,6 +11,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/swaggo/echo-swagger v0.0.0-20190329130007-1219b460a043
 	github.com/swaggo/swag v1.6.3
 	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf

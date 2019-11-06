@@ -7,18 +7,22 @@ import (
 	"2019_2_Covenant/internal/vars"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 type MiddlewareManager struct {
-	sUC session.Usecase
-	uUC user.Usecase
+	sUC    session.Usecase
+	uUC    user.Usecase
+	logger *logrus.Logger
 }
 
-func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase) MiddlewareManager {
+func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase, logger *logrus.Logger) MiddlewareManager {
 	return MiddlewareManager{
-		sUC: sUsecase,
-		uUC: uUsecase,
+		sUC:    sUsecase,
+		uUC:    uUsecase,
+		logger: logger,
 	}
 }
 
@@ -42,6 +46,20 @@ func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.Hand
 				Error: vars.ErrExpired.Error(),
 			})
 		}
+
+		return next(c)
+	}
+}
+
+func (m *MiddlewareManager) AccessLogMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		start := time.Now()
+
+		m.logger.WithFields(logrus.Fields{
+			"Request Method": c.Request().Method,
+			"Remote Address": c.Request().RemoteAddr,
+			"Work Time":      time.Since(start),
+		}).Info(c.Request().URL.Path)
 
 		return next(c)
 	}

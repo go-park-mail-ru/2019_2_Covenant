@@ -33,32 +33,24 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var (
-			id       uint64
-			albumID  uint64
-			artistID uint64
-			name     string
-			duration string
-			photo    string
-			artist   string
-			album    string
-			path     string
-		)
+		t := &models.Track{}
 
-		if err := rows.Scan(&id, &albumID, &artistID, &name, &duration, &photo, &artist, &album, &path); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
+			&t.Photo, &t.Artist, &t.Album, &t.Path,
+		); err != nil {
 			return nil, err
 		}
 
 		tracks = append(tracks, &models.Track{
-			ID: id,
-			AlbumID: albumID,
-			ArtistID: artistID,
-			Name: name,
-			Duration: duration,
-			Photo: photo,
-			Artist: artist,
-			Album: album,
-			Path: path,
+			ID: t.ID,
+			AlbumID: t.AlbumID,
+			ArtistID: t.ArtistID,
+			Name: t.Name,
+			Duration: t.Duration,
+			Photo: t.Photo,
+			Artist: t.Artist,
+			Album: t.Album,
+			Path: t.Path,
 		})
 	}
 

@@ -60,7 +60,7 @@ func (api *APIServer) configureRouter() {
 	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager, api.logger)
 	userHandler.Configure(api.router)
 
-	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager)
+	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager, api.logger)
 	trackHandler.Configure(api.router)
 }
 

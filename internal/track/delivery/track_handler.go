@@ -4,8 +4,8 @@ import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
-	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
@@ -13,17 +13,36 @@ import (
 type TrackHandler struct {
 	TUsecase track.Usecase
 	MManager middlewares.MiddlewareManager
+	Logger   *logrus.Logger
 }
 
-func NewTrackHandler(tUC track.Usecase, mManager middlewares.MiddlewareManager) *TrackHandler {
+func NewTrackHandler(tUC track.Usecase, mManager middlewares.MiddlewareManager, logger *logrus.Logger) *TrackHandler {
 	return &TrackHandler{
 		TUsecase: tUC,
 		MManager: mManager,
+		Logger:   logger,
 	}
 }
 
 func (th *TrackHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/tracks/popular", th.GetPopularTracks())
+}
+
+func (th *TrackHandler) log(c echo.Context, logType string, msg ...interface{}) {
+	fields := logrus.Fields{
+		"Request Method": c.Request().Method,
+		"Remote Address": c.Request().RemoteAddr,
+		"Message":        msg,
+	}
+
+	switch logType {
+	case "error":
+		th.Logger.WithFields(fields).Error(c.Request().URL.Path)
+	case "info":
+		th.Logger.WithFields(fields).Info(c.Request().URL.Path)
+	case "warning":
+		th.Logger.WithFields(fields).Warning(c.Request().URL.Path)
+	}
 }
 
 // @Tags Track
@@ -42,7 +61,7 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 		tracks, err := th.TUsecase.Fetch(25)
 
 		if err != nil {
-			fmt.Println(err)
+			th.log(c, "error", "Error while fetching tracks.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})

@@ -139,6 +139,43 @@ func TestUserUsecase_GetByID(t *testing.T) {
 	})
 }
 
+func TestUserUsecase_GetByNickname(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepo := mock.NewMockRepository(ctrl)
+
+	exe := func(usecase user.Usecase, nickname string) (*User, error) {
+		return usecase.GetByEmail(nickname)
+	}
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		setNickname := "newMarshal"
+
+		userRepo.EXPECT().GetByEmail(setNickname).Return(users.User[0], nil)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, setNickname)
+
+		if expUser != users.User[0] || err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func(t2 *testing.T) {
+		setEmail := "notfound@ya.ru"
+
+		userRepo.EXPECT().GetByEmail(setEmail).Return(nil, vars.ErrNotFound)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, setEmail)
+
+		if expUser != nil || err != vars.ErrNotFound {
+			t2.Fail()
+		}
+	})
+}
+
 func TestUserUsecase_Store(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

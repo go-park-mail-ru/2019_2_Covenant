@@ -24,12 +24,12 @@ func TestTrackRepository_Fetch(t *testing.T) {
 	trackRepo := configureTrackReposirory(dbMock)
 
 	t.Run("Test OK", func(t1 *testing.T) {
-		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name", "T_path"}
 
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World").
-			AddRow(2, 2, 2, "bad guy", "3:14", "path", "Billie Eilish", "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?").
-			AddRow(3, 3, 3, "Still Loving You", "6:28", "path", "Scorpions", "Love at First Sting")
+			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World", "path").
+			AddRow(2, 2, 2, "bad guy", "3:14", "path", "Billie Eilish", "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?", "path").
+			AddRow(3, 3, 3, "Still Loving You", "6:28", "path", "Scorpions", "Love at First Sting", "path")
 
 		count := uint64(3)
 

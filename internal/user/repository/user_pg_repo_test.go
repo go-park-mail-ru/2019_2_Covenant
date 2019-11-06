@@ -156,7 +156,6 @@ func TestUserRepository_GetByEmail(t *testing.T) {
 		rows := sqlmock.NewRows(columns).
 			AddRow(-1, "marshal", "m1@ya.ru", "path", "123456")
 
-
 		mock.ExpectQuery("SELECT").WithArgs(email).WillReturnRows(rows)
 
 		getUser, err := userRepo.GetByEmail(email)
@@ -214,7 +213,6 @@ func TestUserRepository_GetByID(t *testing.T) {
 		rows := sqlmock.NewRows(columns).
 			AddRow(-1, "marshal", "m1@ya.ru", "path", "123456")
 
-
 		mock.ExpectQuery("SELECT").WithArgs(ID).WillReturnRows(rows)
 
 		getUser, err := userRepo.GetByID(ID)
@@ -243,9 +241,9 @@ func TestUserRepository_Store(t *testing.T) {
 	userRepo := configureUserRepository(dbMock)
 
 	t.Run("Test OK", func(t1 *testing.T) {
-		newUser := models.User {
+		newUser := models.User{
 			Nickname: "krulex",
-			Email: "p4@mail.ru",
+			Email:    "p4@mail.ru",
 			Password: "123456",
 		}
 
@@ -267,9 +265,9 @@ func TestUserRepository_Store(t *testing.T) {
 	})
 
 	t.Run("Error of scanning", func(t2 *testing.T) {
-		newUser := models.User {
+		newUser := models.User{
 			Nickname: "krulex",
-			Email: "p4@mail.ru",
+			Email:    "p4@mail.ru",
 			Password: "123456",
 		}
 

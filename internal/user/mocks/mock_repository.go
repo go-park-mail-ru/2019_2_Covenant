@@ -6,9 +6,8 @@ package mock
 
 import (
 	models "2019_2_Covenant/internal/models"
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockRepository is a mock of Repository interface
@@ -77,6 +76,21 @@ func (m *MockRepository) GetByEmail(email string) (*models.User, error) {
 func (mr *MockRepositoryMockRecorder) GetByEmail(email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByEmail", reflect.TypeOf((*MockRepository)(nil).GetByEmail), email)
+}
+
+// GetByNickname mocks base method
+func (m *MockRepository) GetByNickname(nickname string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByNickname", nickname)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByNickname indicates an expected call of GetByNickname
+func (mr *MockRepositoryMockRecorder) GetByNickname(nickname interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNickname", reflect.TypeOf((*MockRepository)(nil).GetByNickname), nickname)
 }
 
 // Store mocks base method

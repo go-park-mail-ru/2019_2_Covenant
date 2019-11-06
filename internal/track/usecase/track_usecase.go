@@ -16,11 +16,37 @@ func NewTrackUsecase(tr track.Repository) track.Usecase {
 }
 
 func (tUC *trackUsecase) Fetch(count uint64) ([]*models.Track, error) {
-	users, err := tUC.trackRepo.Fetch(count)
+	tracks, err := tUC.trackRepo.Fetch(count)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return users, nil
+	return tracks, nil
+}
+
+func (tUC *trackUsecase) StoreFavourite(userID uint64, trackID uint64) error {
+	if err := tUC.trackRepo.StoreFavourite(userID, trackID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tUC *trackUsecase) RemoveFavourite(userID uint64, trackID uint64) error {
+	if err := tUC.trackRepo.RemoveFavourite(userID, trackID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64) ([]*models.Track, error) {
+	tracks, err := tUC.trackRepo.FetchFavourites(userID, count)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }

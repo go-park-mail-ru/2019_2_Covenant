@@ -9,4 +9,5 @@ type Track struct {
 	Photo    string        `json:"photo"`
 	Artist   string        `json:"artist"`
 	Album    string        `json:"album"`
+	Path     string        `json:"path"`
 }

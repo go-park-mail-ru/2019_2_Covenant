@@ -56,6 +56,7 @@ func (api *APIServer) configureRouter() {
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
 	api.router.Use(middlewareManager.PanicRecovering)
+	api.router.Use(middlewareManager.CORSMiddleware)
 
 	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager, api.logger)
 	userHandler.Configure(api.router)

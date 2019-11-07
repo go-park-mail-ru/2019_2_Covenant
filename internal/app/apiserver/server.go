@@ -3,6 +3,7 @@ package apiserver
 import (
 	"2019_2_Covenant/internal/app/storage"
 	"2019_2_Covenant/internal/middlewares"
+	_sessionDelivery "2019_2_Covenant/internal/session/delivery"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
 	_trackDelivery "2019_2_Covenant/internal/track/delivery"
 	_trackUsecase "2019_2_Covenant/internal/track/usecase"
@@ -63,6 +64,9 @@ func (api *APIServer) configureRouter() {
 
 	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager, api.logger)
 	trackHandler.Configure(api.router)
+
+	sessionHandler := _sessionDelivery.NewSessionHandler(sessionUsecase, middlewareManager, api.logger)
+	sessionHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

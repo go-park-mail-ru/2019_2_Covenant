@@ -9,4 +9,6 @@ var (
 	ErrAlreadyExist        = errors.New("already exist")
 	ErrExpired             = errors.New("session expired")
 	ErrRetrievingError     = errors.New("retrieving error")
+	ErrBadCSRF             = errors.New("csrf error")
+	ErrUnathorized         = errors.New("unauthorized")
 )

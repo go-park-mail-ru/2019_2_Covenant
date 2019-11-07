@@ -48,5 +48,9 @@ func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64) ([]*models
 		return nil, err
 	}
 
+	if tracks == nil {
+		tracks = []*models.Track{}
+	}
+
 	return tracks, nil
 }

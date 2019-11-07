@@ -30,10 +30,9 @@ func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.Hand
 	return func(c echo.Context) error {
 		token := c.Request().Header.Get("X-Csrf-Token")
 
-		usr := c.Get("user").(*models.User)
 		sess := c.Get("session").(*models.Session)
 
-		ok, err := models.NewCSRFTokenManager("Covenant").Verify(usr, sess, token)
+		ok, err := models.NewCSRFTokenManager("Covenant").Verify(sess.UserID, sess.Data, token)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
@@ -43,7 +42,7 @@ func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.Hand
 
 		if !ok {
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{
-				Error: vars.ErrExpired.Error(),
+				Error: vars.ErrBadCSRF.Error(),
 			})
 		}
 
@@ -98,29 +97,20 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie("Covenant")
 
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
-				"error": "unauthorized",
+			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
+				Error:vars.ErrUnathorized.Error(),
 			})
 		}
 
 		sess, err := m.sUC.Get(cookie.Value)
 
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
-				"error": "unauthorized",
-			})
-		}
-
-		usr, err := m.uUC.GetByID(sess.UserID)
-
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: err.Error(),
+			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
+				Error:vars.ErrUnathorized.Error(),
 			})
 		}
 
 		c.Set("session", sess)
-		c.Set("user", usr)
 
 		return next(c)
 	}

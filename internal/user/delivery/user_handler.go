@@ -38,22 +38,22 @@ func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middlewares.
 func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/signup", uh.SignUp())
 	e.POST("/api/v1/login", uh.LogIn())
-	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth, uh.MManager.CSRFCheckMiddleware)
+	e.POST("/api/v1/profile", uh.EditProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/logout", uh.LogOut(), uh.MManager.CheckAuth)
 }
 
-func isValidRequest(usr interface{}) (bool, error) {
+func isValidRequest(usr interface{}) error {
 	v := validator.New()
 	err := v.Struct(usr)
 
 	if err != nil {
-		return false, vars.ErrBadParam
+		return vars.ErrBadParam
 	}
 
-	return true, nil
+	return nil
 }
 
 func (uh *UserHandler) log(c echo.Context, logType string, msg ...interface{}) {
@@ -101,7 +101,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if ok, err := isValidRequest(userRegData); !ok {
+		if err := isValidRequest(userRegData); err != nil {
 			uh.log(c, "info", "Invalid request.", userRegData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
@@ -145,23 +145,23 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		if err != nil {
 			uh.log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
-		token, err := models.NewCSRFTokenManager("Covenant").Create(usr, sess, time.Now().Add(24*time.Hour))
+		token, err := models.NewCSRFTokenManager("Covenant").Create(sess.UserID, sess.Data, time.Now().Add(24*time.Hour))
 		c.Response().Header().Set("X-CSRF-Token", token)
 
 		if err != nil {
 			uh.log(c, "error", "CSRF Token generating error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
 		c.SetCookie(cookie)
 
-		return c.JSON(http.StatusOK, vars.Response{newUser})
+		return c.JSON(http.StatusOK, vars.Response{Body: newUser})
 	}
 }
 
@@ -192,7 +192,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if ok, err := isValidRequest(userLoginData); !ok {
+		if err := isValidRequest(userLoginData); err != nil {
 			uh.log(c, "info", "Invalid request.", userLoginData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
@@ -228,23 +228,23 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 		if err != nil {
 			uh.log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
-		token, err := models.NewCSRFTokenManager("Covenant").Create(usr, sess, time.Now().Add(24*time.Hour))
+		token, err := models.NewCSRFTokenManager("Covenant").Create(sess.UserID, sess.Data, time.Now().Add(24*time.Hour))
 		c.Response().Header().Set("X-CSRF-Token", token)
 
 		if err != nil {
 			uh.log(c, "error", "CSRF Token generating error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
 		c.SetCookie(cookie)
 
-		return c.JSON(http.StatusOK, vars.Response{usr})
+		return c.JSON(http.StatusOK, vars.Response{Body: usr})
 	}
 }
 
@@ -290,7 +290,7 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if ok, err := isValidRequest(userEditData); !ok {
+		if err := isValidRequest(userEditData); err != nil {
 			uh.log(c, "info","Invalid request.", userEditData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
@@ -329,7 +329,7 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 
 		if err != nil {
 			uh.log(c, "info", "Error while getting user by ID.", err)
-			return c.JSON(http.StatusUnauthorized, vars.ResponseError{Error: err.Error()})
+			return c.JSON(http.StatusInternalServerError, vars.ResponseError{Error: err.Error()})
 		}
 
 		return c.JSON(http.StatusOK, vars.Response{Body: usr})
@@ -365,7 +365,7 @@ func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.log(c, "info", "Error while getting user by ID.", err)
-			return c.JSON(http.StatusUnauthorized, vars.ResponseError{Error: err.Error()})
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		avatarPath := usr.Avatar

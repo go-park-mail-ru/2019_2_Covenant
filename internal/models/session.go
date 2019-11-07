@@ -28,21 +28,24 @@ func NewCSRFTokenManager(secret string) *CSRFTokenManager {
 	}
 }
 
-func (tk *CSRFTokenManager) Create(usr *User, sess *Session, expires time.Time) (string, error) {
+func (tk *CSRFTokenManager) Create(user_id uint64, cookie string, expires time.Time) (string, error) {
 	h := hmac.New(sha1.New, tk.Secret)
-	data := fmt.Sprintf("%s:%s:%d", usr.ID, sess.Data, expires.Unix())
-	h.Write([]byte(data))
+	data := fmt.Sprintf("%d:%s:%d", user_id, cookie, expires.Unix())
+
+	if _, err := h.Write([]byte(data)); err != nil {
+		return "", vars.ErrInternalServerError
+	}
 
 	token := hex.EncodeToString(h.Sum(nil)) + ":" + strconv.FormatInt(expires.Unix(), 10)
 
 	return token, nil
 }
 
-func (tk *CSRFTokenManager) Verify(usr *User, sess *Session, token string) (bool, error) {
+func (tk *CSRFTokenManager) Verify(user_id uint64, cookie string, token string) (bool, error) {
 	tokenData := strings.Split(token, ":")
 
 	if len(tokenData) != 2 {
-		return false, vars.ErrExpired
+		return false, vars.ErrBadCSRF
 	}
 
 	tokenExp, err := strconv.ParseInt(tokenData[1], 10, 64)
@@ -52,11 +55,11 @@ func (tk *CSRFTokenManager) Verify(usr *User, sess *Session, token string) (bool
 	}
 
 	if tokenExp < time.Now().Unix() {
-		return false, vars.ErrExpired
+		return false, vars.ErrBadCSRF
 	}
 
 	h := hmac.New(sha1.New, tk.Secret)
-	data := fmt.Sprintf("%s:%s:%d", usr.ID, sess.Data, tokenExp)
+	data := fmt.Sprintf("%d:%s:%d", user_id, cookie, tokenExp)
 	h.Write([]byte(data))
 
 	expected := h.Sum(nil)

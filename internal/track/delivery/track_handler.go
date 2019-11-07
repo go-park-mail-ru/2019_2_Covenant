@@ -62,7 +62,7 @@ func (th *TrackHandler) log(c echo.Context, logType string, msg ...interface{}) 
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tracks, err := th.TUsecase.Fetch(25)
+		tracks, err := th.TUsecase.FetchPopular(25)
 
 		if err != nil {
 			th.log(c, "error", "Error while fetching tracks.", err)

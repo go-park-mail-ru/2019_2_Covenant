@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"net/http"
 )
 
 type APIServer struct {
@@ -49,6 +50,8 @@ func (api *APIServer) Start() error {
 
 func (api *APIServer) configureRouter() {
 	api.router.GET("/docs/*", echoSwagger.WrapHandler)
+	fs := http.FileServer(http.Dir("resources/"))
+	api.router.GET("/resources/*", echo.WrapHandler(http.StripPrefix("/resources/", fs)))
 
 	userUsecase := _userUsecase.NewUserUsecase(api.storage.User())
 	sessionUsecase := _sessionUsecase.NewSessionUsecase(api.storage.Session())

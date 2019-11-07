@@ -106,7 +106,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		if err := th.TUsecase.StoreFavourite(sess.UserID, data.TrackID); err != nil {
 			th.log(c, "error", "Error while storing favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
@@ -139,9 +139,9 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 		}
 
 		if err := th.TUsecase.RemoveFavourite(sess.UserID, data.TrackID); err != nil {
-			th.log(c, "error", "Error while storing favourite track.", err)
+			th.log(c, "error", "Error while remove favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 

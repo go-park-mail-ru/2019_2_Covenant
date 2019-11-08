@@ -1,0 +1,298 @@
+basePath: /api/v1
+definitions:
+  models.Track:
+    properties:
+      album:
+        type: string
+      artist:
+        type: string
+      duration:
+        type: string
+      name:
+        type: string
+      path:
+        type: string
+      photo:
+        type: string
+    type: object
+  models.User:
+    properties:
+      access:
+        description: 0 - public; 1 - private;
+        type: integer
+      avatar:
+        type: string
+      email:
+        type: string
+      nickname:
+        type: string
+      role:
+        description: 0 - user; 1 - admin;
+        type: integer
+    type: object
+  vars.ResponseError:
+    properties:
+      error:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Covenant backend server
+  license: {}
+  title: Covenant API
+  version: "1.0"
+paths:
+  /api/v1/avatar:
+    get:
+      consumes:
+      - application/json
+      description: Signing user in
+      operationId: get-avatar
+      parameters:
+      - description: multipart/form-data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Get Avatar Route
+      tags:
+      - User
+    post:
+      consumes:
+      - multipart/form-data
+      description: Set user avatar
+      operationId: set-avatar
+      parameters:
+      - description: multipart/form-data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Set Avatar Route
+      tags:
+      - User
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Logging user in
+      operationId: log-in-user
+      parameters:
+      - description: JSON that contains user login data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: LogIn Route
+      tags:
+      - User
+  /api/v1/logout:
+    get:
+      consumes:
+      - application/json
+      description: Logging user out
+      operationId: log-out-user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Log Out Route
+      tags:
+      - User
+  /api/v1/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get user profile
+      operationId: get-profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Get Profile Route
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Edit user profile
+      operationId: edit-profile
+      parameters:
+      - description: JSON that contains user data to edit
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Edit Profile Route
+      tags:
+      - User
+  /api/v1/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signing user up
+      operationId: sign-up-user
+      parameters:
+      - description: JSON that contains user sign up data
+        in: body
+        name: Data
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: SignUp Route
+      tags:
+      - User
+  /api/v1/tracks/popular:
+    post:
+      consumes:
+      - application/json
+      description: Getting popular tracks
+      operationId: get-popular-tracks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Track'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/vars.ResponseError'
+      summary: Get Popular Tracks Route
+      tags:
+      - Track
+swagger: "2.0"

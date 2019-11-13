@@ -7,6 +7,9 @@ import (
 	"database/sql"
 )
 
+// Для тестирования только этого файла:
+// go test -v -cover -race ./internal/track/repository
+
 type TrackRepository struct {
 	db *sql.DB
 }
@@ -21,9 +24,9 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 	var tracks []*models.Track
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-		"JOIN albums Al ON T.album_id = Al.id " +
-		"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $1",
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
+			"JOIN albums Al ON T.album_id = Al.id "+
+			"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $1",
 		count)
 
 	if err != nil {
@@ -42,15 +45,15 @@ func (tr *TrackRepository) Fetch(count uint64) ([]*models.Track, error) {
 		}
 
 		tracks = append(tracks, &models.Track{
-			ID: t.ID,
-			AlbumID: t.AlbumID,
+			ID:       t.ID,
+			AlbumID:  t.AlbumID,
 			ArtistID: t.ArtistID,
-			Name: t.Name,
+			Name:     t.Name,
 			Duration: t.Duration,
-			Photo: t.Photo,
-			Artist: t.Artist,
-			Album: t.Album,
-			Path: t.Path,
+			Photo:    t.Photo,
+			Artist:   t.Artist,
+			Album:    t.Album,
+			Path:     t.Path,
 		})
 	}
 
@@ -104,11 +107,11 @@ func (th *TrackRepository) FetchFavourites(userID uint64, count uint64) ([]*mode
 	var tracks []*models.Track
 
 	rows, err := th.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-		"JOIN favourites F ON T.id = F.track_id " +
-		"JOIN albums Al ON T.album_id = Al.id " +
-		"JOIN artists Ar ON Al.artist_id = Ar.id " +
-		"WHERE F.user_id = $1 LIMIT $2",
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
+			"JOIN favourites F ON T.id = F.track_id "+
+			"JOIN albums Al ON T.album_id = Al.id "+
+			"JOIN artists Ar ON Al.artist_id = Ar.id "+
+			"WHERE F.user_id = $1 LIMIT $2",
 		userID,
 		count,
 	)
@@ -129,15 +132,15 @@ func (th *TrackRepository) FetchFavourites(userID uint64, count uint64) ([]*mode
 		}
 
 		tracks = append(tracks, &models.Track{
-			ID: t.ID,
-			AlbumID: t.AlbumID,
+			ID:       t.ID,
+			AlbumID:  t.AlbumID,
 			ArtistID: t.ArtistID,
-			Name: t.Name,
+			Name:     t.Name,
 			Duration: t.Duration,
-			Photo: t.Photo,
-			Artist: t.Artist,
-			Album: t.Album,
-			Path: t.Path,
+			Photo:    t.Photo,
+			Artist:   t.Artist,
+			Album:    t.Album,
+			Path:     t.Path,
 		})
 	}
 

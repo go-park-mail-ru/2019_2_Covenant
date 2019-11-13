@@ -1,8 +1,9 @@
 package apiserver
 
 type Config struct {
-	Address string `toml:"server_addr"`
-	Port    string `toml:"server_port"`
+	Address  string `toml:"server_addr"`
+	Port     string `toml:"server_port"`
+	LogLevel string `toml:"log_level"`
 }
 
 func NewConfig() *Config {

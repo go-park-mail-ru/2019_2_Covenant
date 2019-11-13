@@ -1,7 +1,7 @@
 package models
 
 type Track struct {
-	ID       uint64        `json:"-"`
+	ID       uint64        `json:"id"`
 	AlbumID  uint64        `json:"-"`
 	ArtistID uint64		   `json:"-"`
 	Name     string        `json:"name"`

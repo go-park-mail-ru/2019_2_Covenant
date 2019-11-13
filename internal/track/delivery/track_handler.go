@@ -5,10 +5,11 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type TrackHandler struct {
@@ -99,7 +100,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		data := &DataToAdd{}
 
 		if err := c.Bind(&data); err != nil {
-			th.log(c, "error","Can't read request body.")
+			th.log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
@@ -134,7 +135,7 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 		data := &DataToRemove{}
 
 		if err := c.Bind(&data); err != nil {
-			th.log(c, "error","Can't read request body.")
+			th.log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 

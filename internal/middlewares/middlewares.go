@@ -5,6 +5,7 @@ import (
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/pkg/logger"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -15,10 +16,12 @@ import (
 type MiddlewareManager struct {
 	sUC    session.Usecase
 	uUC    user.Usecase
-	logger *logrus.Logger
+	logger *logger.LogrusLogger
 }
 
-func NewMiddlewareManager(uUsecase user.Usecase, sUsecase session.Usecase, logger *logrus.Logger) MiddlewareManager {
+func NewMiddlewareManager(uUsecase user.Usecase,
+	sUsecase session.Usecase,
+	logger *logger.LogrusLogger) MiddlewareManager {
 	return MiddlewareManager{
 		sUC:    sUsecase,
 		uUC:    uUsecase,
@@ -54,7 +57,7 @@ func (m *MiddlewareManager) AccessLogMiddleware(next echo.HandlerFunc) echo.Hand
 	return func(c echo.Context) error {
 		start := time.Now()
 
-		m.logger.WithFields(logrus.Fields{
+		m.logger.L.WithFields(logrus.Fields{
 			"Request Method": c.Request().Method,
 			"Remote Address": c.Request().RemoteAddr,
 			"Work Time":      time.Since(start),

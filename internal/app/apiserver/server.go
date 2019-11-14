@@ -9,6 +9,7 @@ import (
 	_trackUsecase "2019_2_Covenant/internal/track/usecase"
 	_userDelivery "2019_2_Covenant/internal/user/delivery"
 	_userUsecase "2019_2_Covenant/internal/user/usecase"
+	"2019_2_Covenant/pkg/logger"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -20,7 +21,7 @@ type APIServer struct {
 	conf   *Config
 	router *echo.Echo
 	storage storage.Storage
-	logger *logrus.Logger
+	logger *logger.LogrusLogger
 }
 
 func NewAPIServer(conf *Config, st storage.Storage) *APIServer {
@@ -28,7 +29,7 @@ func NewAPIServer(conf *Config, st storage.Storage) *APIServer {
 		conf:   conf,
 		router: echo.New(),
 		storage: st,
-		logger: logrus.New(),
+		logger: logger.NewLogrusLogger(),
 	}
 }
 
@@ -37,7 +38,7 @@ func (api *APIServer) Start() error {
 		return nil
 	}
 
-	api.logger.Info("starting server...")
+	api.logger.L.Info("starting server...")
 
 	if err := api.configureStorage(); err != nil {
 		return err
@@ -87,7 +88,7 @@ func (api *APIServer) configureLogger() error {
 		return err
 	}
 
-	api.logger.SetLevel(level)
+	api.logger.L.SetLevel(level)
 
 	return nil
 }

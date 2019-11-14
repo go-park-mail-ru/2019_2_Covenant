@@ -7,10 +7,10 @@ import (
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
+	"2019_2_Covenant/pkg/validator"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -24,6 +24,7 @@ type UserHandler struct {
 	SUsecase session.Usecase
 	MManager middlewares.MiddlewareManager
 	Logger   *logger.LogrusLogger
+	ReqValidator *validator.ReqValidator
 }
 
 func NewUserHandler(uUC user.Usecase,
@@ -35,6 +36,7 @@ func NewUserHandler(uUC user.Usecase,
 		SUsecase: sUC,
 		MManager: mManager,
 		Logger:   logger,
+		ReqValidator: validator.NewReqValidator(),
 	}
 }
 
@@ -47,19 +49,6 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/logout", uh.LogOut(), uh.MManager.CheckAuth)
 }
-
-func isValidRequest(usr interface{}) error {
-	v := validator.New()
-	err := v.Struct(usr)
-
-	if err != nil {
-		return vars.ErrBadParam
-	}
-
-	return nil
-}
-
-
 
 // @Tags User
 // @Summary SignUp Route
@@ -89,7 +78,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userRegData); err != nil {
+		if err := uh.ReqValidator.Validate(userRegData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request.", userRegData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
@@ -180,7 +169,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userLoginData); err != nil {
+		if err := uh.ReqValidator.Validate(userLoginData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request.", userLoginData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
@@ -278,7 +267,7 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userEditData); err != nil {
+		if err := uh.ReqValidator.Validate(userEditData); err != nil {
 			uh.Logger.Log(c, "info","Invalid request.", userEditData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}

@@ -6,6 +6,7 @@ import (
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
+	"2019_2_Covenant/pkg/validator"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ type TrackHandler struct {
 	TUsecase track.Usecase
 	MManager middlewares.MiddlewareManager
 	Logger   *logger.LogrusLogger
+	ReqValidator *validator.ReqValidator
 }
 
 func NewTrackHandler(tUC track.Usecase,
@@ -24,6 +26,7 @@ func NewTrackHandler(tUC track.Usecase,
 		TUsecase: tUC,
 		MManager: mManager,
 		Logger:   logger,
+		ReqValidator: validator.NewReqValidator(),
 	}
 }
 
@@ -88,6 +91,11 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
+		if err := th.ReqValidator.Validate(data); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", data)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
+		}
+
 		if err := th.TUsecase.StoreFavourite(sess.UserID, data.TrackID); err != nil {
 			th.Logger.Log(c, "error", "Error while storing favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
@@ -121,6 +129,11 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 		if err := c.Bind(&data); err != nil {
 			th.Logger.Log(c, "error","Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
+		}
+
+		if err := th.ReqValidator.Validate(data); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", data)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		if err := th.TUsecase.RemoveFavourite(sess.UserID, data.TrackID); err != nil {

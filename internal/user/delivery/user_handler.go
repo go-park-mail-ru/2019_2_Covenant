@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -239,7 +240,18 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 // @Router /api/v1/profile [post]
 func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 	type UserEdit struct {
-		Nickname string `json:"nickname" validate:"required"`
+		Email string `json:"email" validate:"omitempty,email"`
+		Nickname string `json:"nickname" validate:"omitempty"`
+		Password string `json:"password" validate:"omitempty,gte=6"`
+	}
+
+	checkValue := func(value string, res *bool) bool {
+		value = strings.TrimSpace(value)
+		if strings.Compare(value, "") != 0 && !strings.Contains(value, " ") {
+			*res = true
+		}
+
+		return *res
 	}
 
 	return func(c echo.Context) error {
@@ -272,9 +284,28 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
-		if usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname); err != nil {
-			uh.Logger.Log(c, "error","Error while updating user nickname.", err)
+		var result bool
+
+		switch {
+		case checkValue(userEditData.Nickname, &result):
+			usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname)
+		case checkValue(userEditData.Password, &result):
+			err = uh.UUsecase.UpdatePassword(usr.ID, userEditData.Password)
+		case checkValue(userEditData.Email, &result):
+			usr, err = uh.UUsecase.UpdateEmail(usr.ID, userEditData.Email)
+		}
+
+		if !result {
+			uh.Logger.Log(c, "info","Invalid request.", userEditData)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: vars.ErrBadParam.Error()})
+		}
+
+		if err == vars.ErrAlreadyExist {
+			uh.Logger.Log(c, "info","Error while updating user data.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{Error: err.Error()})
+		} else if err != nil {
+			uh.Logger.Log(c, "error","Error while updating user data.", err)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		return c.JSON(http.StatusOK, vars.Response{Body: usr})

@@ -157,3 +157,51 @@ func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.Us
 
 	return u, nil
 }
+
+func (ur *UserRepository) emailExists(email string) (bool, error) {
+	usr, err := ur.GetByEmail(email)
+
+	if err != nil {
+		return false, err
+	}
+
+	if usr != nil {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (ur *UserRepository) UpdateEmail(id uint64, email string) (*models.User, error) {
+	u := &models.User{}
+
+	exist, _ := ur.emailExists(email)
+
+	if exist {
+		return nil, vars.ErrAlreadyExist
+	}
+
+	if err := ur.db.QueryRow("UPDATE users SET email = $1 WHERE id = $2 RETURNING nickname, email, avatar",
+		email,
+		id,
+	).Scan(
+		&u.Nickname,
+		&u.Email,
+		&u.Avatar,
+	); err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+func (ur *UserRepository) UpdatePassword(id uint64, password string) error {
+	if _, err := ur.db.Exec("UPDATE users SET password = $1 WHERE id = $2 RETURNING nickname, email, avatar",
+		password,
+		id,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}

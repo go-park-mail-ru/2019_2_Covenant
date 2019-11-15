@@ -3,6 +3,7 @@ package validator
 import (
 	"2019_2_Covenant/internal/vars"
 	"gopkg.in/go-playground/validator.v9"
+	"log"
 )
 
 type ReqValidator struct {
@@ -15,10 +16,11 @@ func NewReqValidator() *ReqValidator {
 	}
 }
 
-func (rv *ReqValidator) Validate(usr interface{}) error {
-	err := rv.v.Struct(usr)
+func (rv *ReqValidator) Validate(req interface{}) error {
+	err := rv.v.Struct(req)
 
 	if err != nil {
+		log.Print(err)
 		return vars.ErrBadParam
 	}
 

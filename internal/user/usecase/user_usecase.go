@@ -99,3 +99,31 @@ func (uUC *userUsecase) UpdateNickname(id uint64, nickname string) (*models.User
 
 	return usr, nil
 }
+
+func (uUC *userUsecase) UpdateEmail(id uint64, email string) (*models.User, error) {
+	usr, err := uUC.userRepo.UpdateEmail(id, email)
+
+	if err == vars.ErrAlreadyExist {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return usr, nil
+}
+
+func (uUC *userUsecase) UpdatePassword(id uint64, plainPassword string) error {
+	password, err := models.EncryptPassword(plainPassword)
+
+	if err != nil {
+		return vars.ErrInternalServerError
+	}
+
+	if err := uUC.userRepo.UpdatePassword(id, password); err != nil {
+		return vars.ErrInternalServerError
+	}
+
+	return nil
+}

@@ -179,43 +179,44 @@ func TestTrackHandler_AddToFavourites(t *testing.T) {
 	//
 	//	body, _ := ioutil.ReadAll(rec.Body)
 	//
-	//	if strings.Trim(string(body), "\n") != `{"message":"success"}` {
+	//	if strings.Trim(string(body), "\n") != `{"error":"bad params"}` {
 	//		fmt.Println(string(body))
 	//		t3.Fail()
 	//	}
 	//})
 
-	t.Run("Error binding data", func(t4 *testing.T) {
-		e := echo.New()
-
-		dataToAdd := `{"other_id":1}`
-		req := httptest.NewRequest(http.MethodPost, "/api/v1", strings.NewReader(dataToAdd))
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetPath("/tracks/favourite")
-
-		sess := &Session{
-			ID:      uint64(1),
-			UserID:  uint64(2),
-			Expires: time.Now().Add(24 * time.Hour),
-			Data:    "covenantcookies",
-		}
-		c.Set("session", sess)
-
-		err := handler.AddToFavourites()(c)
-
-		if err != nil {
-			fmt.Println("Error happens")
-			t4.Fail()
-		}
-
-		body, _ := ioutil.ReadAll(rec.Body)
-		if strings.Trim(string(body), "\n") != `{"error":"code=415, message=Unsupported Media Type, internal=\u003cnil\u003e"}` {
-			fmt.Println(string(body))
-			t4.Fail()
-		}
-	})
+	//t.Run("Error bad params", func(t4 *testing.T) {
+	//	e := echo.New()
+	//
+	//	dataToAdd := `{"other_id": 1}`
+	//	req := httptest.NewRequest(http.MethodPost, "/api/v1", strings.NewReader(dataToAdd))
+	//	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	//	rec := httptest.NewRecorder()
+	//
+	//	c := e.NewContext(req, rec)
+	//	c.SetPath("/tracks/favourite")
+	//
+	//	sess := &Session{
+	//		ID:      uint64(1),
+	//		UserID:  uint64(2),
+	//		Expires: time.Now().Add(24 * time.Hour),
+	//		Data:    "covenantcookies",
+	//	}
+	//	c.Set("session", sess)
+	//
+	//	err := handler.AddToFavourites()(c)
+	//
+	//	if err != nil {
+	//		fmt.Println("Error happens")
+	//		t4.Fail()
+	//	}
+	//
+	//	body, _ := ioutil.ReadAll(rec.Body)
+	//	if strings.Trim(string(body), "\n") != `{"error":"bad params"}` {
+	//		fmt.Println(string(body))
+	//		t4.Fail()
+	//	}
+	//})
 
 	t.Run("Error already added", func(t5 *testing.T) {
 		e := echo.New()
@@ -249,6 +250,39 @@ func TestTrackHandler_AddToFavourites(t *testing.T) {
 		if strings.Trim(string(body), "\n") != `{"error":"already exist"}` {
 			fmt.Println(string(body))
 			t5.Fail()
+		}
+	})
+
+	t.Run("Error binding", func(t6 *testing.T) {
+		e := echo.New()
+
+		dataToAdd := `{"other_id"}`
+		req := httptest.NewRequest(http.MethodPost, "/api/v1", strings.NewReader(dataToAdd))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("/tracks/favourite")
+
+		sess := &Session{
+			ID:      uint64(1),
+			UserID:  uint64(2),
+			Expires: time.Now().Add(24 * time.Hour),
+			Data:    "covenantcookies",
+		}
+		c.Set("session", sess)
+
+		err := handler.AddToFavourites()(c)
+
+		if err != nil {
+			fmt.Println("Error happens")
+			t6.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		if strings.Trim(string(body), "\n") != `{"error":"code=400, message=Syntax error: offset=12, error=invalid character '}' after object key, internal=invalid character '}' after object key"}` {
+			fmt.Println(string(body))
+			t6.Fail()
 		}
 	})
 }
@@ -349,43 +383,43 @@ func TestTrackHandler_RemoveFavourite(t *testing.T) {
 	//
 	//	body, _ := ioutil.ReadAll(rec.Body)
 	//
-	//	if strings.Trim(string(body), "\n") != `{"message":"success"}` {
+	//	if strings.Trim(string(body), "\n") != `{"error":"bad params"}}` {
 	//		fmt.Println(string(body))
 	//		t3.Fail()
 	//	}
 	//})
 
-	t.Run("Error binding data", func(t4 *testing.T) {
-		e := echo.New()
-
-		dataToRemove := `{"other_id":1}`
-		req := httptest.NewRequest(http.MethodDelete, "/api/v1", strings.NewReader(dataToRemove))
-		rec := httptest.NewRecorder()
-
-		c := e.NewContext(req, rec)
-		c.SetPath("/tracks/favourite")
-
-		sess := &Session{
-			ID:      uint64(1),
-			UserID:  uint64(2),
-			Expires: time.Now().Add(24 * time.Hour),
-			Data:    "covenantcookies",
-		}
-		c.Set("session", sess)
-
-		err := handler.RemoveFavourite()(c)
-
-		if err != nil {
-			fmt.Println("Error happens")
-			t4.Fail()
-		}
-
-		body, _ := ioutil.ReadAll(rec.Body)
-		if strings.Trim(string(body), "\n") != `{"error":"code=415, message=Unsupported Media Type, internal=\u003cnil\u003e"}` {
-			fmt.Println(string(body))
-			t4.Fail()
-		}
-	})
+	//t.Run("Error bad params", func(t4 *testing.T) {
+	//	e := echo.New()
+	//
+	//	dataToRemove := `{"other_id":1}`
+	//	req := httptest.NewRequest(http.MethodDelete, "/api/v1", strings.NewReader(dataToRemove))
+	//	rec := httptest.NewRecorder()
+	//
+	//	c := e.NewContext(req, rec)
+	//	c.SetPath("/tracks/favourite")
+	//
+	//	sess := &Session{
+	//		ID:      uint64(1),
+	//		UserID:  uint64(2),
+	//		Expires: time.Now().Add(24 * time.Hour),
+	//		Data:    "covenantcookies",
+	//	}
+	//	c.Set("session", sess)
+	//
+	//	err := handler.RemoveFavourite()(c)
+	//
+	//	if err != nil {
+	//		fmt.Println("Error happens")
+	//		t4.Fail()
+	//	}
+	//
+	//	body, _ := ioutil.ReadAll(rec.Body)
+	//	if strings.Trim(string(body), "\n") != `{"error":"bad params"}` {
+	//		fmt.Println(string(body))
+	//		t4.Fail()
+	//	}
+	//})
 
 	t.Run("Error not found", func(t5 *testing.T) {
 		e := echo.New()
@@ -419,6 +453,39 @@ func TestTrackHandler_RemoveFavourite(t *testing.T) {
 		if strings.Trim(string(body), "\n") != `{"error":"not found"}` {
 			fmt.Println(string(body))
 			t5.Fail()
+		}
+	})
+
+	t.Run("Error binding", func(t6 *testing.T) {
+		e := echo.New()
+
+		dataToAdd := `{"other_id"}`
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1", strings.NewReader(dataToAdd))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("/tracks/favourite")
+
+		sess := &Session{
+			ID:      uint64(1),
+			UserID:  uint64(2),
+			Expires: time.Now().Add(24 * time.Hour),
+			Data:    "covenantcookies",
+		}
+		c.Set("session", sess)
+
+		err := handler.RemoveFavourite()(c)
+
+		if err != nil {
+			fmt.Println("Error happens")
+			t6.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		if strings.Trim(string(body), "\n") != `{"error":"code=400, message=Syntax error: offset=12, error=invalid character '}' after object key, internal=invalid character '}' after object key"}` {
+			fmt.Println(string(body))
+			t6.Fail()
 		}
 	})
 }

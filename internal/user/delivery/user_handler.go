@@ -19,6 +19,9 @@ import (
 	"time"
 )
 
+// Для тестирования только этого файла:
+// go test -v -cover -race ./internal/user/delivery
+
 type UserHandler struct {
 	UUsecase user.Usecase
 	SUsecase session.Usecase

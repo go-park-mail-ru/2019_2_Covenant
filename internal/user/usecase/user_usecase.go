@@ -86,34 +86,6 @@ func (uUC *userUsecase) UpdateAvatar(id uint64, avatarPath string) (*models.User
 	return usr, nil
 }
 
-func (uUC *userUsecase) UpdateNickname(id uint64, nickname string) (*models.User, error) {
-	usr, err := uUC.userRepo.UpdateNickname(id, nickname)
-
-	if err == vars.ErrAlreadyExist {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, nil
-}
-
-func (uUC *userUsecase) UpdateEmail(id uint64, email string) (*models.User, error) {
-	usr, err := uUC.userRepo.UpdateEmail(id, email)
-
-	if err == vars.ErrAlreadyExist {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, nil
-}
-
 func (uUC *userUsecase) UpdatePassword(id uint64, plainPassword string) error {
 	password, err := models.EncryptPassword(plainPassword)
 
@@ -126,4 +98,14 @@ func (uUC *userUsecase) UpdatePassword(id uint64, plainPassword string) error {
 	}
 
 	return nil
+}
+
+func (uUC *userUsecase) Update(id uint64, nickname string, email string) (*models.User, error) {
+	usr, err := uUC.userRepo.Update(id, nickname, email)
+
+	if err != nil {
+		return nil, vars.ErrAlreadyExist
+	}
+
+	return usr, nil
 }

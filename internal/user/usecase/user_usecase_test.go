@@ -146,13 +146,13 @@ func TestUserUsecase_GetByNickname(t *testing.T) {
 	userRepo := mock.NewMockRepository(ctrl)
 
 	exe := func(usecase user.Usecase, nickname string) (*User, error) {
-		return usecase.GetByEmail(nickname)
+		return usecase.GetByNickname(nickname)
 	}
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		setNickname := "newMarshal"
 
-		userRepo.EXPECT().GetByEmail(setNickname).Return(users.User[0], nil)
+		userRepo.EXPECT().GetByNickname(setNickname).Return(users.User[0], nil)
 		usecase := configUserUsecase(userRepo)
 
 		expUser, err := exe(usecase, setNickname)
@@ -165,7 +165,7 @@ func TestUserUsecase_GetByNickname(t *testing.T) {
 	t.Run("Test with error", func(t2 *testing.T) {
 		setEmail := "notfound@ya.ru"
 
-		userRepo.EXPECT().GetByEmail(setEmail).Return(nil, vars.ErrNotFound)
+		userRepo.EXPECT().GetByNickname(setEmail).Return(nil, vars.ErrNotFound)
 		usecase := configUserUsecase(userRepo)
 
 		expUser, err := exe(usecase, setEmail)

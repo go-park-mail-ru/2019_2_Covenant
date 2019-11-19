@@ -7,16 +7,17 @@ import (
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 // Для тестирования только этого файла:
@@ -287,17 +288,17 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 		err = c.Bind(&userEditData)
 
 		if err != nil {
-			uh.log(c, "error","Can't read request body.")
+			uh.log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
 		if err := isValidRequest(userEditData); err != nil {
-			uh.log(c, "info","Invalid request.", userEditData)
+			uh.log(c, "info", "Invalid request.", userEditData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		if usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname); err != nil {
-			uh.log(c, "error","Error while updating user nickname.", err)
+			uh.log(c, "error", "Error while updating user nickname.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{Error: err.Error()})
 		}
 

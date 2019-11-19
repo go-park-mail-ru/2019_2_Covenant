@@ -5,10 +5,11 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/vars"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type SessionHandler struct {

@@ -1,8 +1,11 @@
 package delivery
 
 import (
+	. "2019_2_Covenant/internal/middlewares"
 	. "2019_2_Covenant/internal/models"
+	mockSs "2019_2_Covenant/internal/session/mocks"
 	mock "2019_2_Covenant/internal/track/mocks"
+	mockUs "2019_2_Covenant/internal/user/mocks"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,8 +32,14 @@ func TestTrackHandler_GetPopularTracks(t *testing.T) {
 
 	TUsecase := mock.NewMockUsecase(ctrl)
 
-	handler := TrackHandler{TUsecase: TUsecase, Logger: logrus.New()}
+	SUsecase := mockSs.NewMockRepository(ctrl)
+	UUsecase := mockUs.NewMockRepository(ctrl)
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
+
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
 
@@ -91,8 +100,14 @@ func TestTrackHandler_AddToFavourites(t *testing.T) {
 
 	TUsecase := mock.NewMockUsecase(ctrl)
 
-	handler := TrackHandler{TUsecase: TUsecase, Logger: logrus.New()}
+	SUsecase := mockSs.NewMockRepository(ctrl)
+	UUsecase := mockUs.NewMockRepository(ctrl)
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
+
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
 
@@ -293,7 +308,12 @@ func TestTrackHandler_RemoveFavourite(t *testing.T) {
 
 	TUsecase := mock.NewMockUsecase(ctrl)
 
-	handler := TrackHandler{TUsecase: TUsecase, Logger: logrus.New()}
+	SUsecase := mockSs.NewMockRepository(ctrl)
+	UUsecase := mockUs.NewMockRepository(ctrl)
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -496,7 +516,12 @@ func TestTrackHandler_GetFavourites(t *testing.T) {
 
 	TUsecase := mock.NewMockUsecase(ctrl)
 
-	handler := TrackHandler{TUsecase: TUsecase, Logger: logrus.New()}
+	SUsecase := mockSs.NewMockRepository(ctrl)
+	UUsecase := mockUs.NewMockRepository(ctrl)
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {

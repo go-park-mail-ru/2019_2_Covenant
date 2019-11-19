@@ -13,6 +13,7 @@ import (
 )
 
 //go:generate mockgen -source=../repository.go -destination=../mocks/mock_repository.go -package=mock
+//go:generate mockgen -source=../../models/user.go -destination=../../models/mocks/mock_user.go -package=mock
 
 type Sessions struct {
 	Session []*Session

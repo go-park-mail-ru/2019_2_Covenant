@@ -1,6 +1,7 @@
 package delivery
 
 import (
+	. "2019_2_Covenant/internal/middlewares"
 	. "2019_2_Covenant/internal/models"
 	mockSs "2019_2_Covenant/internal/session/mocks"
 	mockUs "2019_2_Covenant/internal/user/mocks"
@@ -32,7 +33,10 @@ func TestUserHandler_LogIn(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -214,7 +218,10 @@ func TestUserHandler_SignUp(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -408,7 +415,10 @@ func TestUserHandler_EditProfile(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -637,7 +647,10 @@ func TestUserHandler_GetProfile(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -744,7 +757,10 @@ func TestUserHandler_LogOut(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	t.Run("Test OK", func(t1 *testing.T) {
@@ -837,112 +853,118 @@ func TestUserHandler_LogOut(t *testing.T) {
 	})
 }
 
-//func TestUserHandler_GetAvatar(t *testing.T) {
-//	ctrl := gomock.NewController(t)
-//	defer ctrl.Finish()
-//
-//	UUsecase := mockUs.NewMockRepository(ctrl)
-//	SUsecase := mockSs.NewMockRepository(ctrl)
-//
-//	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
-//	handler.Logger.Out = ioutil.Discard
-//
-//	t.Run("Test OK", func(t1 *testing.T) {
-//		e := echo.New()
-//
-//		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
-//		rec := httptest.NewRecorder()
-//
-//		c := e.NewContext(req, rec)
-//		c.SetPath("/avatar")
-//
-//		sess := &Session{
-//			ID:      1,
-//			UserID:  2,
-//			Expires: time.Now().Add(24 * time.Hour),
-//			Data:    "covenantcookies",
-//		}
-//		c.Set("session", sess)
-//
-//		user := &User{
-//			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "image.png", Role: 0, Access: 0,
-//		}
-//		_ = user.BeforeStore()
-//		UUsecase.EXPECT().GetByID(uint64(2)).Return(user, nil)
-//
-//		err := handler.GetAvatar()(c)
-//
-//		if err != nil {
-//			fmt.Println("Error happens", err)
-//			t1.Fail()
-//		}
-//
-//		body, _ := ioutil.ReadAll(rec.Body)
-//		if body == nil {
-//			fmt.Println("Expected avatar, got:", string(body))
-//			t1.Fail()
-//		}
-//	})
-//
-//	t.Run("Error getting from ctx", func(t2 *testing.T) {
-//		e := echo.New()
-//
-//		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
-//		rec := httptest.NewRecorder()
-//
-//		c := e.NewContext(req, rec)
-//		c.SetPath("/avatar")
-//
-//		err := handler.GetAvatar()(c)
-//
-//		if err != nil {
-//			fmt.Println("Error happens")
-//			t2.Fail()
-//		}
-//
-//		body, _ := ioutil.ReadAll(rec.Body)
-//		if strings.Trim(string(body), "\n") != `{"error":"internal server error"}` {
-//			fmt.Println(string(body))
-//			t2.Fail()
-//		}
-//	})
-//
-//	t.Run("Error getting by id", func(t3 *testing.T) {
-//		e := echo.New()
-//
-//		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
-//		rec := httptest.NewRecorder()
-//
-//		c := e.NewContext(req, rec)
-//		c.SetPath("/avatar")
-//
-//		sess := &Session{
-//			ID:      1,
-//			UserID:  2,
-//			Expires: time.Now().Add(24 * time.Hour),
-//			Data:    "covenantcookies",
-//		}
-//		c.Set("session", sess)
-//		user := &User{
-//			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "image.png", Role: 0, Access: 0,
-//		}
-//		_ = user.BeforeStore()
-//		UUsecase.EXPECT().GetByID(uint64(2)).Return(nil, fmt.Errorf("some error"))
-//
-//		err := handler.GetAvatar()(c)
-//
-//		if err != nil {
-//			fmt.Println("Error happens")
-//			t3.Fail()
-//		}
-//
-//		body, _ := ioutil.ReadAll(rec.Body)
-//		if strings.Trim(string(body), "\n") != `{"error":"some error"}` {
-//			fmt.Println(string(body))
-//			t3.Fail()
-//		}
-//	})
-//}
+func TestUserHandler_GetAvatar(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	UUsecase := mockUs.NewMockRepository(ctrl)
+	SUsecase := mockSs.NewMockRepository(ctrl)
+
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
+	handler.Logger.Out = ioutil.Discard
+
+	rootPath := "/Users/yulia_plaksina/back/2019_2_Covenant"
+	_ = os.Chdir(rootPath)
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("/avatar")
+
+		sess := &Session{
+			ID:      1,
+			UserID:  2,
+			Expires: time.Now().Add(24 * time.Hour),
+			Data:    "covenantcookies",
+		}
+		c.Set("session", sess)
+
+		user := &User{
+			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "resources/avatars/image.png", Role: 0, Access: 0,
+		}
+		_ = user.BeforeStore()
+		UUsecase.EXPECT().GetByID(uint64(2)).Return(user, nil)
+
+		err := handler.GetAvatar()(c)
+
+		if err != nil {
+			fmt.Println("Error happens", err)
+			t1.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		if body == nil {
+			fmt.Println("Expected avatar, got:", string(body))
+			t1.Fail()
+		}
+	})
+
+	t.Run("Error getting from ctx", func(t2 *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("/avatar")
+
+		err := handler.GetAvatar()(c)
+
+		if err != nil {
+			fmt.Println("Error happens")
+			t2.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		if strings.Trim(string(body), "\n") != `{"error":"internal server error"}` {
+			fmt.Println(string(body))
+			t2.Fail()
+		}
+	})
+
+	t.Run("Error getting by id", func(t3 *testing.T) {
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1", nil)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetPath("/avatar")
+
+		sess := &Session{
+			ID:      1,
+			UserID:  2,
+			Expires: time.Now().Add(24 * time.Hour),
+			Data:    "covenantcookies",
+		}
+		c.Set("session", sess)
+		user := &User{
+			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "image.png", Role: 0, Access: 0,
+		}
+		_ = user.BeforeStore()
+		UUsecase.EXPECT().GetByID(uint64(2)).Return(nil, fmt.Errorf("some error"))
+
+		err := handler.GetAvatar()(c)
+
+		if err != nil {
+			fmt.Println("Error happens")
+			t3.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		if strings.Trim(string(body), "\n") != `{"error":"some error"}` {
+			fmt.Println(string(body))
+			t3.Fail()
+		}
+	})
+}
 
 func TestUserHandler_SetAvatar(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -951,7 +973,10 @@ func TestUserHandler_SetAvatar(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	handler := UserHandler{UUsecase: UUsecase, SUsecase: SUsecase, Logger: logrus.New()}
+	Logger := logrus.New()
+	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
+
+	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
 	handler.Logger.Out = ioutil.Discard
 
 	rootPath := "/Users/yulia_plaksina/back/2019_2_Covenant"

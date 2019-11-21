@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type UserHandler struct {
@@ -40,10 +41,93 @@ func NewUserHandler(uUC user.Usecase,
 }
 
 func (uh *UserHandler) Configure(e *echo.Echo) {
+	e.POST("/api/v1/users", uh.CreateUser())
+
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
+}
+
+// @Tags Session
+// @Summary SignUp Route
+// @Description Signing user up
+// @ID sign-up-user
+// @Accept json
+// @Produce json
+// @Param Data body object true "JSON that contains user sign up data"
+// @Success 200 object models.User
+// @Failure 400 object vars.ResponseError
+// @Failure 404 object vars.ResponseError
+// @Failure 500 object vars.ResponseError
+// @Router /api/v1/users [post]
+func (uh *UserHandler) CreateUser() echo.HandlerFunc {
+	type Request struct {
+		Nickname         string `json:"nickname" validate:"required"`
+		Email            string `json:"email" validate:"required,email"`
+		Password         string `json:"password" validate:"required,gte=6"`
+		PassConfirmation string `json:"password_confirmation" validate:"required,eqfield=Password"`
+	}
+
+	correctData := func(req interface{}) bool {
+		return strings.Contains(req.(*Request).Password, " ") == false &&
+			strings.Contains(req.(*Request).Nickname, " ") == false
+	}
+
+	return func(c echo.Context) error {
+		var request Request
+
+		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		usr, err := uh.UUsecase.GetByEmail(request.Email)
+
+		if err == nil {
+			uh.Logger.Log(c, "info", "Already exists.", "User ID:", usr.ID)
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: vars.ErrAlreadyExist.Error(),
+			})
+		}
+
+		newUser := models.NewUser(request.Email, request.Nickname, request.Password)
+
+		if err = uh.UUsecase.Store(newUser); err != nil {
+			uh.Logger.Log(c, "error", "User store error.", err)
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		sess, cookie := models.NewSession(usr.ID)
+		c.SetCookie(cookie)
+
+		if err = uh.SUsecase.Store(sess); err != nil {
+			uh.Logger.Log(c, "error", "Session store error.", err)
+			return c.JSON(http.StatusInternalServerError, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		token, err := models.NewCSRFTokenManager("Covenant").Create(sess.UserID, sess.Data, time.Now().Add(24*time.Hour))
+		c.Response().Header().Set("X-CSRF-Token", token)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "CSRF Token generating error.", err)
+			return c.JSON(http.StatusInternalServerError, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, vars.Response{
+			Body: &vars.Body{
+				"user": usr,
+			},
+		})
+	}
 }
 
 // @Tags Profile

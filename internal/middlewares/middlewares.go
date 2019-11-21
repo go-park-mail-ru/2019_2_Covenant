@@ -6,10 +6,11 @@ import (
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type MiddlewareManager struct {
@@ -103,7 +104,7 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
-				Error:vars.ErrUnathorized.Error(),
+				Error: vars.ErrUnathorized.Error(),
 			})
 		}
 
@@ -111,7 +112,7 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
-				Error:vars.ErrUnathorized.Error(),
+				Error: vars.ErrUnathorized.Error(),
 			})
 		}
 

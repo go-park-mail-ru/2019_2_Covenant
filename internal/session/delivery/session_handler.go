@@ -10,7 +10,6 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -36,94 +35,13 @@ func NewSessionHandler(sUC session.Usecase,
 }
 
 func (sh *SessionHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/signup", sh.SignUp())
-	e.POST("/api/v1/login", sh.LogIn())
-	e.GET("/api/v1/logout", sh.LogOut(), sh.MManager.CheckAuth)
+	e.POST("/api/v1/session", sh.CreateSession())
+	e.DELETE("/api/v1/session", sh.DeleteSession(), sh.MManager.CheckAuth)
+
 	e.GET("/api/v1/csrf", sh.GetCSRF(), sh.MManager.CheckAuth)
 }
 
-// @Tags User
-// @Summary SignUp Route
-// @Description Signing user up
-// @ID sign-up-user
-// @Accept json
-// @Produce json
-// @Param Data body object true "JSON that contains user sign up data"
-// @Success 200 object models.User
-// @Failure 400 object vars.ResponseError
-// @Failure 404 object vars.ResponseError
-// @Failure 500 object vars.ResponseError
-// @Router /api/v1/signup [post]
-func (sh *SessionHandler) SignUp() echo.HandlerFunc {
-	type Request struct {
-		Nickname         string `json:"nickname" validate:"required"`
-		Email            string `json:"email" validate:"required,email"`
-		Password         string `json:"password" validate:"required,gte=6"`
-		PassConfirmation string `json:"password_confirmation" validate:"required,eqfield=Password"`
-	}
-
-	correctData := func(req interface{}) bool {
-		return strings.Contains(req.(*Request).Password, " ") == false &&
-			strings.Contains(req.(*Request).Nickname, " ") == false
-	}
-
-	return func(c echo.Context) error {
-		var request Request
-
-		if err := sh.ReqReader.Read(c, request, correctData); err != nil {
-			sh.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: err.Error(),
-			})
-		}
-
-		usr, err := sh.UUsecase.GetByEmail(request.Email)
-
-		if err == nil {
-			sh.Logger.Log(c, "info", "Already exist.", "User ID:", usr.ID)
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: vars.ErrAlreadyExist.Error(),
-			})
-		}
-
-		newUser := models.NewUser(request.Email, request.Nickname, request.Password)
-
-		if err = sh.UUsecase.Store(newUser); err != nil {
-			sh.Logger.Log(c, "error", "User store error.", err)
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: err.Error(),
-			})
-		}
-
-		sess, cookie := models.NewSession(usr.ID)
-		c.SetCookie(cookie)
-
-		if err = sh.SUsecase.Store(sess); err != nil {
-			sh.Logger.Log(c, "error", "Session store error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: err.Error(),
-			})
-		}
-
-		token, err := models.NewCSRFTokenManager("Covenant").Create(sess.UserID, sess.Data, time.Now().Add(24*time.Hour))
-		c.Response().Header().Set("X-CSRF-Token", token)
-
-		if err != nil {
-			sh.Logger.Log(c, "error", "CSRF Token generating error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: err.Error(),
-			})
-		}
-
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
-				"user": usr,
-			},
-		})
-	}
-}
-
-// @Tags User
+// @Tags Session
 // @Summary LogIn Route
 // @Description Logging user in
 // @ID log-in-user
@@ -134,8 +52,8 @@ func (sh *SessionHandler) SignUp() echo.HandlerFunc {
 // @Failure 400 object vars.ResponseError
 // @Failure 404 object vars.ResponseError
 // @Failure 500 object vars.ResponseError
-// @Router /api/v1/login [post]
-func (sh *SessionHandler) LogIn() echo.HandlerFunc {
+// @Router /api/v1/session [post]
+func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 	type Request struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
@@ -195,23 +113,22 @@ func (sh *SessionHandler) LogIn() echo.HandlerFunc {
 	}
 }
 
-// @Tags User
+// @Tags Session
 // @Summary Log Out Route
 // @Description Logging user out
 // @ID log-out-user
 // @Accept json
 // @Produce json
 // @Success 200 object models.User
-// @Failure 400 object vars.ResponseError
 // @Failure 404 object vars.ResponseError
 // @Failure 500 object vars.ResponseError
-// @Router /api/v1/logout [get]
-func (sh *SessionHandler) LogOut() echo.HandlerFunc {
+// @Router /api/v1/session [delete]
+func (sh *SessionHandler) DeleteSession() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			sh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
+			sh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.Response{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -219,7 +136,7 @@ func (sh *SessionHandler) LogOut() echo.HandlerFunc {
 
 		if err := sh.SUsecase.DeleteByID(sess.ID); err != nil {
 			sh.Logger.Log(c, "error", "Error while deleting session.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusNotFound, vars.Response{
 				Error: err.Error(),
 			})
 		}
@@ -233,7 +150,7 @@ func (sh *SessionHandler) LogOut() echo.HandlerFunc {
 		c.SetCookie(cookie)
 
 		return c.JSON(http.StatusOK, vars.Response{
-			Message: "logout",
+			Message: "success",
 		})
 	}
 }

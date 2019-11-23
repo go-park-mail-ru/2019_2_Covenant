@@ -137,3 +137,32 @@ func (mr *MockUsecaseMockRecorder) UpdateNickname(id, nickname interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateNickname", reflect.TypeOf((*MockUsecase)(nil).UpdateNickname), id, nickname)
 }
+
+// UpdateEmail mocks base method
+func (m *MockUsecase) UpdateEmail(id uint64, email string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEmail", id, email)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEmail indicates an expected call of UpdateEmail
+func (mr *MockUsecaseMockRecorder) UpdateEmail(id, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUsecase)(nil).UpdateEmail), id, email)
+}
+
+// UpdatePassword mocks base method
+func (m *MockUsecase) UpdatePassword(id uint64, plainPassword string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePassword", id, plainPassword)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePassword indicates an expected call of UpdatePassword
+func (mr *MockUsecaseMockRecorder) UpdatePassword(id, plainPassword interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockUsecase)(nil).UpdatePassword), id, plainPassword)
+}

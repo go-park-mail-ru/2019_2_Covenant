@@ -17,5 +17,5 @@ require (
 	github.com/swaggo/echo-swagger v0.0.0-20190329130007-1219b460a043
 	github.com/swaggo/swag v1.6.3
 	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf
-	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
+	gopkg.in/go-playground/validator.v9 v9.30.0
 )

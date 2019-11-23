@@ -6,36 +6,39 @@ import (
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/pkg/logger"
+	"2019_2_Covenant/pkg/validator"
 	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/go-playground/validator.v9"
 )
 
-// Для тестирования только этого файла:
-// go test -v -cover -race ./internal/user/delivery
-
 type UserHandler struct {
-	UUsecase user.Usecase
-	SUsecase session.Usecase
-	MManager middlewares.MiddlewareManager
-	Logger   *logrus.Logger
+	UUsecase     user.Usecase
+	SUsecase     session.Usecase
+	MManager     middlewares.MiddlewareManager
+	Logger       *logger.LogrusLogger
+	ReqValidator *validator.ReqValidator
 }
 
-func NewUserHandler(uUC user.Usecase, sUC session.Usecase, mManager middlewares.MiddlewareManager, logger *logrus.Logger) *UserHandler {
+func NewUserHandler(uUC user.Usecase,
+	sUC session.Usecase,
+	mManager middlewares.MiddlewareManager,
+	logger *logger.LogrusLogger) *UserHandler {
 	return &UserHandler{
-		UUsecase: uUC,
-		SUsecase: sUC,
-		MManager: mManager,
-		Logger:   logger,
+		UUsecase:     uUC,
+		SUsecase:     sUC,
+		MManager:     mManager,
+		Logger:       logger,
+		ReqValidator: validator.NewReqValidator(),
 	}
 }
 
@@ -47,34 +50,6 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/avatar", uh.GetAvatar(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/logout", uh.LogOut(), uh.MManager.CheckAuth)
-}
-
-func isValidRequest(usr interface{}) error {
-	v := validator.New()
-	err := v.Struct(usr)
-
-	if err != nil {
-		return vars.ErrBadParam
-	}
-
-	return nil
-}
-
-func (uh *UserHandler) log(c echo.Context, logType string, msg ...interface{}) {
-	fields := logrus.Fields{
-		"Request Method": c.Request().Method,
-		"Remote Address": c.Request().RemoteAddr,
-		"Message":        msg,
-	}
-
-	switch logType {
-	case "error":
-		uh.Logger.WithFields(fields).Error(c.Request().URL.Path)
-	case "info":
-		uh.Logger.WithFields(fields).Info(c.Request().URL.Path)
-	case "warning":
-		uh.Logger.WithFields(fields).Warning(c.Request().URL.Path)
-	}
 }
 
 // @Tags User
@@ -101,19 +76,19 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		err := c.Bind(&userRegData)
 
 		if err != nil {
-			uh.log(c, "error", "Can't read request body.")
+			uh.Logger.Log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userRegData); err != nil {
-			uh.log(c, "info", "Invalid request.", userRegData)
+		if err := uh.ReqValidator.Validate(userRegData); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", userRegData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		usr, err := uh.UUsecase.GetByEmail(userRegData.Email)
 
 		if usr != nil {
-			uh.log(c, "info", "Already exist.", "User ID:", usr.ID)
+			uh.Logger.Log(c, "info", "Already exist.", "User ID:", usr.ID)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{
 				Error: vars.ErrAlreadyExist.Error(),
 			})
@@ -128,7 +103,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		usr, err = uh.UUsecase.Store(newUser)
 
 		if err != nil {
-			uh.log(c, "error", "User store error.", err)
+			uh.Logger.Log(c, "error", "User store error.", err)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
@@ -147,7 +122,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		err = uh.SUsecase.Store(sess)
 
 		if err != nil {
-			uh.log(c, "error", "Session store error.", err)
+			uh.Logger.Log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -157,7 +132,7 @@ func (uh *UserHandler) SignUp() echo.HandlerFunc {
 		c.Response().Header().Set("X-CSRF-Token", token)
 
 		if err != nil {
-			uh.log(c, "error", "CSRF Token generating error.", err)
+			uh.Logger.Log(c, "error", "CSRF Token generating error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -190,25 +165,26 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var userLoginData UserLogin
 		err := c.Bind(&userLoginData)
+
 		if err != nil {
-			uh.log(c, "error", "Can't read request body.")
+			uh.Logger.Log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userLoginData); err != nil {
-			uh.log(c, "info", "Invalid request.", userLoginData)
+		if err := uh.ReqValidator.Validate(userLoginData); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", userLoginData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		usr, err := uh.UUsecase.GetByEmail(userLoginData.Email)
 
 		if usr == nil {
-			uh.log(c, "info", "Error while getting user by EMAIL.", err)
+			uh.Logger.Log(c, "info", "Error while getting user by EMAIL.", err)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		if !usr.Verify(userLoginData.Password) {
-			uh.log(c, "info", "Bad authentication.", "User ID:", usr.Nickname)
+			uh.Logger.Log(c, "info", "Bad authentication.", "User ID:", usr.Nickname)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{
 				Error: vars.ErrBadParam.Error(),
 			})
@@ -229,7 +205,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 		err = uh.SUsecase.Store(sess)
 
 		if err != nil {
-			uh.log(c, "error", "Session store error.", err)
+			uh.Logger.Log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -239,7 +215,7 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 		c.Response().Header().Set("X-CSRF-Token", token)
 
 		if err != nil {
-			uh.log(c, "error", "CSRF Token generating error.", err)
+			uh.Logger.Log(c, "error", "CSRF Token generating error.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -265,13 +241,25 @@ func (uh *UserHandler) LogIn() echo.HandlerFunc {
 // @Router /api/v1/profile [post]
 func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 	type UserEdit struct {
-		Nickname string `json:"nickname" validate:"required"`
+		Email    string `json:"email" validate:"omitempty,email"`
+		Nickname string `json:"nickname" validate:"omitempty"`
+		Password string `json:"password" validate:"omitempty,gte=6"`
+	}
+
+	checkValue := func(value string, res *bool) bool {
+		value = strings.TrimSpace(value)
+		if strings.Compare(value, "") != 0 && !strings.Contains(value, " ") {
+			*res = true
+		}
+
+		return *res
 	}
 
 	return func(c echo.Context) error {
 		sess, ok := c.Get("session").(*models.Session)
+
 		if !ok {
-			uh.log(c, "error", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -280,7 +268,7 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 		usr, err := uh.UUsecase.GetByID(sess.UserID)
 
 		if err != nil {
-			uh.log(c, "info", "Error while getting user by ID.", err)
+			uh.Logger.Log(c, "info", "Error while getting user by ID.", err)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
@@ -288,18 +276,37 @@ func (uh *UserHandler) EditProfile() echo.HandlerFunc {
 		err = c.Bind(&userEditData)
 
 		if err != nil {
-			uh.log(c, "error", "Can't read request body.")
+			uh.Logger.Log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
-		if err := isValidRequest(userEditData); err != nil {
-			uh.log(c, "info", "Invalid request.", userEditData)
+		if err := uh.ReqValidator.Validate(userEditData); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", userEditData)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
-		if usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname); err != nil {
-			uh.log(c, "error", "Error while updating user nickname.", err)
+		var result bool
+
+		switch {
+		case checkValue(userEditData.Nickname, &result):
+			usr, err = uh.UUsecase.UpdateNickname(usr.ID, userEditData.Nickname)
+		case checkValue(userEditData.Password, &result):
+			err = uh.UUsecase.UpdatePassword(usr.ID, userEditData.Password)
+		case checkValue(userEditData.Email, &result):
+			usr, err = uh.UUsecase.UpdateEmail(usr.ID, userEditData.Email)
+		}
+
+		if !result {
+			uh.Logger.Log(c, "info", "Invalid request.", userEditData)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: vars.ErrBadParam.Error()})
+		}
+
+		if err == vars.ErrAlreadyExist {
+			uh.Logger.Log(c, "info", "Error while updating user data.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{Error: err.Error()})
+		} else if err != nil {
+			uh.Logger.Log(c, "error", "Error while updating user data.", err)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
 		return c.JSON(http.StatusOK, vars.Response{Body: usr})
@@ -321,7 +328,7 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			uh.log(c, "error", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -330,7 +337,7 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 		usr, err := uh.UUsecase.GetByID(sess.UserID)
 
 		if err != nil {
-			uh.log(c, "info", "Error while getting user by ID.", err)
+			uh.Logger.Log(c, "info", "Error while getting user by ID.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{Error: err.Error()})
 		}
 
@@ -357,7 +364,7 @@ func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			uh.log(c, "error", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -366,7 +373,7 @@ func (uh *UserHandler) GetAvatar() echo.HandlerFunc {
 		usr, err := uh.UUsecase.GetByID(sess.UserID)
 
 		if err != nil {
-			uh.log(c, "info", "Error while getting user by ID.", err)
+			uh.Logger.Log(c, "info", "Error while getting user by ID.", err)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
 		}
 
@@ -399,7 +406,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		file, err := c.FormFile("avatar")
 
 		if err != nil {
-			uh.log(c, "info", "Can't extract file from request.", err)
+			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
 			return c.JSON(http.StatusBadRequest, vars.ResponseError{
 				Error: vars.ErrRetrievingError.Error(),
 			})
@@ -408,7 +415,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		src, err := file.Open()
 
 		if err != nil {
-			uh.log(c, "error", "Can't open file.", err)
+			uh.Logger.Log(c, "error", "Can't open file.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -417,7 +424,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		defer src.Close()
 
 		if _, err := os.Stat(destPath); os.IsNotExist(err) {
-			uh.log(c, "error", "There is no dir for avatars.")
+			uh.Logger.Log(c, "error", "There is no dir for avatars.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -426,7 +433,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		bytes, err := ioutil.ReadAll(src)
 
 		if err != nil {
-			uh.log(c, "error", "Can't read file.", err)
+			uh.Logger.Log(c, "error", "Can't read file.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -438,7 +445,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			uh.log(c, "info", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -448,7 +455,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		destFile, err := os.Create(filepath.Join(destPath, avatarName))
 
 		if err != nil {
-			uh.log(c, "error", "Can't create avatar file.", err)
+			uh.Logger.Log(c, "error", "Can't create avatar file.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -459,7 +466,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		_, err = destFile.Write(bytes)
 
 		if err != nil {
-			uh.log(c, "error", "Error while writing bytes in destFile.", err)
+			uh.Logger.Log(c, "error", "Error while writing bytes in destFile.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -468,7 +475,7 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filepath.Join(avatarsPath, avatarName))
 
 		if err != nil {
-			uh.log(c, "error", "Error while updating user avatar.", err)
+			uh.Logger.Log(c, "error", "Error while updating user avatar.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -494,14 +501,14 @@ func (uh *UserHandler) LogOut() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			uh.log(c, "info", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
 		}
 
 		if err := uh.SUsecase.DeleteByID(sess.ID); err != nil {
-			uh.log(c, "error", "Error while deleting session.", err)
+			uh.Logger.Log(c, "error", "Error while deleting session.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})

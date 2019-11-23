@@ -5,6 +5,7 @@ import (
 	. "2019_2_Covenant/internal/models"
 	mockSs "2019_2_Covenant/internal/session/mocks"
 	mockUs "2019_2_Covenant/internal/user/mocks"
+	"2019_2_Covenant/pkg/logger"
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
@@ -25,11 +26,11 @@ func TestSessionHandler_GetCSRF(t *testing.T) {
 
 	SUsecase := mockSs.NewMockRepository(ctrl)
 	UUsecase := mockUs.NewMockRepository(ctrl)
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewSessionHandler(SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()

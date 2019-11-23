@@ -5,24 +5,29 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/pkg/logger"
+	"2019_2_Covenant/pkg/validator"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 )
 
 type TrackHandler struct {
-	TUsecase track.Usecase
-	MManager middlewares.MiddlewareManager
-	Logger   *logrus.Logger
+	TUsecase     track.Usecase
+	MManager     middlewares.MiddlewareManager
+	Logger       *logger.LogrusLogger
+	ReqValidator *validator.ReqValidator
 }
 
-func NewTrackHandler(tUC track.Usecase, mManager middlewares.MiddlewareManager, logger *logrus.Logger) *TrackHandler {
+func NewTrackHandler(tUC track.Usecase,
+	mManager middlewares.MiddlewareManager,
+	logger *logger.LogrusLogger) *TrackHandler {
 	return &TrackHandler{
-		TUsecase: tUC,
-		MManager: mManager,
-		Logger:   logger,
+		TUsecase:     tUC,
+		MManager:     mManager,
+		Logger:       logger,
+		ReqValidator: validator.NewReqValidator(),
 	}
 }
 
@@ -31,23 +36,6 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/tracks/favourite", th.GetFavourites(), th.MManager.CheckAuth)
 	e.POST("/api/v1/tracks/favourite", th.AddToFavourites(), th.MManager.CheckAuth)
 	e.DELETE("/api/v1/tracks/favourite", th.RemoveFavourite(), th.MManager.CheckAuth)
-}
-
-func (th *TrackHandler) log(c echo.Context, logType string, msg ...interface{}) {
-	fields := logrus.Fields{
-		"Request Method": c.Request().Method,
-		"Remote Address": c.Request().RemoteAddr,
-		"Message":        msg,
-	}
-
-	switch logType {
-	case "error":
-		th.Logger.WithFields(fields).Error(c.Request().URL.Path)
-	case "info":
-		th.Logger.WithFields(fields).Info(c.Request().URL.Path)
-	case "warning":
-		th.Logger.WithFields(fields).Warning(c.Request().URL.Path)
-	}
 }
 
 // @Tags Track
@@ -66,7 +54,7 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 		tracks, err := th.TUsecase.FetchPopular(25)
 
 		if err != nil {
-			th.log(c, "error", "Error while fetching tracks.", err)
+			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -91,7 +79,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			th.log(c, "error", "Can't extract session from echo.Context.")
+			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -100,12 +88,17 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		data := &DataToAdd{}
 
 		if err := c.Bind(&data); err != nil {
-			th.log(c, "error", "Can't read request body.")
+			th.Logger.Log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
+		if err := th.ReqValidator.Validate(data); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", data)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
+		}
+
 		if err := th.TUsecase.StoreFavourite(sess.UserID, data.TrackID); err != nil {
-			th.log(c, "error", "Error while storing favourite track.", err)
+			th.Logger.Log(c, "error", "Error while storing favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -126,7 +119,7 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			th.log(c, "error", "Can't extract session from echo.Context.")
+			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -135,12 +128,17 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 		data := &DataToRemove{}
 
 		if err := c.Bind(&data); err != nil {
-			th.log(c, "error", "Can't read request body.")
+			th.Logger.Log(c, "error", "Can't read request body.")
 			return c.JSON(http.StatusUnprocessableEntity, vars.ResponseError{Error: err.Error()})
 		}
 
+		if err := th.ReqValidator.Validate(data); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", data)
+			return c.JSON(http.StatusBadRequest, vars.ResponseError{Error: err.Error()})
+		}
+
 		if err := th.TUsecase.RemoveFavourite(sess.UserID, data.TrackID); err != nil {
-			th.log(c, "error", "Error while remove favourite track.", err)
+			th.Logger.Log(c, "error", "Error while remove favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: err.Error(),
 			})
@@ -157,7 +155,7 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			th.log(c, "error", "Can't extract session from echo.Context.")
+			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})
@@ -166,7 +164,7 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 		tracks, err := th.TUsecase.FetchFavourites(sess.UserID, 25)
 
 		if err != nil {
-			th.log(c, "error", "Error while fetching tracks.", err)
+			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
 			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
 				Error: vars.ErrInternalServerError.Error(),
 			})

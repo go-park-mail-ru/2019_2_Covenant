@@ -10,4 +10,6 @@ type Usecase interface {
 	Store(user *models.User) (*models.User, error)
 	UpdateAvatar(id uint64, avatarPath string) (*models.User, error)
 	UpdateNickname(id uint64, nickname string) (*models.User, error)
+	UpdateEmail(id uint64, email string) (*models.User, error)
+	UpdatePassword(id uint64, plainPassword string) error
 }

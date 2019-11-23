@@ -5,6 +5,7 @@ import (
 	. "2019_2_Covenant/internal/models"
 	mockSs "2019_2_Covenant/internal/session/mocks"
 	mockUs "2019_2_Covenant/internal/user/mocks"
+	"2019_2_Covenant/pkg/logger"
 	"bytes"
 	"fmt"
 	"io"
@@ -23,6 +24,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//TODO: уточнить у Марселя по поводу валидации. Сейчас не протестировано
+
 //go:generate mockgen -source=../usecase.go -destination=../mocks/mock_usecase.go -package=mock
 //go:generate mockgen -source=../../session/usecase.go -destination=../../session/mocks/mock_usecase.go -package=mock
 
@@ -33,11 +36,11 @@ func TestUserHandler_LogIn(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -218,11 +221,11 @@ func TestUserHandler_SignUp(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -415,11 +418,11 @@ func TestUserHandler_EditProfile(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -647,11 +650,11 @@ func TestUserHandler_GetProfile(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -757,11 +760,11 @@ func TestUserHandler_LogOut(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -860,11 +863,11 @@ func TestUserHandler_GetAvatar(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	rootPath := "/Users/yulia_plaksina/back/2019_2_Covenant"
 	_ = os.Chdir(rootPath)
@@ -973,11 +976,11 @@ func TestUserHandler_SetAvatar(t *testing.T) {
 	UUsecase := mockUs.NewMockRepository(ctrl)
 	SUsecase := mockSs.NewMockRepository(ctrl)
 
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewUserHandler(UUsecase, SUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	rootPath := "/Users/yulia_plaksina/back/2019_2_Covenant"
 	_ = os.Chdir(rootPath)

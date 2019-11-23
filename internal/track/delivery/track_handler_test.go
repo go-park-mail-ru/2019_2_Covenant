@@ -6,6 +6,7 @@ import (
 	mockSs "2019_2_Covenant/internal/session/mocks"
 	mock "2019_2_Covenant/internal/track/mocks"
 	mockUs "2019_2_Covenant/internal/user/mocks"
+	"2019_2_Covenant/pkg/logger"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +20,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo/v4"
 )
+
+//TODO: уточнить у Марселя по поводу валидации. Сейчас не протестировано
 
 // Для тестирования только этого файла:
 // go test -v -cover -race ./internal/track/delivery
@@ -34,11 +37,11 @@ func TestTrackHandler_GetPopularTracks(t *testing.T) {
 
 	SUsecase := mockSs.NewMockRepository(ctrl)
 	UUsecase := mockUs.NewMockRepository(ctrl)
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -102,11 +105,11 @@ func TestTrackHandler_AddToFavourites(t *testing.T) {
 
 	SUsecase := mockSs.NewMockRepository(ctrl)
 	UUsecase := mockUs.NewMockRepository(ctrl)
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -310,11 +313,11 @@ func TestTrackHandler_RemoveFavourite(t *testing.T) {
 
 	SUsecase := mockSs.NewMockRepository(ctrl)
 	UUsecase := mockUs.NewMockRepository(ctrl)
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()
@@ -518,11 +521,11 @@ func TestTrackHandler_GetFavourites(t *testing.T) {
 
 	SUsecase := mockSs.NewMockRepository(ctrl)
 	UUsecase := mockUs.NewMockRepository(ctrl)
-	Logger := logrus.New()
+	Logger := logger.NewLogrusLogger()
 	MiddlewareManager := NewMiddlewareManager(UUsecase, SUsecase, Logger)
 
 	handler := NewTrackHandler(TUsecase, MiddlewareManager, Logger)
-	handler.Logger.Out = ioutil.Discard
+	logrus.SetOutput(ioutil.Discard)
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		e := echo.New()

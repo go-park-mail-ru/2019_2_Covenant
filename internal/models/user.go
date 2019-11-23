@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/rand"
 	"crypto/sha1"
+
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -19,7 +20,7 @@ type User struct {
 
 func (u *User) BeforeStore() error {
 	if len(u.PlainPassword) > 0 {
-		pass, err := encryptPassword(u.PlainPassword)
+		pass, err := EncryptPassword(u.PlainPassword)
 
 		if err != nil {
 			return err
@@ -31,7 +32,7 @@ func (u *User) BeforeStore() error {
 	return nil
 }
 
-func encryptPassword(plainPassword string) (string, error) {
+func EncryptPassword(plainPassword string) (string, error) {
 	salt := make([]byte, 8)
 
 	if _, err := rand.Read(salt); err != nil {

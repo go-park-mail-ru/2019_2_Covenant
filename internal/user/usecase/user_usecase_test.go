@@ -319,3 +319,95 @@ func TestUserUsecase_UpdateNickname(t *testing.T) {
 		}
 	})
 }
+
+func TestUserUsecase_UpdateEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepo := mock.NewMockRepository(ctrl)
+
+	exe := func(usecase user.Usecase, ID uint64, email string) (*User, error) {
+		return usecase.UpdateEmail(ID, email)
+	}
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		ID := uint64(1)
+		email := "some email"
+
+		userRepo.EXPECT().UpdateEmail(ID, email).Return(users.User[0], nil)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, ID, email)
+
+		if expUser != users.User[0] || err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func(t2 *testing.T) {
+		ID := uint64(5)
+		email := "some email"
+
+		userRepo.EXPECT().UpdateEmail(ID, email).Return(nil, fmt.Errorf("some error"))
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, ID, email)
+
+		if expUser != nil || err == nil {
+			t2.Fail()
+		}
+	})
+
+	t.Run("Test with ErrAlreadyExist", func(t3 *testing.T) {
+		ID := uint64(5)
+		email := "some email"
+
+		userRepo.EXPECT().UpdateEmail(ID, email).Return(nil, vars.ErrAlreadyExist)
+		usecase := configUserUsecase(userRepo)
+
+		expUser, err := exe(usecase, ID, email)
+
+		if expUser != nil || err != vars.ErrAlreadyExist {
+			t3.Fail()
+		}
+	})
+}
+
+func TestUserUsecase_UpdatePassword(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepo := mock.NewMockRepository(ctrl)
+
+	exe := func(usecase user.Usecase, ID uint64, password string) error {
+		return usecase.UpdatePassword(ID, password)
+	}
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		ID := uint64(1)
+		password := "some email"
+
+		userRepo.EXPECT().UpdatePassword(ID, gomock.Any()).Return(nil)
+		usecase := configUserUsecase(userRepo)
+
+		err := exe(usecase, ID, password)
+
+		if err != nil {
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with error", func(t2 *testing.T) {
+		ID := uint64(5)
+		password := ""
+
+		userRepo.EXPECT().UpdatePassword(ID, gomock.Any()).Return(fmt.Errorf("some error"))
+		usecase := configUserUsecase(userRepo)
+
+		err := exe(usecase, ID, password)
+
+		if err == nil {
+			t2.Fail()
+		}
+	})
+}

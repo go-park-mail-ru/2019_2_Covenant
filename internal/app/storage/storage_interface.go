@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"2019_2_Covenant/internal/playlist"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/track"
 	"2019_2_Covenant/internal/user"
@@ -12,4 +13,5 @@ type Storage interface {
 	User() user.Repository
 	Session() session.Repository
 	Track() track.Repository
+	Playlist() playlist.Repository
 }

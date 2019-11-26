@@ -56,7 +56,16 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		tracks, err := th.TUsecase.FetchPopular(25)
+		request := &Request{}
+
+		if err := th.ReqReader.Read(c, request, nil); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		tracks, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -94,7 +103,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 			})
 		}
 
-		var request Request
+		request := &Request{}
 
 		if err := th.ReqReader.Read(c, request, nil); err != nil {
 			th.Logger.Log(c, "info", "Invalid request.", err.Error())
@@ -131,7 +140,7 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 			})
 		}
 
-		var request Request
+		request := &Request{}
 
 		if err := th.ReqReader.Read(c, request, nil); err != nil {
 			th.Logger.Log(c, "info", "Invalid request.", err.Error())
@@ -169,7 +178,16 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := th.TUsecase.FetchFavourites(sess.UserID, 25)
+		request := &Request{}
+
+		if err := th.ReqReader.Read(c, request, nil); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: err.Error(),
+			})
+		}
+
+		tracks, total, err := th.TUsecase.FetchFavourites(sess.UserID, request.Count, request.Offset)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -187,6 +205,7 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, vars.Response{
 			Body: &vars.Body{
 				"tracks": tracks,
+				"total": total,
 			},
 		})
 	}

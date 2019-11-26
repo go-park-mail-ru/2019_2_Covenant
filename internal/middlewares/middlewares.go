@@ -71,7 +71,7 @@ func (m *MiddlewareManager) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFu
 	return func(c echo.Context) error {
 		origin := c.Request().Header.Get("Origin")
 
-		if origin == "http://localhost:3000" || origin == "http://front.covenant.fun:3000" {
+		if origin == "http://localhost:3000" || origin == "http://front.covenant.fun:3000" || origin == "http://front.covenant.fun:5000"{
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
 		}
 

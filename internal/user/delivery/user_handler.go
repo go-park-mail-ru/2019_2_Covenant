@@ -49,7 +49,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 }
 
-// @Tags Session
+// @Tags User
 // @Summary SignUp Route
 // @Description Signing user up
 // @ID sign-up-user
@@ -75,7 +75,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		var request Request
+		request := &Request{}
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
@@ -102,7 +102,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 			})
 		}
 
-		sess, cookie := models.NewSession(usr.ID)
+		sess, cookie := models.NewSession(newUser.ID)
 		c.SetCookie(cookie)
 
 		if err = uh.SUsecase.Store(sess); err != nil {
@@ -124,7 +124,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, vars.Response{
 			Body: &vars.Body{
-				"user": usr,
+				"user": newUser,
 			},
 		})
 	}
@@ -163,7 +163,7 @@ func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 			})
 		}
 
-		var request Request
+		request := &Request{}
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request:", request)
@@ -222,7 +222,7 @@ func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 			})
 		}
 
-		var request Request
+		request := &Request{}
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request:", request)

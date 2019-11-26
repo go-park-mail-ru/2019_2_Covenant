@@ -3,6 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
+	"2019_2_Covenant/internal/vars"
 	"database/sql"
 )
 
@@ -16,16 +17,12 @@ func NewUserRepository(db *sql.DB) user.Repository {
 	}
 }
 
-func (ur *UserRepository) Store(newUser *models.User) (*models.User, error) {
-	if err := ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
+func (ur *UserRepository) Store(newUser *models.User) error {
+	return ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
 		newUser.Nickname,
 		newUser.Email,
 		newUser.Password,
-	).Scan(&newUser.ID, &newUser.Avatar); err != nil {
-		return nil, err
-	}
-
-	return newUser, nil
+	).Scan(&newUser.ID, &newUser.Avatar)
 }
 
 func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
@@ -34,6 +31,10 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE email = $1",
 		email,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -46,6 +47,10 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE id = $1",
 		usrID,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -58,6 +63,10 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE nickname = $1",
 		nickname,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 

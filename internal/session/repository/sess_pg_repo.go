@@ -70,6 +70,10 @@ func (sr *SessionRepository) DeleteByID(id uint64) error {
 	).Scan(
 		&item,
 	); err != nil {
+		if err == sql.ErrNoRows {
+			return vars.ErrNotFound
+		}
+
 		return vars.ErrInternalServerError
 	}
 

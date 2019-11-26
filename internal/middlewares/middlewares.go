@@ -38,13 +38,13 @@ func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.Hand
 		ok, err := models.NewCSRFTokenManager("Covenant").Verify(sess.UserID, sess.Data, token)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, vars.ResponseError{
+			return c.JSON(http.StatusInternalServerError, vars.Response{
 				Error: err.Error(),
 			})
 		}
 
 		if !ok {
-			return c.JSON(http.StatusBadRequest, vars.ResponseError{
+			return c.JSON(http.StatusBadRequest, vars.Response{
 				Error: vars.ErrBadCSRF.Error(),
 			})
 		}
@@ -105,20 +105,32 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie("Covenant")
 
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
-				Error:vars.ErrUnathorized.Error(),
+			m.logger.Log(c, "info", "There is no cookies.")
+			return c.JSON(http.StatusUnauthorized, vars.Response{
+				Error: vars.ErrUnathorized.Error(),
 			})
 		}
 
 		sess, err := m.sUC.Get(cookie.Value)
 
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, vars.ResponseError{
-				Error:vars.ErrUnathorized.Error(),
+			m.logger.Log(c, "info", "Error while getting session by cookie:", err.Error())
+			return c.JSON(http.StatusUnauthorized, vars.Response{
+				Error: vars.ErrUnathorized.Error(),
+			})
+		}
+
+		usr, err := m.uUC.GetByID(sess.UserID)
+
+		if err != nil {
+			m.logger.Log(c, "info", "Error while getting user by id:", err.Error())
+			return c.JSON(http.StatusBadRequest, vars.Response{
+				Error: err.Error(),
 			})
 		}
 
 		c.Set("session", sess)
+		c.Set("user", usr)
 
 		return next(c)
 	}

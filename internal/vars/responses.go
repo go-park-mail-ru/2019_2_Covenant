@@ -1,9 +1,9 @@
 package vars
 
-type ResponseError struct {
-	Error string `json:"error"`
-}
+type Body map[string]interface{}
 
 type Response struct {
-	Body interface{} `json:"body"`
+	Error   string `json:"error,omitempty"`
+	Message string `json:"message,omitempty"`
+	Body    *Body  `json:"body,omitempty"`
 }

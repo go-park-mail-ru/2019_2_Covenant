@@ -60,7 +60,7 @@ func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		var request Request
+		request := &Request{}
 
 		if err := sh.ReqReader.Read(c, request, nil); err != nil {
 			sh.Logger.Log(c, "info", "Invalid request.", err.Error())

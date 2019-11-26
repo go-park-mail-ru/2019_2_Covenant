@@ -11,4 +11,5 @@ var (
 	ErrRetrievingError     = errors.New("retrieving error")
 	ErrBadCSRF             = errors.New("csrf error")
 	ErrUnathorized         = errors.New("unauthorized")
+	ErrUnprocessableEntity = errors.New("unprocessable entity")
 )

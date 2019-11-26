@@ -1,4 +1,4 @@
-package validator
+package reader
 
 import (
 	"2019_2_Covenant/internal/vars"
@@ -11,7 +11,7 @@ type ReqReader struct {
 	v *validator.Validate
 }
 
-func NewReqValidator() *ReqReader {
+func NewReqReader() *ReqReader {
 	return &ReqReader{
 		v: validator.New(),
 	}
@@ -28,7 +28,7 @@ func (rv *ReqReader) validate(req interface{}) error {
 	return nil
 }
 
-func (rv *ReqReader) Read(c echo.Context, request interface{}) error {
+func (rv *ReqReader) Read(c echo.Context, request interface{}, check func(interface{}) bool) error {
 	err := c.Bind(&request)
 
 	if err != nil {
@@ -37,6 +37,10 @@ func (rv *ReqReader) Read(c echo.Context, request interface{}) error {
 
 	if err := rv.validate(request); err != nil {
 		return err
+	}
+
+	if check != nil && !check(request) {
+		return vars.ErrBadParam
 	}
 
 	return nil

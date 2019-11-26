@@ -26,31 +26,29 @@ func (uUC *userUsecase) Fetch(count uint64) ([]*models.User, error) {
 	return users, nil
 }
 
-func (uUC *userUsecase) Store(newUser *models.User) (*models.User, error) {
+func (uUC *userUsecase) Store(newUser *models.User) error {
 	exist, _ := uUC.userRepo.GetByEmail(newUser.Email)
 
 	if exist != nil {
-		return nil, vars.ErrAlreadyExist
+		return vars.ErrAlreadyExist
 	}
 
 	if err := newUser.BeforeStore(); err != nil {
-		return nil, vars.ErrInternalServerError
+		return vars.ErrInternalServerError
 	}
 
-	usr, err := uUC.userRepo.Store(newUser)
-
-	if err != nil {
-		return nil, vars.ErrInternalServerError
+	if err := uUC.userRepo.Store(newUser); err != nil {
+		return vars.ErrInternalServerError
 	}
 
-	return usr, nil
+	return nil
 }
 
 func (uUC *userUsecase) GetByEmail(email string) (*models.User, error) {
 	usr, err := uUC.userRepo.GetByEmail(email)
 
 	if err != nil {
-		return nil, vars.ErrNotFound
+		return nil, err
 	}
 
 	return usr, nil
@@ -60,7 +58,7 @@ func (uUC *userUsecase) GetByID(userID uint64) (*models.User, error) {
 	usr, err := uUC.userRepo.GetByID(userID)
 
 	if err != nil {
-		return nil, vars.ErrNotFound
+		return nil, err
 	}
 
 	return usr, nil

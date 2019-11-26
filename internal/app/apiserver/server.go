@@ -92,3 +92,7 @@ func (api *APIServer) configureLogger() error {
 
 	return nil
 }
+
+func (api *APIServer) Stop() {
+	api.storage.Close()
+}

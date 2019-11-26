@@ -5,9 +5,11 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
-	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
+	"2019_2_Covenant/tools/base_handler"
+	. "2019_2_Covenant/tools/response"
+	. "2019_2_Covenant/tools/vars"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"io/ioutil"
@@ -20,23 +22,23 @@ import (
 )
 
 type UserHandler struct {
-	UUsecase  user.Usecase
-	SUsecase  session.Usecase
-	MManager  middlewares.MiddlewareManager
-	Logger    *logger.LogrusLogger
-	ReqReader *reader.ReqReader
+	base_handler.BaseHandler
+	UUsecase user.Usecase
+	SUsecase session.Usecase
 }
 
 func NewUserHandler(uUC user.Usecase,
 	sUC session.Usecase,
-	mManager middlewares.MiddlewareManager,
+	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *UserHandler {
 	return &UserHandler{
-		UUsecase:  uUC,
-		SUsecase:  sUC,
-		MManager:  mManager,
-		Logger:    logger,
-		ReqReader: reader.NewReqReader(),
+		BaseHandler: base_handler.BaseHandler{
+			MManager:  mManager,
+			Logger:    logger,
+			ReqReader: reader.NewReqReader(),
+		},
+		UUsecase: uUC,
+		SUsecase: sUC,
 	}
 }
 
@@ -57,9 +59,9 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 // @Produce json
 // @Param Data body object true "JSON that contains user sign up data"
 // @Success 200 object models.User
-// @Failure 400 object vars.ResponseError
-// @Failure 404 object vars.ResponseError
-// @Failure 500 object vars.ResponseError
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
 // @Router /api/v1/users [post]
 func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 	type Request struct {
@@ -79,7 +81,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
@@ -88,8 +90,8 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		if err == nil {
 			uh.Logger.Log(c, "info", "Already exists.", "User ID:", usr.ID)
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: vars.ErrAlreadyExist.Error(),
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: ErrAlreadyExist.Error(),
 			})
 		}
 
@@ -97,7 +99,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		if err = uh.UUsecase.Store(newUser); err != nil {
 			uh.Logger.Log(c, "error", "User store error.", err)
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
@@ -107,7 +109,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		if err = uh.SUsecase.Store(sess); err != nil {
 			uh.Logger.Log(c, "error", "Session store error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
@@ -117,13 +119,13 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "CSRF Token generating error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"user": newUser,
 			},
 		})
@@ -138,10 +140,10 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 // @Produce json
 // @Param Data body object true "JSON that contains user data to edit"
 // @Success 200 object models.User
-// @Failure 400 object vars.Response
-// @Failure 401 object vars.Response
-// @Failure 409 object vars.Response
-// @Failure 500 object vars.Response
+// @Failure 400 object Response
+// @Failure 401 object Response
+// @Failure 409 object Response
+// @Failure 500 object Response
 // @Router /api/v1/profile [post]
 func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 	type Request struct {
@@ -158,8 +160,8 @@ func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 
 		if !ok {
 			uh.Logger.Log(c, "error", "Can't extract user from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -167,7 +169,7 @@ func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request:", request)
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
@@ -176,13 +178,13 @@ func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "info", "Error while updating user data.", err)
-			return c.JSON(http.StatusConflict, vars.Response{
+			return c.JSON(http.StatusConflict, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"user": usr,
 			},
 		})
@@ -197,9 +199,9 @@ func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 // @Produce json
 // @Param Data body object true "JSON that contains user data to edit"
 // @Success 200 object models.User
-// @Failure 400 object vars.Response
-// @Failure 401 object vars.Response
-// @Failure 500 object vars.Response
+// @Failure 400 object Response
+// @Failure 401 object Response
+// @Failure 500 object Response
 // @Router /api/v1/profile/password [post]
 func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 	type Request struct {
@@ -217,8 +219,8 @@ func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 
 		if !ok {
 			uh.Logger.Log(c, "error", "Can't extract user from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -226,26 +228,26 @@ func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 
 		if err := uh.ReqReader.Read(c, request, correctData); err != nil {
 			uh.Logger.Log(c, "info", "Invalid request:", request)
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
 
 		if !usr.Verify(request.OldPassword) {
 			uh.Logger.Log(c, "info", "Bad old password.", "User:", usr.Nickname)
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: vars.ErrBadParam.Error(),
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: ErrBadParam.Error(),
 			})
 		}
 
 		if err := uh.UUsecase.UpdatePassword(usr.ID, request.Password); err != nil {
 			uh.Logger.Log(c, "info", "Error while updating user data.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
+		return c.JSON(http.StatusOK, Response{
 			Message: "success",
 		})
 	}
@@ -258,8 +260,8 @@ func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 200 object models.User
-// @Failure 401 object vars.Response
-// @Failure 500 object vars.Response
+// @Failure 401 object Response
+// @Failure 500 object Response
 // @Router /api/v1/profile [get]
 func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -267,13 +269,13 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 
 		if !ok {
 			uh.Logger.Log(c, "error", "Can't extract user from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"user": usr,
 			},
 		})
@@ -288,9 +290,9 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 // @Produce json
 // @Param Data body string true "multipart/form-data"
 // @Success 200 object models.User
-// @Failure 400 object vars.Response
-// @Failure 401 object vars.Response
-// @Failure 500 object vars.Response
+// @Failure 400 object Response
+// @Failure 401 object Response
+// @Failure 500 object Response
 // @Router /api/v1/profile/avatar [post]
 func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 	rootPath, _ := os.Getwd()
@@ -302,8 +304,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: vars.ErrRetrievingError.Error(),
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: ErrRetrievingError.Error(),
 			})
 		}
 
@@ -311,8 +313,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Can't open file.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -320,8 +322,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if _, err := os.Stat(destPath); os.IsNotExist(err) {
 			uh.Logger.Log(c, "error", "There is no dir for avatars.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -329,8 +331,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Can't read file.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -341,8 +343,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if !ok {
 			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -351,8 +353,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Can't create avatar file.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -362,8 +364,8 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while writing bytes in destFile.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -371,13 +373,13 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while updating user avatar.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"user": usr,
 			},
 		})

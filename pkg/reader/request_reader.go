@@ -1,7 +1,7 @@
 package reader
 
 import (
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/go-playground/validator.v9"
 	"log"
@@ -22,7 +22,7 @@ func (rv *ReqReader) validate(req interface{}) error {
 
 	if err != nil {
 		log.Print(err)
-		return vars.ErrBadParam
+		return ErrBadParam
 	}
 
 	return nil
@@ -32,7 +32,7 @@ func (rv *ReqReader) Read(c echo.Context, request interface{}, check func(interf
 	err := c.Bind(&request)
 
 	if err != nil {
-		return vars.ErrUnprocessableEntity
+		return ErrUnprocessableEntity
 	}
 
 	if err := rv.validate(request); err != nil {
@@ -40,7 +40,7 @@ func (rv *ReqReader) Read(c echo.Context, request interface{}, check func(interf
 	}
 
 	if check != nil && !check(request) {
-		return vars.ErrBadParam
+		return ErrBadParam
 	}
 
 	return nil

@@ -3,7 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"database/sql"
 )
 
@@ -69,7 +69,7 @@ func (th *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {
 		userID,
 		trackID,
 	).Scan(&favID); err == nil {
-		return vars.ErrAlreadyExist
+		return ErrAlreadyExist
 	}
 
 	if _, err := th.db.Exec("INSERT INTO favourites (user_id, track_id) VALUES ($1, $2)",
@@ -89,7 +89,7 @@ func (th *TrackRepository) RemoveFavourite(userID uint64, trackID uint64) error 
 		userID,
 		trackID,
 	).Scan(&favID); err != nil {
-		return vars.ErrNotFound
+		return ErrNotFound
 	}
 
 	if _, err := th.db.Exec("DELETE FROM favourites WHERE id = $1",

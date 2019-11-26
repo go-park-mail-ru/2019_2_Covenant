@@ -5,32 +5,34 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
-	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
+	. "2019_2_Covenant/tools/base_handler"
+	. "2019_2_Covenant/tools/response"
+	"2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
 )
 
 type SessionHandler struct {
+	BaseHandler
 	SUsecase  session.Usecase
 	UUsecase  user.Usecase
-	MManager  middlewares.MiddlewareManager
-	Logger    *logger.LogrusLogger
-	ReqReader *reader.ReqReader
 }
 
 func NewSessionHandler(sUC session.Usecase,
 	uUC user.Usecase,
-	mManager middlewares.MiddlewareManager,
+	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *SessionHandler {
 	return &SessionHandler{
-		SUsecase:  sUC,
-		UUsecase:  uUC,
-		MManager:  mManager,
-		Logger:    logger,
-		ReqReader: reader.NewReqReader(),
+		BaseHandler: BaseHandler{
+			MManager:  mManager,
+			Logger:    logger,
+			ReqReader: reader.NewReqReader(),
+		},
+		SUsecase: sUC,
+		UUsecase: uUC,
 	}
 }
 
@@ -64,7 +66,7 @@ func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 
 		if err := sh.ReqReader.Read(c, request, nil); err != nil {
 			sh.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
@@ -73,14 +75,14 @@ func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 
 		if err != nil {
 			sh.Logger.Log(c, "info", "Error while getting user by EMAIL.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
 
 		if !usr.Verify(request.Password) {
 			sh.Logger.Log(c, "info", "Bad authentication.", "User:", usr.Nickname)
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: vars.ErrBadParam.Error(),
 			})
 		}
@@ -90,7 +92,7 @@ func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 
 		if err = sh.SUsecase.Store(sess); err != nil {
 			sh.Logger.Log(c, "error", "Session store error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
@@ -100,13 +102,13 @@ func (sh *SessionHandler) CreateSession() echo.HandlerFunc {
 
 		if err != nil {
 			sh.Logger.Log(c, "error", "CSRF Token generating error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"user": usr,
 			},
 		})
@@ -129,14 +131,14 @@ func (sh *SessionHandler) DeleteSession() echo.HandlerFunc {
 
 		if !ok {
 			sh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: vars.ErrInternalServerError.Error(),
 			})
 		}
 
 		if err := sh.SUsecase.DeleteByID(sess.ID); err != nil {
 			sh.Logger.Log(c, "error", "Error while deleting session.", err.Error())
-			return c.JSON(http.StatusNotFound, vars.Response{
+			return c.JSON(http.StatusNotFound, Response{
 				Error: err.Error(),
 			})
 		}
@@ -149,7 +151,7 @@ func (sh *SessionHandler) DeleteSession() echo.HandlerFunc {
 
 		c.SetCookie(cookie)
 
-		return c.JSON(http.StatusOK, vars.Response{
+		return c.JSON(http.StatusOK, Response{
 			Message: "success",
 		})
 	}
@@ -161,7 +163,7 @@ func (sh *SessionHandler) GetCSRF() echo.HandlerFunc {
 
 		if !ok {
 			sh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: vars.ErrInternalServerError.Error(),
 			})
 		}
@@ -171,13 +173,13 @@ func (sh *SessionHandler) GetCSRF() echo.HandlerFunc {
 
 		if err != nil {
 			sh.Logger.Log(c, "error", "CSRF Token generating error.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, map[string]string{
-			"message": "success",
+		return c.JSON(http.StatusOK, Response{
+			Message: "success",
 		})
 	}
 }

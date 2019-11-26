@@ -24,3 +24,17 @@ func (pUC *PlaylistUsecase) Store(playlist *models.Playlist) error {
 
 	return nil
 }
+
+func (pUC *PlaylistUsecase) Fetch(userID uint64, count uint64, offset uint64) ([]*models.Playlist, uint64, error) {
+	playlists, total, err := pUC.playlistRepo.Fetch(userID, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if playlists == nil {
+		playlists = []*models.Playlist{}
+	}
+
+	return playlists, total, nil
+}

@@ -8,7 +8,7 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
-	"2019_2_Covenant/tools/vars"
+	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -34,8 +34,8 @@ func NewPlaylistHandler(pUC playlist.Usecase,
 func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
-	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylust(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id", ph.GetPlaylist(), ph.MManager.CheckAuth)
+	//e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylust(), ph.MManager.CheckAuth)
+	//e.GET("/api/v1/playlists/:id", ph.GetPlaylist(), ph.MManager.CheckAuth)
 }
 
 func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
@@ -50,7 +50,7 @@ func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
 		if !ok {
 			ph.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: vars.ErrInternalServerError.Error(),
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -75,6 +75,49 @@ func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"playlist": newPlaylist,
+			},
+		})
+	}
+}
+
+func (ph *PlaylistHandler) GetPlaylists() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `json:"count" validate:"required"`
+		Offset uint64 `json:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			ph.Logger.Log(c, "error", "Can't extract session from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ph.ReqReader.Read(c, request, nil); err != nil {
+			ph.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		playlists, total, err := ph.PUsecase.Fetch(sess.UserID, request.Count, request.Offset)
+
+		if err != nil {
+			ph.Logger.Log(c, "error", "Error while fetching tracks.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"playlists": playlists,
+				"total":  total,
 			},
 		})
 	}

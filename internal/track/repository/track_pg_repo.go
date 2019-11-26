@@ -42,17 +42,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 			return nil, err
 		}
 
-		tracks = append(tracks, &models.Track{
-			ID: t.ID,
-			AlbumID: t.AlbumID,
-			ArtistID: t.ArtistID,
-			Name: t.Name,
-			Duration: t.Duration,
-			Photo: t.Photo,
-			Artist: t.Artist,
-			Album: t.Album,
-			Path: t.Path,
-		})
+		tracks = append(tracks, t)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -138,17 +128,7 @@ func (th *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 			return nil, total, err
 		}
 
-		tracks = append(tracks, &models.Track{
-			ID: t.ID,
-			AlbumID: t.AlbumID,
-			ArtistID: t.ArtistID,
-			Name: t.Name,
-			Duration: t.Duration,
-			Photo: t.Photo,
-			Artist: t.Artist,
-			Album: t.Album,
-			Path: t.Path,
-		})
+		tracks = append(tracks, t)
 	}
 
 	if err := rows.Err(); err != nil {

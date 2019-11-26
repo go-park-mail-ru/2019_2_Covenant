@@ -6,6 +6,8 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +18,20 @@ type Session struct {
 	UserID  uint64
 	Expires time.Time
 	Data    string
+}
+
+func NewSession(userID uint64) (*Session, *http.Cookie) {
+	cookie := &http.Cookie{
+		Name:    "Covenant",
+		Value:   uuid.New().String(),
+		Expires: time.Now().Add(24 * time.Hour),
+	}
+
+	return &Session{
+		UserID:  userID,
+		Data:    cookie.Value,
+		Expires: cookie.Expires,
+	}, cookie
 }
 
 type CSRFTokenManager struct {

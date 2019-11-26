@@ -3,6 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/playlist"
+	. "2019_2_Covenant/tools/vars"
 	"database/sql"
 )
 
@@ -70,4 +71,18 @@ func (plR *PlaylistRepository) Fetch(userID uint64, count uint64, offset uint64)
 	}
 
 	return playlists, total, nil
+}
+
+func (plR *PlaylistRepository) DeleteByID(playlistID uint64) error {
+	if err := plR.db.QueryRow("DELETE FROM playlists WHERE id = $1 RETURNING id",
+		playlistID,
+	).Scan(); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
 }

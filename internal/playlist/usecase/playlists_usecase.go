@@ -16,9 +16,7 @@ func NewPlaylistUsecase(repo playlist.Repository) playlist.Usecase {
 }
 
 func (pUC *PlaylistUsecase) Store(playlist *models.Playlist) error {
-	err := pUC.playlistRepo.Store(playlist)
-
-	if err != nil {
+	if err := pUC.playlistRepo.Store(playlist); err != nil {
 		return err
 	}
 
@@ -37,4 +35,12 @@ func (pUC *PlaylistUsecase) Fetch(userID uint64, count uint64, offset uint64) ([
 	}
 
 	return playlists, total, nil
+}
+
+func (pUC *PlaylistUsecase) DeleteByID(playlistID uint64) error {
+	if err := pUC.playlistRepo.DeleteByID(playlistID); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strconv"
 )
 
 type PlaylistHandler struct {
@@ -34,7 +35,8 @@ func NewPlaylistHandler(pUC playlist.Usecase,
 func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
-	//e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylust(), ph.MManager.CheckAuth)
+	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
+	//e.POST("/api/v1/playlists/:id/tracks/", ph.AddToPlaylist(), ph.MManager.CheckAuth)
 	//e.GET("/api/v1/playlists/:id", ph.GetPlaylist(), ph.MManager.CheckAuth)
 }
 
@@ -119,6 +121,30 @@ func (ph *PlaylistHandler) GetPlaylists() echo.HandlerFunc {
 				"playlists": playlists,
 				"total":  total,
 			},
+		})
+	}
+}
+
+func (ph *PlaylistHandler) DeletePlaylist() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		pID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ph.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		if err := ph.PUsecase.DeleteByID(uint64(pID)); err != nil {
+			ph.Logger.Log(c, "info", "Error while remove favourite track.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Message: "success",
 		})
 	}
 }

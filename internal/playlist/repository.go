@@ -7,4 +7,5 @@ type Repository interface {
 	Fetch(userID uint64, count uint64, offset uint64) ([]*models.Playlist, uint64, error)
 	DeleteByID(playlistID uint64) error
 	AddToPlaylist(playlistID uint64, trackID uint64) error
+	RemoveFromPlaylist(playlistID uint64, trackID uint64) error
 }

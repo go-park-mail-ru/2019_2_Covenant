@@ -52,3 +52,11 @@ func (pUC *PlaylistUsecase) AddToPlaylist(playlistID uint64, trackID uint64) err
 
 	return nil
 }
+
+func (pUC *PlaylistUsecase) RemoveFromPlaylist(playlistID uint64, trackID uint64) error {
+	if err := pUC.playlistRepo.RemoveFromPlaylist(playlistID, trackID); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -104,3 +104,20 @@ func (plR *PlaylistRepository) AddToPlaylist(playlistID uint64, trackID uint64) 
 
 	return nil
 }
+
+func (plR *PlaylistRepository) RemoveFromPlaylist(playlistID uint64, trackID uint64) error {
+	res, err := plR.db.Exec("DELETE from playlist_track WHERE playlist_id = $1 AND track_id = $2",
+		playlistID,
+		trackID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}

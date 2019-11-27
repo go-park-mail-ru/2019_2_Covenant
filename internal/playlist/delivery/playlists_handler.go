@@ -37,7 +37,7 @@ func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
 	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
-	//e.GET("/api/v1/playlists/:id", ph.GetPlaylist(), ph.MManager.CheckAuth)
+	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuth)
 }
 
 func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
@@ -176,6 +176,31 @@ func (ph *PlaylistHandler) AddToPlaylist() echo.HandlerFunc {
 		if err := ph.PUsecase.AddToPlaylist(uint64(pID), request.TrackID); err != nil {
 			ph.Logger.Log(c, "error", "Error while adding track to playlist.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Message: "success",
+		})
+	}
+}
+
+func (ph *PlaylistHandler) RemoveFromPlaylist() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		pID, err1 := strconv.Atoi(c.Param("playlist_id"))
+		tID, err2 := strconv.Atoi(c.Param("track_id"))
+
+		if err1 != nil || err2 != nil {
+			ph.Logger.Log(c, "error", "Atoi error.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		if err := ph.PUsecase.RemoveFromPlaylist(uint64(pID), uint64(tID)); err != nil {
+			ph.Logger.Log(c, "info", "Error while remove playlist.", err)
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}

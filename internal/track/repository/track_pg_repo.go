@@ -22,9 +22,9 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 	var tracks []*models.Track
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-		"JOIN albums Al ON T.album_id = Al.id " +
-		"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $1 OFFSET $2",
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
+			"JOIN albums Al ON T.album_id = Al.id "+
+			"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $1 OFFSET $2",
 		count,
 		offset)
 
@@ -105,11 +105,11 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 	}
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-		"JOIN favourites F ON T.id = F.track_id " +
-		"JOIN albums Al ON T.album_id = Al.id " +
-		"JOIN artists Ar ON Al.artist_id = Ar.id " +
-		"WHERE F.user_id = $1 LIMIT $2",
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
+			"JOIN favourites F ON T.id = F.track_id "+
+			"JOIN albums Al ON T.album_id = Al.id "+
+			"JOIN artists Ar ON Al.artist_id = Ar.id "+
+			"WHERE F.user_id = $1 LIMIT $2",
 		userID,
 		count,
 		offset,
@@ -144,11 +144,11 @@ func (tr *TrackRepository) FindLike(name string, count uint64) ([]*models.Track,
 	var tracks []*models.Track
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-			"JOIN albums Al ON T.album_id = Al.id " +
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
+			"JOIN albums Al ON T.album_id = Al.id "+
 			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE lower(T.name) like '%' || $1 || '%' LIMIT $2",
-			strings.ToLower(name),
-			count)
+		strings.ToLower(name),
+		count)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -91,3 +91,18 @@ func (mr *MockUsecaseMockRecorder) RemoveFavourite(userID, trackID interface{}) 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFavourite", reflect.TypeOf((*MockUsecase)(nil).RemoveFavourite), userID, trackID)
 }
+
+// FindLike mocks base method
+func (m *MockUsecase) FindLike(name string, count uint64) ([]*models.Track, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindLike", name, count)
+	ret0, _ := ret[0].([]*models.Track)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindLike indicates an expected call of FindLike
+func (mr *MockUsecaseMockRecorder) FindLike(name, count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindLike", reflect.TypeOf((*MockUsecase)(nil).FindLike), name, count)
+}

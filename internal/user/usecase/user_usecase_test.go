@@ -4,7 +4,7 @@ import (
 	. "2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
 	mock "2019_2_Covenant/internal/user/mocks"
-	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/tools/vars"
 	"fmt"
 	"testing"
 

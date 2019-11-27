@@ -91,3 +91,18 @@ func (mr *MockRepositoryMockRecorder) FetchFavourites(userID, count, offset inte
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchFavourites", reflect.TypeOf((*MockRepository)(nil).FetchFavourites), userID, count, offset)
 }
+
+// FindLike mocks base method
+func (m *MockRepository) FindLike(name string, count uint64) ([]*models.Track, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindLike", name, count)
+	ret0, _ := ret[0].([]*models.Track)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindLike indicates an expected call of FindLike
+func (mr *MockRepositoryMockRecorder) FindLike(name, count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindLike", reflect.TypeOf((*MockRepository)(nil).FindLike), name, count)
+}

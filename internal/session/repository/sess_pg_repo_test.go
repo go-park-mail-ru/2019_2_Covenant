@@ -3,7 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
-	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/tools/vars"
 	"database/sql"
 	"fmt"
 	"testing"

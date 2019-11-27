@@ -424,3 +424,108 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 		}
 	})
 }
+
+func TestTrackRepository_FindLike(t *testing.T) {
+	dbMock, mock, err := sqlmock.New()
+	if err != nil {
+		fmt.Println("error creating mock database")
+		return
+	}
+	defer dbMock.Close()
+
+	trackRepo := configureTrackReposirory(dbMock)
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name", "T_path"}
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World", "path").
+			AddRow(2, 2, 2, "bad guy", "3:14", "path", "Billie Eilish", "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?", "path").
+			AddRow(3, 3, 3, "Still Loving You", "6:28", "path", "Scorpions", "Love at First Sting", "path")
+
+		mock.ExpectQuery("SELECT").WithArgs(name, count).WillReturnRows(rows)
+
+		tracks, err := trackRepo.FindLike(name, count)
+
+		if tracks == nil || err != nil {
+			fmt.Println("Tracks -> expected not nil, got: ", tracks)
+			fmt.Println("Error -> expected nil, got: ", err)
+			t1.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t1.Fail()
+		}
+	})
+
+	t.Run("Test with errors", func(t2 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		mock.ExpectQuery("SELECT").WithArgs(name, count).WillReturnError(fmt.Errorf("some error"))
+
+		tracks, err := trackRepo.FindLike(name, count)
+
+		if tracks != nil || err == nil {
+			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t2.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t2.Fail()
+		}
+	})
+
+	t.Run("Test with error of rows", func(t4 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World").
+			RowError(0, fmt.Errorf("some error"))
+
+		mock.ExpectQuery("SELECT").WillReturnRows(rows)
+
+		tracks, err := trackRepo.FindLike(name, count)
+
+		if tracks != nil || err == nil {
+			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t4.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t4.Fail()
+		}
+	})
+
+	t.Run("Test with no result", func(t5 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
+		rows := sqlmock.NewRows(columns)
+
+		mock.ExpectQuery("SELECT").WillReturnRows(rows)
+
+		tracks, err := trackRepo.FindLike(name, count)
+
+		if tracks != nil || err != nil {
+			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Error -> expected nil, got: ", err)
+			t5.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t5.Fail()
+		}
+	})
+}

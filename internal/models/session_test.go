@@ -1,7 +1,7 @@
 package models
 
 import (
-	"2019_2_Covenant/internal/vars"
+	"2019_2_Covenant/tools/vars"
 	"fmt"
 	"testing"
 	"time"

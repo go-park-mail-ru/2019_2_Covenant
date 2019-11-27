@@ -121,3 +121,35 @@ func (plR *PlaylistRepository) RemoveFromPlaylist(playlistID uint64, trackID uin
 
 	return nil
 }
+
+func (plR *PlaylistRepository) GetSinglePlaylist(playlistID uint64) (*models.Playlist, uint64, error) {
+	p := &models.Playlist{}
+	var amountOfTracks uint64
+
+	if err := plR.db.QueryRow("SELECT name, description, photo, owner_id FROM playlists WHERE id = $1",
+		playlistID,
+	).Scan(
+		&p.Name,
+		&p.Description,
+		&p.Photo,
+		&p.OwnerID,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, amountOfTracks, ErrNotFound
+		}
+
+		return nil, amountOfTracks, err
+	}
+
+	if err := plR.db.QueryRow("SELECT COUNT(*) FROM playlist_track WHERE playlist_id = $1",
+		playlistID,
+	).Scan(&amountOfTracks); err != nil {
+		if err == sql.ErrNoRows {
+			return p, amountOfTracks, nil
+		}
+
+		return nil, amountOfTracks, err
+	}
+
+	return p, amountOfTracks, nil
+}

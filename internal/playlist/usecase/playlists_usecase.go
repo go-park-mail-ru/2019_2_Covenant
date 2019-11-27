@@ -60,3 +60,13 @@ func (pUC *PlaylistUsecase) RemoveFromPlaylist(playlistID uint64, trackID uint64
 
 	return nil
 }
+
+func (pUC *PlaylistUsecase) GetSinglePlaylist(playlistID uint64) (*models.Playlist, uint64, error) {
+	p, amountOfTracks, err := pUC.playlistRepo.GetSinglePlaylist(playlistID)
+
+	if err != nil {
+		return nil, amountOfTracks, err
+	}
+
+	return p, amountOfTracks, nil
+}

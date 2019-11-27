@@ -15,8 +15,8 @@ func NewTrackUsecase(tr track.Repository) track.Usecase {
 	}
 }
 
-func (tUC *trackUsecase) FetchPopular(count uint64) ([]*models.Track, error) {
-	tracks, err := tUC.trackRepo.Fetch(count)
+func (tUC *trackUsecase) FetchPopular(count uint64, offset uint64) ([]*models.Track, error) {
+	tracks, err := tUC.trackRepo.Fetch(count, offset)
 
 	if err != nil {
 		return nil, err
@@ -45,16 +45,16 @@ func (tUC *trackUsecase) RemoveFavourite(userID uint64, trackID uint64) error {
 	return nil
 }
 
-func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64) ([]*models.Track, error) {
-	tracks, err := tUC.trackRepo.FetchFavourites(userID, count)
+func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
+	tracks, total, err := tUC.trackRepo.FetchFavourites(userID, count, offset)
 
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
 	if tracks == nil {
 		tracks = []*models.Track{}
 	}
 
-	return tracks, nil
+	return tracks, total, nil
 }

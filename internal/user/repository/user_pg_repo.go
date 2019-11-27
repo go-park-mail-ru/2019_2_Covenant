@@ -17,16 +17,12 @@ func NewUserRepository(db *sql.DB) user.Repository {
 	}
 }
 
-func (ur *UserRepository) Store(newUser *models.User) (*models.User, error) {
-	if err := ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
+func (ur *UserRepository) Store(newUser *models.User) error {
+	return ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
 		newUser.Nickname,
 		newUser.Email,
 		newUser.Password,
-	).Scan(&newUser.ID, &newUser.Avatar); err != nil {
-		return nil, err
-	}
-
-	return newUser, nil
+	).Scan(&newUser.ID, &newUser.Avatar)
 }
 
 func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
@@ -35,6 +31,10 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE email = $1",
 		email,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -47,6 +47,10 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE id = $1",
 		usrID,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -59,6 +63,10 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE nickname = $1",
 		nickname,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, vars.ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -118,29 +126,6 @@ func (ur *UserRepository) nicknameExists(nickname string) (bool, error) {
 	return false, nil
 }
 
-func (ur *UserRepository) UpdateNickname(id uint64, nickname string) (*models.User, error) {
-	u := &models.User{}
-
-	exist, _ := ur.nicknameExists(nickname)
-
-	if exist {
-		return nil, vars.ErrAlreadyExist
-	}
-
-	if err := ur.db.QueryRow("UPDATE users SET nickname = $1 WHERE id = $2 RETURNING nickname, email, avatar",
-		nickname,
-		id,
-	).Scan(
-		&u.Nickname,
-		&u.Email,
-		&u.Avatar,
-	); err != nil {
-		return nil, err
-	}
-
-	return u, nil
-}
-
 func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
 	u := &models.User{}
 
@@ -172,16 +157,22 @@ func (ur *UserRepository) emailExists(email string) (bool, error) {
 	return false, nil
 }
 
-func (ur *UserRepository) UpdateEmail(id uint64, email string) (*models.User, error) {
-	u := &models.User{}
-
-	exist, _ := ur.emailExists(email)
-
-	if exist {
-		return nil, vars.ErrAlreadyExist
+func (ur *UserRepository) UpdatePassword(id uint64, password string) error {
+	if _, err := ur.db.Exec("UPDATE users SET password = $1 WHERE id = $2",
+		password,
+		id,
+	); err != nil {
+		return err
 	}
 
-	if err := ur.db.QueryRow("UPDATE users SET email = $1 WHERE id = $2 RETURNING nickname, email, avatar",
+	return nil
+}
+
+func (ur *UserRepository) Update(id uint64, nickname string, email string) (*models.User, error) {
+	u := &models.User{}
+
+	if err := ur.db.QueryRow("UPDATE users SET nickname = $1, email = $2 WHERE id = $3 RETURNING nickname, email, avatar",
+		nickname,
 		email,
 		id,
 	).Scan(
@@ -193,15 +184,4 @@ func (ur *UserRepository) UpdateEmail(id uint64, email string) (*models.User, er
 	}
 
 	return u, nil
-}
-
-func (ur *UserRepository) UpdatePassword(id uint64, password string) error {
-	if _, err := ur.db.Exec("UPDATE users SET password = $1 WHERE id = $2 RETURNING nickname, email, avatar",
-		password,
-		id,
-	); err != nil {
-		return err
-	}
-
-	return nil
 }

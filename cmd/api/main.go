@@ -27,19 +27,19 @@ func main() {
 	flag.Parse()
 
 	serverConfig := apiserver.NewConfig()
-
 	if _, err := toml.DecodeFile(serverConfPath, serverConfig); err != nil {
 		log.Fatal(err)
 	}
 
 	storageConfig := storage.NewConfig("dev")
-
 	if _, err := toml.DecodeFile(storageConfPath, storageConfig); err != nil {
 		log.Fatal(err)
 	}
 
 	st := storage.NewPGStorage(storageConfig)
 	server := apiserver.NewAPIServer(serverConfig, st)
+
+	defer server.Stop()
 
 	if err := server.Start(); err != nil {
 		log.Fatal(err)

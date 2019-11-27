@@ -18,6 +18,14 @@ type User struct {
 	Access        int8   `json:"access"` // 0 - public; 1 - private;
 }
 
+func NewUser(email string, nickname string, plainPassword string) *User {
+	return &User{
+		Nickname:      nickname,
+		Email:         email,
+		PlainPassword: plainPassword,
+	}
+}
+
 func (u *User) BeforeStore() error {
 	if len(u.PlainPassword) > 0 {
 		pass, err := EncryptPassword(u.PlainPassword)

@@ -3,7 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"database/sql"
 	"time"
 )
@@ -41,7 +41,7 @@ func (sr *SessionRepository) Get(value string) (*models.Session, error) {
 			return nil, err
 		}
 
-		return nil, vars.ErrExpired
+		return nil, ErrExpired
 	}
 
 	return item, nil
@@ -55,7 +55,7 @@ func (sr *SessionRepository) Store(newSession *models.Session) error {
 	).Scan(
 		&newSession.ID,
 	); err != nil {
-		return vars.ErrInternalServerError
+		return ErrInternalServerError
 	}
 
 	return nil
@@ -70,10 +70,10 @@ func (sr *SessionRepository) DeleteByID(id uint64) error {
 		&item,
 	); err != nil {
 		if err == sql.ErrNoRows {
-			return vars.ErrNotFound
+			return ErrNotFound
 		}
 
-		return vars.ErrInternalServerError
+		return ErrInternalServerError
 	}
 
 	return nil

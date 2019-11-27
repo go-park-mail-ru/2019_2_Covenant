@@ -7,4 +7,5 @@ type Repository interface {
 	StoreFavourite(userID uint64, trackID uint64) error
 	RemoveFavourite(userID uint64, trackID uint64) error
 	FetchFavourites(userID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error)
+	FindLike(name string, count uint64) ([]*models.Track, error)
 }

@@ -4,30 +4,31 @@ import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
-	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
+	"2019_2_Covenant/tools/base_handler"
+	. "2019_2_Covenant/tools/response"
+	. "2019_2_Covenant/tools/vars"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
-
-	"github.com/labstack/echo/v4"
 )
 
 type TrackHandler struct {
-	TUsecase  track.Usecase
-	MManager  middlewares.MiddlewareManager
-	Logger    *logger.LogrusLogger
-	ReqReader *reader.ReqReader
+	base_handler.BaseHandler
+	TUsecase track.Usecase
 }
 
 func NewTrackHandler(tUC track.Usecase,
-	mManager middlewares.MiddlewareManager,
+	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *TrackHandler {
 	return &TrackHandler{
-		TUsecase:  tUC,
-		MManager:  mManager,
-		Logger:    logger,
-		ReqReader: reader.NewReqReader(),
+		BaseHandler: base_handler.BaseHandler{
+			MManager:  mManager,
+			Logger:    logger,
+			ReqReader: reader.NewReqReader(),
+		},
+		TUsecase: tUC,
 	}
 }
 
@@ -46,9 +47,9 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 // @Accept json
 // @Produce json
 // @Success 200 object models.Track
-// @Failure 400 object vars.ResponseError
-// @Failure 404 object vars.ResponseError
-// @Failure 500 object vars.ResponseError
+// @Failure 400 object ResponseError
+// @Failure 404 object ResponseError
+// @Failure 500 object ResponseError
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -56,8 +57,8 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -67,8 +68,8 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			item.Duration = item.Duration[start+1 : end]
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"tracks": tracks,
 			},
 		})
@@ -85,8 +86,8 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 
 		if !ok {
 			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -94,19 +95,19 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 
 		if err := th.ReqReader.Read(c, request, nil); err != nil {
 			th.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
 
 		if err := th.TUsecase.StoreFavourite(sess.UserID, request.TrackID); err != nil {
 			th.Logger.Log(c, "error", "Error while storing favourite track.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
+		return c.JSON(http.StatusOK, Response{
 			Message: "success",
 		})
 	}
@@ -122,8 +123,8 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 
 		if !ok {
 			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -131,19 +132,19 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 
 		if err := th.ReqReader.Read(c, request, nil); err != nil {
 			th.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
 
 		if err := th.TUsecase.RemoveFavourite(sess.UserID, request.TrackID); err != nil {
 			th.Logger.Log(c, "error", "Error while remove favourite track.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
+		return c.JSON(http.StatusOK, Response{
 			Message: "success",
 		})
 	}
@@ -160,8 +161,8 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 
 		if !ok {
 			th.Logger.Log(c, "error", "Can't extract session from echo.Context.")
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -169,7 +170,7 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 
 		if err := th.ReqReader.Read(c, request, nil); err != nil {
 			th.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}
@@ -178,8 +179,8 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
-			return c.JSON(http.StatusInternalServerError, vars.Response{
-				Error: vars.ErrInternalServerError.Error(),
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
 			})
 		}
 
@@ -189,8 +190,8 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 			item.Duration = item.Duration[start+1 : end]
 		}
 
-		return c.JSON(http.StatusOK, vars.Response{
-			Body: &vars.Body{
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
 				"tracks": tracks,
 				"total":  total,
 			},

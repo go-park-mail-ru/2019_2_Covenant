@@ -3,7 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"database/sql"
 )
 
@@ -32,7 +32,7 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 		email,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, vars.ErrNotFound
+			return nil, ErrNotFound
 		}
 
 		return nil, err
@@ -48,7 +48,7 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 		usrID,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, vars.ErrNotFound
+			return nil, ErrNotFound
 		}
 
 		return nil, err
@@ -64,7 +64,7 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 		nickname,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, vars.ErrNotFound
+			return nil, ErrNotFound
 		}
 
 		return nil, err

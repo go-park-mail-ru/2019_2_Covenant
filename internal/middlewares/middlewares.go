@@ -4,8 +4,9 @@ import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
-	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
+	. "2019_2_Covenant/tools/response"
+	. "2019_2_Covenant/tools/vars"
 	"fmt"
 	"net/http"
 	"time"
@@ -22,8 +23,8 @@ type MiddlewareManager struct {
 
 func NewMiddlewareManager(uUsecase user.Usecase,
 	sUsecase session.Usecase,
-	logger *logger.LogrusLogger) MiddlewareManager {
-	return MiddlewareManager{
+	logger *logger.LogrusLogger) *MiddlewareManager {
+	return &MiddlewareManager{
 		sUC:    sUsecase,
 		uUC:    uUsecase,
 		logger: logger,
@@ -39,14 +40,14 @@ func (m *MiddlewareManager) CSRFCheckMiddleware(next echo.HandlerFunc) echo.Hand
 		ok, err := models.NewCSRFTokenManager("Covenant").Verify(sess.UserID, sess.Data, token)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, vars.Response{
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}
 
 		if !ok {
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: vars.ErrBadCSRF.Error(),
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: ErrBadCSRF.Error(),
 			})
 		}
 
@@ -93,7 +94,7 @@ func (m *MiddlewareManager) PanicRecovering(next echo.HandlerFunc) echo.HandlerF
 		defer func() {
 			if err := recover(); err != nil {
 				fmt.Println(err)
-				c.Error(vars.ErrInternalServerError)
+				c.Error(ErrInternalServerError)
 			}
 		}()
 
@@ -107,8 +108,8 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if err != nil {
 			m.logger.Log(c, "info", "There is no cookies.")
-			return c.JSON(http.StatusUnauthorized, vars.Response{
-				Error: vars.ErrUnathorized.Error(),
+			return c.JSON(http.StatusUnauthorized, Response{
+				Error: ErrUnathorized.Error(),
 			})
 		}
 
@@ -116,8 +117,8 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if err != nil {
 			m.logger.Log(c, "info", "Error while getting session by cookie:", err.Error())
-			return c.JSON(http.StatusUnauthorized, vars.Response{
-				Error: vars.ErrUnathorized.Error(),
+			return c.JSON(http.StatusUnauthorized, Response{
+				Error: ErrUnathorized.Error(),
 			})
 		}
 
@@ -125,7 +126,7 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		if err != nil {
 			m.logger.Log(c, "info", "Error while getting user by id:", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
+			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
 		}

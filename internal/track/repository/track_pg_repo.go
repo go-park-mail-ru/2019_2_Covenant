@@ -3,12 +3,10 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"database/sql"
+	"strings"
 )
-
-// Для тестирования только этого файла:
-// go test -v -cover -race ./internal/track/repository
 
 type TrackRepository struct {
 	db *sql.DB
@@ -45,17 +43,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 			return nil, err
 		}
 
-		tracks = append(tracks, &models.Track{
-			ID:       t.ID,
-			AlbumID:  t.AlbumID,
-			ArtistID: t.ArtistID,
-			Name:     t.Name,
-			Duration: t.Duration,
-			Photo:    t.Photo,
-			Artist:   t.Artist,
-			Album:    t.Album,
-			Path:     t.Path,
-		})
+		tracks = append(tracks, t)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -72,7 +60,7 @@ func (tr *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {
 		userID,
 		trackID,
 	).Scan(&favID); err == nil {
-		return vars.ErrAlreadyExist
+		return ErrAlreadyExist
 	}
 
 	if _, err := tr.db.Exec("INSERT INTO favourites (user_id, track_id) VALUES ($1, $2)",
@@ -92,7 +80,7 @@ func (tr *TrackRepository) RemoveFavourite(userID uint64, trackID uint64) error 
 		userID,
 		trackID,
 	).Scan(&favID); err != nil {
-		return vars.ErrNotFound
+		return ErrNotFound
 	}
 
 	if _, err := tr.db.Exec("DELETE FROM favourites WHERE id = $1",
@@ -118,10 +106,10 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 
 	rows, err := tr.db.Query(
 		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
-			"JOIN favourites F ON T.id = F.track_id " +
-			"JOIN albums Al ON T.album_id = Al.id " +
-			"JOIN artists Ar ON Al.artist_id = Ar.id " +
-			"WHERE F.user_id = $1 LIMIT $2 OFFSET $3",
+		"JOIN favourites F ON T.id = F.track_id " +
+		"JOIN albums Al ON T.album_id = Al.id " +
+		"JOIN artists Ar ON Al.artist_id = Ar.id " +
+		"WHERE F.user_id = $1 LIMIT $2",
 		userID,
 		count,
 		offset,
@@ -142,17 +130,7 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 			return nil, total, err
 		}
 
-		tracks = append(tracks, &models.Track{
-			ID:       t.ID,
-			AlbumID:  t.AlbumID,
-			ArtistID: t.ArtistID,
-			Name:     t.Name,
-			Duration: t.Duration,
-			Photo:    t.Photo,
-			Artist:   t.Artist,
-			Album:    t.Album,
-			Path:     t.Path,
-		})
+		tracks = append(tracks, t)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -160,4 +138,43 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 	}
 
 	return tracks, total, nil
+}
+
+func (tr *TrackRepository) FindLike(name string, count uint64) ([]*models.Track, error) {
+	var tracks []*models.Track
+
+	rows, err := tr.db.Query(
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
+			"JOIN albums Al ON T.album_id = Al.id " +
+			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE lower(T.name) like '%' || $1 || '%' LIMIT $2",
+			strings.ToLower(name),
+			count)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		t := &models.Track{}
+
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
+			&t.Photo, &t.Artist, &t.Album, &t.Path,
+		); err != nil {
+			return nil, err
+		}
+
+		tracks = append(tracks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }

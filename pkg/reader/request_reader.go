@@ -29,7 +29,7 @@ func (rv *ReqReader) validate(req interface{}) error {
 }
 
 func (rv *ReqReader) Read(c echo.Context, request interface{}, check func(interface{}) bool) error {
-	err := c.Bind(&request)
+	err := c.Bind(request)
 
 	if err != nil {
 		return ErrUnprocessableEntity

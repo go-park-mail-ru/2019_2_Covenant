@@ -36,7 +36,7 @@ func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
-	//e.POST("/api/v1/playlists/:id/tracks/", ph.AddToPlaylist(), ph.MManager.CheckAuth)
+	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
 	//e.GET("/api/v1/playlists/:id", ph.GetPlaylist(), ph.MManager.CheckAuth)
 }
 
@@ -110,7 +110,7 @@ func (ph *PlaylistHandler) GetPlaylists() echo.HandlerFunc {
 		playlists, total, err := ph.PUsecase.Fetch(sess.UserID, request.Count, request.Offset)
 
 		if err != nil {
-			ph.Logger.Log(c, "error", "Error while fetching tracks.", err)
+			ph.Logger.Log(c, "error", "Error while fetching playlists.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
@@ -137,8 +137,45 @@ func (ph *PlaylistHandler) DeletePlaylist() echo.HandlerFunc {
 		}
 
 		if err := ph.PUsecase.DeleteByID(uint64(pID)); err != nil {
-			ph.Logger.Log(c, "info", "Error while remove favourite track.", err)
+			ph.Logger.Log(c, "info", "Error while remove playlist.", err)
 			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Message: "success",
+		})
+	}
+}
+
+func (ph *PlaylistHandler) AddToPlaylist() echo.HandlerFunc {
+	type Request struct {
+		TrackID uint64 `json:"track_id" validate:"required"`
+	}
+
+	return func(c echo.Context) error {
+		pID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ph.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ph.ReqReader.Read(c, request, nil); err != nil {
+			ph.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		if err := ph.PUsecase.AddToPlaylist(uint64(pID), request.TrackID); err != nil {
+			ph.Logger.Log(c, "error", "Error while adding track to playlist.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
 			})
 		}

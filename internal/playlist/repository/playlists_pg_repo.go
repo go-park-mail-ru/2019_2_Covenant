@@ -86,3 +86,21 @@ func (plR *PlaylistRepository) DeleteByID(playlistID uint64) error {
 
 	return nil
 }
+
+func (plR *PlaylistRepository) AddToPlaylist(playlistID uint64, trackID uint64) error {
+	if err := plR.db.QueryRow("SELECT id FROM playlist_track WHERE playlist_id = $1 AND track_id = $2",
+		playlistID,
+		trackID,
+	).Scan(); err == nil {
+		return ErrAlreadyExist
+	}
+
+	if _, err := plR.db.Exec("INSERT INTO playlist_track (playlist_id, track_id) VALUES ($1, $2)",
+		playlistID,
+		trackID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}

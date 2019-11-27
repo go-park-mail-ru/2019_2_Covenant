@@ -8,9 +8,10 @@ import (
 	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 type SessionHandler struct {

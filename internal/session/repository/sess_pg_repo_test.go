@@ -3,6 +3,7 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/session"
+	"2019_2_Covenant/internal/vars"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -175,6 +176,38 @@ func TestSessionRepository_Store(t *testing.T) {
 		if err = mock.ExpectationsWereMet(); err != nil {
 			fmt.Println("unmet expectation error: ", err)
 			t2.Fail()
+		}
+	})
+}
+
+func TestSessionRepository_DeleteByID(t *testing.T) {
+	dbMock, mock, err := sqlmock.New()
+	if err != nil {
+		fmt.Println("error creating mock database")
+		return
+	}
+	defer dbMock.Close()
+
+	sessRepo := configureSessionRepository(dbMock)
+
+	t.Run("Error no rows", func(t1 *testing.T) {
+		sessId := uint64(1)
+		columns := []string{"id", "user_id", "expires", "data"}
+
+		rows := sqlmock.NewRows(columns)
+
+		mock.ExpectQuery("DELETE").WithArgs(sessId).WillReturnRows(rows)
+
+		err := sessRepo.DeleteByID(sessId)
+
+		if err != vars.ErrNotFound {
+			fmt.Println("Error -> expected Not Found, got: ", err)
+			t1.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t1.Fail()
 		}
 	})
 }

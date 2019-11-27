@@ -94,12 +94,11 @@ func (mr *MockRepositoryMockRecorder) GetByNickname(nickname interface{}) *gomoc
 }
 
 // Store mocks base method
-func (m *MockRepository) Store(user *models.User) (*models.User, error) {
+func (m *MockRepository) Store(user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", user)
-	ret0, _ := ret[0].(*models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Store indicates an expected call of Store
@@ -123,36 +122,6 @@ func (mr *MockRepositoryMockRecorder) UpdateAvatar(id, avatarPath interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAvatar", reflect.TypeOf((*MockRepository)(nil).UpdateAvatar), id, avatarPath)
 }
 
-// UpdateNickname mocks base method
-func (m *MockRepository) UpdateNickname(id uint64, nickname string) (*models.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateNickname", id, nickname)
-	ret0, _ := ret[0].(*models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateNickname indicates an expected call of UpdateNickname
-func (mr *MockRepositoryMockRecorder) UpdateNickname(id, nickname interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateNickname", reflect.TypeOf((*MockRepository)(nil).UpdateNickname), id, nickname)
-}
-
-// UpdateEmail mocks base method
-func (m *MockRepository) UpdateEmail(id uint64, email string) (*models.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEmail", id, email)
-	ret0, _ := ret[0].(*models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateEmail indicates an expected call of UpdateEmail
-func (mr *MockRepositoryMockRecorder) UpdateEmail(id, email interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockRepository)(nil).UpdateEmail), id, email)
-}
-
 // UpdatePassword mocks base method
 func (m *MockRepository) UpdatePassword(id uint64, password string) error {
 	m.ctrl.T.Helper()
@@ -165,4 +134,19 @@ func (m *MockRepository) UpdatePassword(id uint64, password string) error {
 func (mr *MockRepositoryMockRecorder) UpdatePassword(id, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockRepository)(nil).UpdatePassword), id, password)
+}
+
+// Update mocks base method
+func (m *MockRepository) Update(id uint64, nickname, email string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", id, nickname, email)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update
+func (mr *MockRepositoryMockRecorder) Update(id, nickname, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), id, nickname, email)
 }

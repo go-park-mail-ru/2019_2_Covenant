@@ -34,18 +34,34 @@ func (m *MockUsecase) EXPECT() *MockUsecaseMockRecorder {
 }
 
 // FetchPopular mocks base method
-func (m *MockUsecase) FetchPopular(count uint64) ([]*models.Track, error) {
+func (m *MockUsecase) FetchPopular(count, offset uint64) ([]*models.Track, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchPopular", count)
+	ret := m.ctrl.Call(m, "FetchPopular", count, offset)
 	ret0, _ := ret[0].([]*models.Track)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchPopular indicates an expected call of FetchPopular
-func (mr *MockUsecaseMockRecorder) FetchPopular(count interface{}) *gomock.Call {
+func (mr *MockUsecaseMockRecorder) FetchPopular(count, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPopular", reflect.TypeOf((*MockUsecase)(nil).FetchPopular), count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchPopular", reflect.TypeOf((*MockUsecase)(nil).FetchPopular), count, offset)
+}
+
+// FetchFavourites mocks base method
+func (m *MockUsecase) FetchFavourites(userID, count, offset uint64) ([]*models.Track, uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchFavourites", userID, count, offset)
+	ret0, _ := ret[0].([]*models.Track)
+	ret1, _ := ret[1].(uint64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// FetchFavourites indicates an expected call of FetchFavourites
+func (mr *MockUsecaseMockRecorder) FetchFavourites(userID, count, offset interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchFavourites", reflect.TypeOf((*MockUsecase)(nil).FetchFavourites), userID, count, offset)
 }
 
 // StoreFavourite mocks base method
@@ -74,19 +90,4 @@ func (m *MockUsecase) RemoveFavourite(userID, trackID uint64) error {
 func (mr *MockUsecaseMockRecorder) RemoveFavourite(userID, trackID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFavourite", reflect.TypeOf((*MockUsecase)(nil).RemoveFavourite), userID, trackID)
-}
-
-// FetchFavourites mocks base method
-func (m *MockUsecase) FetchFavourites(userID, count uint64) ([]*models.Track, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchFavourites", userID, count)
-	ret0, _ := ret[0].([]*models.Track)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchFavourites indicates an expected call of FetchFavourites
-func (mr *MockUsecaseMockRecorder) FetchFavourites(userID, count interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchFavourites", reflect.TypeOf((*MockUsecase)(nil).FetchFavourites), userID, count)
 }

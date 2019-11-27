@@ -7,9 +7,10 @@ import (
 	"2019_2_Covenant/internal/vars"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type TrackHandler struct {
@@ -50,22 +51,8 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 // @Failure 500 object vars.ResponseError
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
-	type Request struct {
-		Count uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
-	}
-
 	return func(c echo.Context) error {
-		request := &Request{}
-
-		if err := th.ReqReader.Read(c, request, nil); err != nil {
-			th.Logger.Log(c, "info", "Invalid request.", err.Error())
-			return c.JSON(http.StatusBadRequest, vars.Response{
-				Error: err.Error(),
-			})
-		}
-
-		tracks, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
+		tracks, err := th.TUsecase.FetchPopular(50, 0)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -164,7 +151,7 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 
 func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 	type Request struct {
-		Count uint64 `json:"count" validate:"required"`
+		Count  uint64 `json:"count" validate:"required"`
 		Offset uint64 `json:"offset"`
 	}
 
@@ -205,7 +192,7 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, vars.Response{
 			Body: &vars.Body{
 				"tracks": tracks,
-				"total": total,
+				"total":  total,
 			},
 		})
 	}

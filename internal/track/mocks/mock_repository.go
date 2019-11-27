@@ -34,18 +34,18 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // Fetch mocks base method
-func (m *MockRepository) Fetch(count uint64) ([]*models.Track, error) {
+func (m *MockRepository) Fetch(count, offset uint64) ([]*models.Track, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Fetch", count)
+	ret := m.ctrl.Call(m, "Fetch", count, offset)
 	ret0, _ := ret[0].([]*models.Track)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Fetch indicates an expected call of Fetch
-func (mr *MockRepositoryMockRecorder) Fetch(count interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Fetch(count, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockRepository)(nil).Fetch), count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fetch", reflect.TypeOf((*MockRepository)(nil).Fetch), count, offset)
 }
 
 // StoreFavourite mocks base method
@@ -77,16 +77,17 @@ func (mr *MockRepositoryMockRecorder) RemoveFavourite(userID, trackID interface{
 }
 
 // FetchFavourites mocks base method
-func (m *MockRepository) FetchFavourites(userID, count uint64) ([]*models.Track, error) {
+func (m *MockRepository) FetchFavourites(userID, count, offset uint64) ([]*models.Track, uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchFavourites", userID, count)
+	ret := m.ctrl.Call(m, "FetchFavourites", userID, count, offset)
 	ret0, _ := ret[0].([]*models.Track)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(uint64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // FetchFavourites indicates an expected call of FetchFavourites
-func (mr *MockRepositoryMockRecorder) FetchFavourites(userID, count interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) FetchFavourites(userID, count, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchFavourites", reflect.TypeOf((*MockRepository)(nil).FetchFavourites), userID, count)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchFavourites", reflect.TypeOf((*MockRepository)(nil).FetchFavourites), userID, count, offset)
 }

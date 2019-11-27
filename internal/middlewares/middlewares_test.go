@@ -44,8 +44,13 @@ func TestMiddlewareManager_CheckAuth(t *testing.T) {
 			Expires: time.Now().Add(24 * time.Hour),
 			Data:    "covenantcookies",
 		}
-
 		SUsecase.EXPECT().Get("covenantcookies").Return(sess, nil)
+
+		user := &User{
+			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "path", Role: 0, Access: 0,
+		}
+		_ = user.BeforeStore()
+		UUsecase.EXPECT().GetByID(sess.UserID).Return(user, nil)
 
 		h := MiddlewareManager.CheckAuth(func(c echo.Context) error {
 			return c.String(http.StatusOK, "test")
@@ -106,7 +111,7 @@ func TestMiddlewareManager_CheckAuth(t *testing.T) {
 		}
 	})
 
-	t.Run("Test OK", func(t3 *testing.T){
+	t.Run("Error unauthorized", func(t3 *testing.T){
 		e := echo.New()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -141,6 +146,56 @@ func TestMiddlewareManager_CheckAuth(t *testing.T) {
 		if status != 401 {
 			fmt.Println("Status: expected 401, got", status)
 			t3.Fail()
+		}
+	})
+
+	t.Run("Test OK", func(t4 *testing.T){
+		e := echo.New()
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		cookie := http.Cookie{Name: "Covenant", Value: "covenantcookies"}
+		req.AddCookie(&cookie)
+
+		c := e.NewContext(req, rec)
+
+		sess := &Session{
+			ID:      1,
+			UserID:  2,
+			Expires: time.Now().Add(24 * time.Hour),
+			Data:    "covenantcookies",
+		}
+		SUsecase.EXPECT().Get("covenantcookies").Return(sess, nil)
+
+		user := &User{
+			ID: 2, Nickname: "nickname", Email: "e@mail.ru", PlainPassword: "qwerty", Avatar: "path", Role: 0, Access: 0,
+		}
+		_ = user.BeforeStore()
+		UUsecase.EXPECT().GetByID(sess.UserID).Return(nil, fmt.Errorf("some error"))
+
+		h := MiddlewareManager.CheckAuth(func(c echo.Context) error {
+			return c.String(http.StatusOK, "test")
+		})
+
+		err := h(c)
+
+		if err != nil {
+			fmt.Println("Error: expected nil, got", err)
+			t4.Fail()
+		}
+
+		body, _ := ioutil.ReadAll(rec.Body)
+		expBody := `{"error":"some error"}`
+		if strings.Trim(string(body), "\n") != expBody {
+			fmt.Println("Body: expected:", expBody)
+			fmt.Println("      got:", string(body))
+			t4.Fail()
+		}
+
+		status := rec.Code
+		if status != 400 {
+			fmt.Println("Status: expected 200, got", status)
+			t4.Fail()
 		}
 	})
 }

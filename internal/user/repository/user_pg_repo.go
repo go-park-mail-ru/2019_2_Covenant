@@ -112,20 +112,6 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	return users, nil
 }
 
-func (ur *UserRepository) nicknameExists(nickname string) (bool, error) {
-	usr, err := ur.GetByNickname(nickname)
-
-	if err != nil {
-		return false, err
-	}
-
-	if usr != nil {
-		return true, nil
-	}
-
-	return false, nil
-}
-
 func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {
 	u := &models.User{}
 
@@ -141,20 +127,6 @@ func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.Us
 	}
 
 	return u, nil
-}
-
-func (ur *UserRepository) emailExists(email string) (bool, error) {
-	usr, err := ur.GetByEmail(email)
-
-	if err != nil {
-		return false, err
-	}
-
-	if usr != nil {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 func (ur *UserRepository) UpdatePassword(id uint64, password string) error {

@@ -32,10 +32,11 @@ func TestTrackRepository_Fetch(t *testing.T) {
 			AddRow(3, 3, 3, "Still Loving You", "6:28", "path", "Scorpions", "Love at First Sting", "path")
 
 		count := uint64(3)
+		offset := uint64(0)
 
-		mock.ExpectQuery("SELECT").WithArgs(count).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT").WithArgs(count, offset).WillReturnRows(rows)
 
-		tracks, err := trackRepo.Fetch(count)
+		tracks, err := trackRepo.Fetch(count, offset)
 
 		if tracks == nil || err != nil {
 			fmt.Println("Tracks -> expected not nil, got: ", tracks)
@@ -51,9 +52,10 @@ func TestTrackRepository_Fetch(t *testing.T) {
 
 	t.Run("Test with errors", func(t2 *testing.T) {
 		count := uint64(1)
-		mock.ExpectQuery("SELECT").WithArgs(count).WillReturnError(fmt.Errorf("some error"))
+		offset := uint64(0)
+		mock.ExpectQuery("SELECT").WithArgs(count, offset).WillReturnError(fmt.Errorf("some error"))
 
-		tracks, err := trackRepo.Fetch(count)
+		tracks, err := trackRepo.Fetch(count, offset)
 
 		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
@@ -69,14 +71,15 @@ func TestTrackRepository_Fetch(t *testing.T) {
 
 	t.Run("Test with scanning error", func(t3 *testing.T) {
 		count := uint64(1)
+		offset := uint64(0)
 		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
 
 		rows := sqlmock.NewRows(columns).
 			AddRow(-1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World")
 
-		mock.ExpectQuery("SELECT").WithArgs(count).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT").WithArgs(count, offset).WillReturnRows(rows)
 
-		tracks, err := trackRepo.Fetch(count)
+		tracks, err := trackRepo.Fetch(count, offset)
 
 		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
@@ -92,6 +95,7 @@ func TestTrackRepository_Fetch(t *testing.T) {
 
 	t.Run("Test with error of rows", func(t4 *testing.T) {
 		count := uint64(1)
+		offset := uint64(0)
 		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
 
 		rows := sqlmock.NewRows(columns).
@@ -100,7 +104,7 @@ func TestTrackRepository_Fetch(t *testing.T) {
 
 		mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
-		tracks, err := trackRepo.Fetch(count)
+		tracks, err := trackRepo.Fetch(count, offset)
 
 		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
@@ -285,20 +289,24 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 	t.Run("Test OK", func(t1 *testing.T) {
 		userID := uint64(1)
 		count := uint64(3)
+		offset := uint64(0)
+
+		rowCount := sqlmock.NewRows([]string{"count"}).AddRow(uint64(3))
+		mock.ExpectQuery("SELECT").WithArgs(userID).WillReturnRows(rowCount)
 
 		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name", "T_path"}
-
 		rows := sqlmock.NewRows(columns).
 			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World", "path").
 			AddRow(2, 2, 2, "bad guy", "3:14", "path", "Billie Eilish", "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?", "path").
 			AddRow(3, 3, 3, "Still Loving You", "6:28", "path", "Scorpions", "Love at First Sting", "path")
 
-		mock.ExpectQuery("SELECT").WithArgs(userID, count).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT").WithArgs(userID, count, offset).WillReturnRows(rows)
 
-		tracks, err := trackRepo.FetchFavourites(userID, count)
+		tracks, total, err := trackRepo.FetchFavourites(userID, count, offset)
 
-		if tracks == nil || err != nil {
+		if tracks == nil || err != nil || total != uint64(3) {
 			fmt.Println("Tracks -> expected not nil, got: ", tracks)
+			fmt.Println("Total -> expected 3, got: ", total)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t1.Fail()
 		}
@@ -312,12 +320,18 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 	t.Run("Test with errors", func(t2 *testing.T) {
 		userID := uint64(1)
 		count := uint64(1)
-		mock.ExpectQuery("SELECT").WithArgs(userID, count).WillReturnError(fmt.Errorf("some error"))
+		offset := uint64(0)
 
-		tracks, err := trackRepo.FetchFavourites(userID, count)
+		rowCount := sqlmock.NewRows([]string{"count"}).AddRow(uint64(3))
+		mock.ExpectQuery("SELECT").WithArgs(userID).WillReturnRows(rowCount)
 
-		if tracks != nil || err == nil {
+		mock.ExpectQuery("SELECT").WithArgs(userID, count, offset).WillReturnError(fmt.Errorf("some error"))
+
+		tracks, total, err := trackRepo.FetchFavourites(userID, count, offset)
+
+		if tracks != nil || err == nil || total != uint64(3) {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Total -> expected 3, got: ", total)
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t2.Fail()
 		}
@@ -331,17 +345,23 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 	t.Run("Test with scanning error", func(t3 *testing.T) {
 		userID := uint64(1)
 		count := uint64(1)
+		offset := uint64(0)
+
 		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
+
+		rowCount := sqlmock.NewRows([]string{"count"}).AddRow(uint64(3))
+		mock.ExpectQuery("SELECT").WithArgs(userID).WillReturnRows(rowCount)
 
 		rows := sqlmock.NewRows(columns).
 			AddRow(-1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World")
 
-		mock.ExpectQuery("SELECT").WithArgs(userID, count).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT").WithArgs(userID, count, offset).WillReturnRows(rows)
 
-		tracks, err := trackRepo.FetchFavourites(userID, count)
+		tracks, total, err := trackRepo.FetchFavourites(userID, count, offset)
 
-		if tracks != nil || err == nil {
+		if tracks != nil || err == nil || total != uint64(3) {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Total -> expected 3, got: ", total)
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t3.Fail()
 		}
@@ -355,18 +375,23 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 	t.Run("Test with error of rows", func(t4 *testing.T) {
 		userID := uint64(1)
 		count := uint64(1)
-		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
+		offset := uint64(0)
 
+		rowCount := sqlmock.NewRows([]string{"count"}).AddRow(uint64(3))
+		mock.ExpectQuery("SELECT").WithArgs(userID).WillReturnRows(rowCount)
+
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
 		rows := sqlmock.NewRows(columns).
 			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen", "News of the World").
 			RowError(0, fmt.Errorf("some error"))
 
 		mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
-		tracks, err := trackRepo.FetchFavourites(userID, count)
+		tracks, total, err := trackRepo.FetchFavourites(userID, count, offset)
 
-		if tracks != nil || err == nil {
+		if tracks != nil || err == nil || total != uint64(3) {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Total -> expected 3, got: ", total)
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t4.Fail()
 		}
@@ -374,6 +399,28 @@ func TestTrackRepository_FetchFavourites(t *testing.T) {
 		if err = mock.ExpectationsWereMet(); err != nil {
 			fmt.Println("unmet expectation error: ", err)
 			t4.Fail()
+		}
+	})
+
+	t.Run("Test with error of rows", func(t5 *testing.T) {
+		userID := uint64(1)
+		count := uint64(1)
+		offset := uint64(0)
+
+		mock.ExpectQuery("SELECT").WithArgs(userID).WillReturnError(fmt.Errorf("some error"))
+
+		tracks, total, err := trackRepo.FetchFavourites(userID, count, offset)
+
+		if tracks != nil || err == nil || total != 0 {
+			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Total -> expected 0, got: ", total)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t5.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t5.Fail()
 		}
 	})
 }

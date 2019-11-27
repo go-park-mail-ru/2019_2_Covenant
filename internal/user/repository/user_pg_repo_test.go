@@ -3,7 +3,6 @@ package repository
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/user"
-	"2019_2_Covenant/internal/vars"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -171,6 +170,28 @@ func TestUserRepository_GetByEmail(t *testing.T) {
 			t2.Fail()
 		}
 	})
+
+	t.Run("Error not exist", func(t2 *testing.T) {
+		email := "m1@ya.ru"
+		columns := []string{"id", "nickname", "email", "avatar", "password"}
+
+		rows := sqlmock.NewRows(columns)
+
+		mock.ExpectQuery("SELECT").WithArgs(email).WillReturnRows(rows)
+
+		getUser, err := userRepo.GetByEmail(email)
+
+		if getUser != nil || err == nil {
+			fmt.Println("User -> expected nil, got: ", getUser)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t2.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t2.Fail()
+		}
+	})
 }
 
 func TestUserRepository_GetByID(t *testing.T) {
@@ -228,6 +249,107 @@ func TestUserRepository_GetByID(t *testing.T) {
 			t2.Fail()
 		}
 	})
+
+	t.Run("Error not exist", func(t3 *testing.T) {
+		ID := uint64(1)
+		columns := []string{"id", "nickname", "email", "avatar", "password"}
+
+		rows := sqlmock.NewRows(columns)
+
+		mock.ExpectQuery("SELECT").WithArgs(ID).WillReturnRows(rows)
+
+		getUser, err := userRepo.GetByID(ID)
+
+		if getUser != nil || err == nil {
+			fmt.Println("User -> expected nil, got: ", getUser)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t3.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t3.Fail()
+		}
+	})
+}
+
+func TestUserRepository_GetByNickname(t *testing.T) {
+	dbMock, mock, err := sqlmock.New()
+	if err != nil {
+		fmt.Println("error creating mock database")
+		return
+	}
+	defer dbMock.Close()
+
+	userRepo := configureUserRepository(dbMock)
+
+	t.Run("Test OK", func(t1 *testing.T) {
+		nickname := "nickname"
+		columns := []string{"id", "nickname", "email", "avatar", "password"}
+
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, "marshal", "m1@ya.ru", "path", "123456")
+
+		mock.ExpectQuery("SELECT").WithArgs(nickname).WillReturnRows(rows)
+
+		getUser, err := userRepo.GetByNickname(nickname)
+
+		if getUser == nil || err != nil {
+			fmt.Println("User -> expected not nil, got: ", getUser)
+			fmt.Println("Error -> expected nil, got: ", err)
+			t1.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t1.Fail()
+		}
+	})
+
+	t.Run("Error of scanning", func(t2 *testing.T) {
+		nickname := "nickname"
+		columns := []string{"id", "nickname", "email", "avatar", "password"}
+
+		rows := sqlmock.NewRows(columns).
+			AddRow(-1, "marshal", "m1@ya.ru", "path", "123456")
+
+		mock.ExpectQuery("SELECT").WithArgs(nickname).WillReturnRows(rows)
+
+		getUser, err := userRepo.GetByNickname(nickname)
+
+		if getUser != nil || err == nil {
+			fmt.Println("User -> expected nil, got: ", getUser)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t2.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t2.Fail()
+		}
+	})
+
+	t.Run("Error not exist", func(t2 *testing.T) {
+		nickname := "nickname"
+		columns := []string{"id", "nickname", "email", "avatar", "password"}
+
+		rows := sqlmock.NewRows(columns)
+
+		mock.ExpectQuery("SELECT").WithArgs(nickname).WillReturnRows(rows)
+
+		getUser, err := userRepo.GetByNickname(nickname)
+
+		if getUser != nil || err == nil {
+			fmt.Println("User -> expected nil, got: ", getUser)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t2.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t2.Fail()
+		}
+	})
 }
 
 func TestUserRepository_Store(t *testing.T) {
@@ -251,9 +373,8 @@ func TestUserRepository_Store(t *testing.T) {
 			AddRow(uint64(6), "path")
 		mock.ExpectQuery("INSERT").WithArgs(newUser.Nickname, newUser.Email, newUser.Password).WillReturnRows(rows)
 
-		getUser, err := userRepo.Store(&newUser)
-		if getUser == nil || err != nil {
-			fmt.Println("User -> expected not nil, got: ", getUser)
+		err := userRepo.Store(&newUser)
+		if err != nil {
 			fmt.Println("Error -> expected nil, got: ", err)
 			t1.Fail()
 		}
@@ -275,9 +396,8 @@ func TestUserRepository_Store(t *testing.T) {
 			AddRow(uint64(6))
 		mock.ExpectQuery("INSERT").WithArgs(newUser.Nickname, newUser.Email, newUser.Password).WillReturnRows(rows)
 
-		getUser, err := userRepo.Store(&newUser)
-		if getUser != nil || err == nil {
-			fmt.Println("User -> expected nil, got: ", getUser)
+		err := userRepo.Store(&newUser)
+		if err == nil {
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t2.Fail()
 		}
@@ -359,15 +479,15 @@ func TestUserRepository_UpdateNickname(t *testing.T) {
 	t.Run("Test OK", func(t1 *testing.T) {
 		id := uint64(1)
 		nickname := "new nickname"
+		email := "e@mail"
 
 		columns := []string{"nickname", "email", "avatar"}
 		rows := sqlmock.NewRows(columns).
-			AddRow("new nickname", "m1@ya.ru", "path")
+			AddRow("new nickname", "e@mail", "path")
 
-		mock.ExpectQuery("SELECT").WithArgs(nickname)
-		mock.ExpectQuery("UPDATE").WithArgs(nickname, id).WillReturnRows(rows)
+		mock.ExpectQuery("UPDATE").WithArgs(nickname, email, id).WillReturnRows(rows)
 
-		getUser, err := userRepo.UpdateNickname(id, nickname)
+		getUser, err := userRepo.Update(id, nickname, email)
 		if getUser == nil || err != nil {
 			fmt.Println("User -> expected not nil, got: ", getUser)
 			fmt.Println("Error -> expected nil, got: ", err)
@@ -383,15 +503,15 @@ func TestUserRepository_UpdateNickname(t *testing.T) {
 	t.Run("Error of scanning", func(t2 *testing.T) {
 		id := uint64(1)
 		nickname := "new nickname"
+		email := "e@mail"
 
 		columns := []string{"nickname", "email"}
 		rows := sqlmock.NewRows(columns).
-			AddRow("new nickname", "m1@ya.ru")
+			AddRow("new nickname", "e@mail")
 
-		mock.ExpectQuery("SELECT").WithArgs(nickname)
-		mock.ExpectQuery("UPDATE").WithArgs(nickname, id).WillReturnRows(rows)
+		mock.ExpectQuery("UPDATE").WithArgs(nickname, email, id).WillReturnRows(rows)
 
-		getUser, err := userRepo.UpdateNickname(id, nickname)
+		getUser, err := userRepo.Update(id, nickname, email)
 		if getUser != nil || err == nil {
 			fmt.Println("User -> expected nil, got: ", getUser)
 			fmt.Println("Error -> expected not nil, got: ", err)
@@ -403,102 +523,8 @@ func TestUserRepository_UpdateNickname(t *testing.T) {
 			t2.Fail()
 		}
 	})
-
-	t.Run("Error - Nickname exist", func(t3 *testing.T) {
-		id := uint64(1)
-		nickname := "marshal"
-
-		columns := []string{"id", "nickname", "email", "avatar", "password"}
-		rows := sqlmock.NewRows(columns).
-			AddRow(1, "marshal", "m1@ya.ru", "path", "123456")
-
-		mock.ExpectQuery("SELECT").WithArgs(nickname).WillReturnRows(rows)
-
-		getUser, err := userRepo.UpdateNickname(id, nickname)
-		if getUser != nil || err != vars.ErrAlreadyExist {
-			fmt.Println("User -> expected nil, got: ", getUser)
-			fmt.Println("Error -> expected ErrAlreadyExist, got: ", err)
-			t3.Fail()
-		}
-	})
 }
 
-func TestUserRepository_UpdateEmail(t *testing.T) {
-	dbMock, mock, err := sqlmock.New()
-	if err != nil {
-		fmt.Println("error creating mock database")
-		return
-	}
-	defer dbMock.Close()
-
-	userRepo := configureUserRepository(dbMock)
-
-	t.Run("Test OK", func(t1 *testing.T) {
-		id := uint64(1)
-		email := "new email"
-
-		columns := []string{"nickname", "email", "avatar"}
-		rows := sqlmock.NewRows(columns).
-			AddRow("nickname", "new email", "path")
-
-		mock.ExpectQuery("SELECT").WithArgs(email)
-		mock.ExpectQuery("UPDATE").WithArgs(email, id).WillReturnRows(rows)
-
-		getUser, err := userRepo.UpdateEmail(id, email)
-		if getUser == nil || err != nil {
-			fmt.Println("User -> expected not nil, got: ", getUser)
-			fmt.Println("Error -> expected nil, got: ", err)
-			t1.Fail()
-		}
-
-		if err = mock.ExpectationsWereMet(); err != nil {
-			fmt.Println("unmet expectation error: ", err)
-			t1.Fail()
-		}
-	})
-
-	t.Run("Error of scanning", func(t2 *testing.T) {
-		id := uint64(1)
-		email := "new nickname"
-
-		columns := []string{"nickname", "email"}
-		rows := sqlmock.NewRows(columns).
-			AddRow("nickname", "new email")
-
-		mock.ExpectQuery("SELECT").WithArgs(email)
-		mock.ExpectQuery("UPDATE").WithArgs(email, id).WillReturnRows(rows)
-
-		getUser, err := userRepo.UpdateEmail(id, email)
-		if getUser != nil || err == nil {
-			fmt.Println("User -> expected nil, got: ", getUser)
-			fmt.Println("Error -> expected not nil, got: ", err)
-			t2.Fail()
-		}
-
-		if err = mock.ExpectationsWereMet(); err != nil {
-			fmt.Println("unmet expectation error: ", err)
-			t2.Fail()
-		}
-	})
-
-	t.Run("Error - Email exist", func(t3 *testing.T) {
-		id := uint64(1)
-		email := "m1@ya.ru"
-
-		columns := []string{"id", "nickname", "email", "avatar", "password"}
-		rows := sqlmock.NewRows(columns).
-			AddRow(1, "marshal", "m1@ya.ru", "path", "123456")
-
-		mock.ExpectQuery("SELECT").WithArgs(email).WillReturnRows(rows)
-
-		getUser, err := userRepo.UpdateEmail(id, email)
-		if getUser != nil || err != vars.ErrAlreadyExist {
-			fmt.Println("User -> expected nil, got: ", getUser)
-			fmt.Println("Error -> expected ErrAlreadyExist, got: ", err)
-			t3.Fail()
-		}
-	})
-}
 func TestUserRepository_UpdatePassword(t *testing.T) {
 	dbMock, mock, err := sqlmock.New()
 	if err != nil {

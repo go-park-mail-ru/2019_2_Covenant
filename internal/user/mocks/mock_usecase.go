@@ -94,12 +94,11 @@ func (mr *MockUsecaseMockRecorder) GetByNickname(nickname interface{}) *gomock.C
 }
 
 // Store mocks base method
-func (m *MockUsecase) Store(user *models.User) (*models.User, error) {
+func (m *MockUsecase) Store(user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", user)
-	ret0, _ := ret[0].(*models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Store indicates an expected call of Store
@@ -123,34 +122,19 @@ func (mr *MockUsecaseMockRecorder) UpdateAvatar(id, avatarPath interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAvatar", reflect.TypeOf((*MockUsecase)(nil).UpdateAvatar), id, avatarPath)
 }
 
-// UpdateNickname mocks base method
-func (m *MockUsecase) UpdateNickname(id uint64, nickname string) (*models.User, error) {
+// Update mocks base method
+func (m *MockUsecase) Update(id uint64, nickname, email string) (*models.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateNickname", id, nickname)
+	ret := m.ctrl.Call(m, "Update", id, nickname, email)
 	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateNickname indicates an expected call of UpdateNickname
-func (mr *MockUsecaseMockRecorder) UpdateNickname(id, nickname interface{}) *gomock.Call {
+// Update indicates an expected call of Update
+func (mr *MockUsecaseMockRecorder) Update(id, nickname, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateNickname", reflect.TypeOf((*MockUsecase)(nil).UpdateNickname), id, nickname)
-}
-
-// UpdateEmail mocks base method
-func (m *MockUsecase) UpdateEmail(id uint64, email string) (*models.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEmail", id, email)
-	ret0, _ := ret[0].(*models.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateEmail indicates an expected call of UpdateEmail
-func (mr *MockUsecaseMockRecorder) UpdateEmail(id, email interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUsecase)(nil).UpdateEmail), id, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUsecase)(nil).Update), id, nickname, email)
 }
 
 // UpdatePassword mocks base method

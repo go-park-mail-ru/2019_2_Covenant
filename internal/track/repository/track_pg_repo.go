@@ -65,17 +65,17 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 	return tracks, nil
 }
 
-func (th *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {
+func (tr *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {
 	var favID uint64
 
-	if err := th.db.QueryRow("SELECT id FROM favourites WHERE user_id = $1 AND track_id = $2",
+	if err := tr.db.QueryRow("SELECT id FROM favourites WHERE user_id = $1 AND track_id = $2",
 		userID,
 		trackID,
 	).Scan(&favID); err == nil {
 		return vars.ErrAlreadyExist
 	}
 
-	if _, err := th.db.Exec("INSERT INTO favourites (user_id, track_id) VALUES ($1, $2)",
+	if _, err := tr.db.Exec("INSERT INTO favourites (user_id, track_id) VALUES ($1, $2)",
 		userID,
 		trackID,
 	); err != nil {
@@ -85,17 +85,17 @@ func (th *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {
 	return nil
 }
 
-func (th *TrackRepository) RemoveFavourite(userID uint64, trackID uint64) error {
+func (tr *TrackRepository) RemoveFavourite(userID uint64, trackID uint64) error {
 	var favID uint64
 
-	if err := th.db.QueryRow("SELECT id FROM favourites WHERE user_id = $1 AND track_id = $2",
+	if err := tr.db.QueryRow("SELECT id FROM favourites WHERE user_id = $1 AND track_id = $2",
 		userID,
 		trackID,
 	).Scan(&favID); err != nil {
 		return vars.ErrNotFound
 	}
 
-	if _, err := th.db.Exec("DELETE FROM favourites WHERE id = $1",
+	if _, err := tr.db.Exec("DELETE FROM favourites WHERE id = $1",
 		favID,
 	); err != nil {
 		return err
@@ -104,11 +104,11 @@ func (th *TrackRepository) RemoveFavourite(userID uint64, trackID uint64) error 
 	return nil
 }
 
-func (th *TrackRepository) FetchFavourites(userID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
+func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
 	var tracks []*models.Track
 	var total uint64
 
-	if err := th.db.QueryRow("SELECT COUNT(*) FROM tracks T JOIN favourites F on T.id = F.track_id WHERE F.user_id = $1",
+	if err := tr.db.QueryRow("SELECT COUNT(*) FROM tracks T JOIN favourites F on T.id = F.track_id WHERE F.user_id = $1",
 		userID,
 	).Scan(
 		&total,
@@ -116,14 +116,15 @@ func (th *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 		return nil, total, err
 	}
 
-	rows, err := th.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T "+
-			"JOIN favourites F ON T.id = F.track_id "+
-			"JOIN albums Al ON T.album_id = Al.id "+
-			"JOIN artists Ar ON Al.artist_id = Ar.id "+
-			"WHERE F.user_id = $1 LIMIT $2",
+	rows, err := tr.db.Query(
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
+			"JOIN favourites F ON T.id = F.track_id " +
+			"JOIN albums Al ON T.album_id = Al.id " +
+			"JOIN artists Ar ON Al.artist_id = Ar.id " +
+			"WHERE F.user_id = $1 LIMIT $2 OFFSET $3",
 		userID,
 		count,
+		offset,
 	)
 
 	if err != nil {

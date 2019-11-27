@@ -182,7 +182,7 @@ func TestUserUsecase_Store(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase user.Usecase, newUser *User) (*User, error) {
+	exe := func(usecase user.Usecase, newUser *User) error {
 		return usecase.Store(newUser)
 	}
 
@@ -190,12 +190,12 @@ func TestUserUsecase_Store(t *testing.T) {
 		newUser := User{Nickname: "newUser", Email: "n4@ya.ru", Password: "123456"}
 
 		userRepo.EXPECT().GetByEmail(newUser.Email).Return(nil, vars.ErrNotFound)
-		userRepo.EXPECT().Store(&newUser).Return(&newUser, nil)
+		userRepo.EXPECT().Store(&newUser).Return(nil)
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, &newUser)
+		err := exe(usecase, &newUser)
 
-		if *expUser != newUser || err != nil {
+		if err != nil {
 			t1.Fail()
 		}
 	})
@@ -206,9 +206,9 @@ func TestUserUsecase_Store(t *testing.T) {
 		userRepo.EXPECT().GetByEmail("m1@ya.ru").Return(users.User[0], nil)
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, &newUser)
+		err := exe(usecase, &newUser)
 
-		if expUser != nil || err != vars.ErrAlreadyExist {
+		if err != vars.ErrAlreadyExist {
 			t2.Fail()
 		}
 	})
@@ -217,12 +217,12 @@ func TestUserUsecase_Store(t *testing.T) {
 		newUser := User{Nickname: "newUser", Email: "n4@ya.ru", Password: "123456"}
 
 		userRepo.EXPECT().GetByEmail("n4@ya.ru").Return(nil, vars.ErrNotFound)
-		userRepo.EXPECT().Store(&newUser).Return(nil, fmt.Errorf("some error"))
+		userRepo.EXPECT().Store(&newUser).Return(fmt.Errorf("some error"))
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, &newUser)
+		err := exe(usecase, &newUser)
 
-		if expUser != nil || err != vars.ErrInternalServerError {
+		if err != vars.ErrInternalServerError {
 			t3.Fail()
 		}
 	})
@@ -273,18 +273,19 @@ func TestUserUsecase_UpdateNickname(t *testing.T) {
 
 	userRepo := mock.NewMockRepository(ctrl)
 
-	exe := func(usecase user.Usecase, ID uint64, nickname string) (*User, error) {
-		return usecase.UpdateNickname(ID, nickname)
+	exe := func(usecase user.Usecase, ID uint64, nickname string, email string) (*User, error) {
+		return usecase.Update(ID, nickname, email)
 	}
 
 	t.Run("Test OK", func(t1 *testing.T) {
 		ID := uint64(1)
 		nickname := "some nickname"
+		email := "some email"
 
-		userRepo.EXPECT().UpdateNickname(ID, nickname).Return(users.User[0], nil)
+		userRepo.EXPECT().Update(ID, nickname, email).Return(users.User[0], nil)
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, ID, nickname)
+		expUser, err := exe(usecase, ID, nickname, email)
 
 		if expUser != users.User[0] || err != nil {
 			t1.Fail()
@@ -294,11 +295,12 @@ func TestUserUsecase_UpdateNickname(t *testing.T) {
 	t.Run("Test with error", func(t2 *testing.T) {
 		ID := uint64(5)
 		nickname := "some nickname"
+		email := "some email"
 
-		userRepo.EXPECT().UpdateNickname(ID, nickname).Return(nil, fmt.Errorf("some error"))
+		userRepo.EXPECT().Update(ID, nickname, email).Return(nil, fmt.Errorf("some error"))
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, ID, nickname)
+		expUser, err := exe(usecase, ID, nickname, email)
 
 		if expUser != nil || err == nil {
 			t2.Fail()
@@ -308,64 +310,12 @@ func TestUserUsecase_UpdateNickname(t *testing.T) {
 	t.Run("Test with ErrAlreadyExist", func(t3 *testing.T) {
 		ID := uint64(5)
 		nickname := "some nickname"
-
-		userRepo.EXPECT().UpdateNickname(ID, nickname).Return(nil, vars.ErrAlreadyExist)
-		usecase := configUserUsecase(userRepo)
-
-		expUser, err := exe(usecase, ID, nickname)
-
-		if expUser != nil || err != vars.ErrAlreadyExist {
-			t3.Fail()
-		}
-	})
-}
-
-func TestUserUsecase_UpdateEmail(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userRepo := mock.NewMockRepository(ctrl)
-
-	exe := func(usecase user.Usecase, ID uint64, email string) (*User, error) {
-		return usecase.UpdateEmail(ID, email)
-	}
-
-	t.Run("Test OK", func(t1 *testing.T) {
-		ID := uint64(1)
 		email := "some email"
 
-		userRepo.EXPECT().UpdateEmail(ID, email).Return(users.User[0], nil)
+		userRepo.EXPECT().Update(ID, nickname, email).Return(nil, vars.ErrAlreadyExist)
 		usecase := configUserUsecase(userRepo)
 
-		expUser, err := exe(usecase, ID, email)
-
-		if expUser != users.User[0] || err != nil {
-			t1.Fail()
-		}
-	})
-
-	t.Run("Test with error", func(t2 *testing.T) {
-		ID := uint64(5)
-		email := "some email"
-
-		userRepo.EXPECT().UpdateEmail(ID, email).Return(nil, fmt.Errorf("some error"))
-		usecase := configUserUsecase(userRepo)
-
-		expUser, err := exe(usecase, ID, email)
-
-		if expUser != nil || err == nil {
-			t2.Fail()
-		}
-	})
-
-	t.Run("Test with ErrAlreadyExist", func(t3 *testing.T) {
-		ID := uint64(5)
-		email := "some email"
-
-		userRepo.EXPECT().UpdateEmail(ID, email).Return(nil, vars.ErrAlreadyExist)
-		usecase := configUserUsecase(userRepo)
-
-		expUser, err := exe(usecase, ID, email)
+		expUser, err := exe(usecase, ID, nickname, email)
 
 		if expUser != nil || err != vars.ErrAlreadyExist {
 			t3.Fail()

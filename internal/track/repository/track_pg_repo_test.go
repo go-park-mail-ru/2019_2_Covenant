@@ -510,14 +510,15 @@ func TestTrackRepository_FindLike(t *testing.T) {
 		name := "a"
 		count := uint64(3)
 
-		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name", "Al_name"}
-		rows := sqlmock.NewRows(columns)
+		columns := []string{"T_id", "T_album_id", "Ar_id", "T_name", "T_duration", "Al_photo", "Ar_name"}
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, 1, 1, "We Are the Champions", "3:00", "path", "Queen")
 
 		mock.ExpectQuery("SELECT").WillReturnRows(rows)
 
 		tracks, err := trackRepo.FindLike(name, count)
 
-		if tracks != nil || err != nil {
+		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t5.Fail()

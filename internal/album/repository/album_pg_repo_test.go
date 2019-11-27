@@ -99,14 +99,15 @@ func TestAlbumRepository_FindLike(t *testing.T) {
 		name := "a"
 		count := uint64(3)
 
-		columns := []string{"id", "artist_id", "name", "photo", "year"}
-		rows := sqlmock.NewRows(columns)
+		columns := []string{"id", "artist_id", "name", "photo"}
+		rows := sqlmock.NewRows(columns).
+			AddRow(1, 1, "News of the World", "path")
 
 		mock.ExpectQuery("select").WillReturnRows(rows)
 
 		tracks, err := albumRepo.FindLike(name, count)
 
-		if tracks != nil || err != nil {
+		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t5.Fail()

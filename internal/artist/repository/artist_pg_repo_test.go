@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
-	"time"
 )
 
 func configureArtistReposirory(db *sql.DB) artist.Repository{
@@ -74,9 +73,9 @@ func TestArtistRepository_FindLike(t *testing.T) {
 		name := "a"
 		count := uint64(3)
 
-		columns := []string{"id", "artist_id", "name", "photo", "year"}
+		columns := []string{"id", "name", }
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, 1, "News of the World", "path", time.Now()).
+			AddRow(1, "News of the World").
 			RowError(0, fmt.Errorf("some error"))
 
 		mock.ExpectQuery("select").WillReturnRows(rows)
@@ -99,14 +98,15 @@ func TestArtistRepository_FindLike(t *testing.T) {
 		name := "a"
 		count := uint64(3)
 
-		columns := []string{"id", "artist_id", "name", "photo", "year"}
-		rows := sqlmock.NewRows(columns)
+		columns := []string{"id"}
+		rows := sqlmock.NewRows(columns).
+			AddRow(1)
 
 		mock.ExpectQuery("select").WillReturnRows(rows)
 
 		tracks, err := artistRepo.FindLike(name, count)
 
-		if tracks != nil || err != nil {
+		if tracks != nil || err == nil {
 			fmt.Println("Tracks -> expected nil, got: ", tracks)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t5.Fail()

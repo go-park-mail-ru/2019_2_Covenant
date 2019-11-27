@@ -58,3 +58,17 @@ func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64, offset uin
 
 	return tracks, total, nil
 }
+
+func (tUC *trackUsecase) FindLike(name string, count uint64) ([]*models.Track, error) {
+	tracks, err := tUC.trackRepo.FindLike(name, count)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tracks == nil {
+		tracks = []*models.Track{}
+	}
+
+	return tracks, nil
+}

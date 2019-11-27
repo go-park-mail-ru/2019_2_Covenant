@@ -5,6 +5,7 @@ import (
 	"2019_2_Covenant/internal/track"
 	. "2019_2_Covenant/tools/vars"
 	"database/sql"
+	"strings"
 )
 
 type TrackRepository struct {
@@ -137,4 +138,43 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 	}
 
 	return tracks, total, nil
+}
+
+func (tr *TrackRepository) FindLike(name string, count uint64) ([]*models.Track, error) {
+	var tracks []*models.Track
+
+	rows, err := tr.db.Query(
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
+			"JOIN albums Al ON T.album_id = Al.id " +
+			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE lower(T.name) like '%' || $1 || '%' LIMIT $2",
+			strings.ToLower(name),
+			count)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		t := &models.Track{}
+
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
+			&t.Photo, &t.Artist, &t.Album, &t.Path,
+		); err != nil {
+			return nil, err
+		}
+
+		tracks = append(tracks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }

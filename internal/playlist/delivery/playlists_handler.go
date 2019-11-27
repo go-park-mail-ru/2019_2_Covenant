@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type PlaylistHandler struct {
@@ -37,6 +38,7 @@ func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
 	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
+	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuth)
 	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuth)
 }
@@ -236,6 +238,40 @@ func (ph *PlaylistHandler) GetSinglePlaylist() echo.HandlerFunc {
 			Body: &Body{
 				"playlist": p,
 				"amount_of_tracks": amountOfTracks,
+			},
+		})
+	}
+}
+
+func (ph *PlaylistHandler) GetTracksFromPlaylist() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		pID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ph.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		tracks, err := ph.PUsecase.GetTracksFrom(uint64(pID))
+
+		if err != nil {
+			ph.Logger.Log(c, "error", "Error while fetching tracks.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		for _, item := range tracks {
+			start := strings.Index(item.Duration, "T")
+			end := strings.Index(item.Duration, "Z")
+			item.Duration = item.Duration[start+1 : end]
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"tracks": tracks,
 			},
 		})
 	}

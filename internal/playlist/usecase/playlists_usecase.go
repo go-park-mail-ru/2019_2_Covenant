@@ -70,3 +70,17 @@ func (pUC *PlaylistUsecase) GetSinglePlaylist(playlistID uint64) (*models.Playli
 
 	return p, amountOfTracks, nil
 }
+
+func (pUC *PlaylistUsecase) GetTracksFrom(playlistID uint64) ([]*models.Track, error) {
+	tracks, err := pUC.playlistRepo.GetTracksFrom(playlistID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tracks == nil {
+		tracks = []*models.Track{}
+	}
+
+	return tracks, nil
+}

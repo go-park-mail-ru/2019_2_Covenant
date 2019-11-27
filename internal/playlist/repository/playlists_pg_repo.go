@@ -153,3 +153,35 @@ func (plR *PlaylistRepository) GetSinglePlaylist(playlistID uint64) (*models.Pla
 
 	return p, amountOfTracks, nil
 }
+
+func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64) ([]*models.Track, error) {
+	var tracks []*models.Track
+
+	rows, err := plR.db.Query(
+		"select T.id, T.name, T.duration, T.path, Ar.name from playlist_track PT " +
+			"join tracks T ON PT.track_id=T.id join albums Al ON T.album_id=Al.id " +
+			"join artists Ar ON Al.artist_id=Ar.id where PT.playlist_id = $1;",
+		playlistID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		t := &models.Track{}
+
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist); err != nil {
+			return nil, err
+		}
+
+		tracks = append(tracks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
+}

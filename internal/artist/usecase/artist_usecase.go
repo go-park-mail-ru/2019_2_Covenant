@@ -9,22 +9,60 @@ type ArtistUsecase struct {
 	artistRepo artist.Repository
 }
 
-func NewAlbumUsecase(repo artist.Repository) artist.Usecase {
+func NewArtistUsecase(repo artist.Repository) artist.Usecase {
 	return &ArtistUsecase{
 		artistRepo: repo,
 	}
 }
 
 func (aUC *ArtistUsecase) FindLike(name string, count uint64) ([]*models.Artist, error) {
-	albums, err := aUC.artistRepo.FindLike(name, count)
+	artists, err := aUC.artistRepo.FindLike(name, count)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if albums == nil {
-		albums = []*models.Artist{}
+	if artists == nil {
+		artists = []*models.Artist{}
 	}
 
-	return albums, nil
+	return artists, nil
+}
+
+func (aUC *ArtistUsecase) Store(artist *models.Artist) error {
+	if err := aUC.artistRepo.Store(artist); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (aUC *ArtistUsecase) DeleteByID(id uint64) error {
+	if err := aUC.artistRepo.DeleteByID(id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (aUC *ArtistUsecase) UpdateByID(id uint64, name string) error {
+	if err := aUC.artistRepo.UpdateByID(id, name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (aUC *ArtistUsecase) Fetch(count uint64, offset uint64) ([]*models.Artist, uint64, error) {
+	artists, total, err := aUC.artistRepo.Fetch(count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if artists == nil {
+		artists = []*models.Artist{}
+	}
+
+	return artists, total, nil
 }

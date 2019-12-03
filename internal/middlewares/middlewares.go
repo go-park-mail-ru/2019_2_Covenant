@@ -136,3 +136,25 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
+
+func (m *MiddlewareManager) CheckAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		usr, ok := c.Get("user").(*models.User)
+
+		if !ok {
+			m.logger.Log(c, "error", "Can't extract user from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		if usr.Role != ADMIN {
+			m.logger.Log(c, "info", "Not an admin.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrPermissionDenied.Error(),
+			})
+		}
+
+		return next(c)
+	}
+}

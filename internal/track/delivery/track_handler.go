@@ -53,8 +53,8 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 	type Request struct {
-		Count  uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
 	}
 
 	return func(c echo.Context) error {
@@ -117,7 +117,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		if err := th.TUsecase.StoreFavourite(sess.UserID, request.TrackID); err != nil {
 			th.Logger.Log(c, "error", "Error while storing favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: err.Error(),
+				Error: ErrAlreadyExist.Error(),
 			})
 		}
 
@@ -166,8 +166,8 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 
 func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 	type Request struct {
-		Count  uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
 	}
 
 	return func(c echo.Context) error {

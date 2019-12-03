@@ -36,11 +36,11 @@ func NewPlaylistHandler(pUC playlist.Usecase,
 func (ph *PlaylistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
 	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
+	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuth)
+	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
 	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuth)
 	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuth)
 }
 
 func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
@@ -87,8 +87,8 @@ func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
 
 func (ph *PlaylistHandler) GetPlaylists() echo.HandlerFunc {
 	type Request struct {
-		Count  uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
 	}
 
 	return func(c echo.Context) error {
@@ -179,7 +179,7 @@ func (ph *PlaylistHandler) AddToPlaylist() echo.HandlerFunc {
 		if err := ph.PUsecase.AddToPlaylist(uint64(pID), request.TrackID); err != nil {
 			ph.Logger.Log(c, "error", "Error while adding track to playlist.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: err.Error(),
+				Error: ErrAlreadyExist.Error(),
 			})
 		}
 
@@ -228,9 +228,9 @@ func (ph *PlaylistHandler) GetSinglePlaylist() echo.HandlerFunc {
 		p, amountOfTracks, err := ph.PUsecase.GetSinglePlaylist(uint64(pID))
 
 		if err != nil {
-			ph.Logger.Log(c, "error", "Error while getting playlist.", err.Error())
+			ph.Logger.Log(c, "info", "Error while getting playlist.", err.Error())
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 

@@ -31,13 +31,12 @@ func NewSearchHandler(sUC search.Usecase,
 }
 
 func (sh *SearchHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/search", sh.Search())
+	e.GET("/api/v1/search", sh.Search())
 }
 
 func (sh *SearchHandler) Search() echo.HandlerFunc {
 	type Request struct {
-		Text  string `json:"text"`
-		Count uint64 `json:"count"`
+		Search  string `query:"s"`
 	}
 
 	return func(c echo.Context) error {
@@ -50,7 +49,7 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 			})
 		}
 
-		tracks, albums, artists, err := sh.SUsecase.Search(request.Text, request.Count)
+		tracks, albums, artists, err := sh.SUsecase.Search(request.Search, 10)
 
 		if err != nil {
 			sh.Logger.Log(c, "info", "Error while searching.", err)

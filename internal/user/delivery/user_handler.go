@@ -46,7 +46,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
-	e.POST("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
+	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 }

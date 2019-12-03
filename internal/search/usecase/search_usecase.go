@@ -32,5 +32,9 @@ func (su *SearchUsecase) Search(text string, count uint64) ([]*models.Track, []*
 		return nil, nil, nil, ErrNotFound
 	}
 
+	if tracks == nil { tracks = []*models.Track{} }
+	if albums == nil { albums = []*models.Album{} }
+	if artists == nil { artists = []*models.Artist{} }
+
 	return tracks, albums, artists, nil
 }

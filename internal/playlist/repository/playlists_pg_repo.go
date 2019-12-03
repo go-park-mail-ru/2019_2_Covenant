@@ -76,7 +76,7 @@ func (plR *PlaylistRepository) Fetch(userID uint64, count uint64, offset uint64)
 func (plR *PlaylistRepository) DeleteByID(playlistID uint64) error {
 	if err := plR.db.QueryRow("DELETE FROM playlists WHERE id = $1 RETURNING id",
 		playlistID,
-	).Scan(); err != nil {
+	).Scan(&playlistID); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrNotFound
 		}
@@ -126,9 +126,10 @@ func (plR *PlaylistRepository) GetSinglePlaylist(playlistID uint64) (*models.Pla
 	p := &models.Playlist{}
 	var amountOfTracks uint64
 
-	if err := plR.db.QueryRow("SELECT name, description, photo, owner_id FROM playlists WHERE id = $1",
+	if err := plR.db.QueryRow("SELECT id, name, description, photo, owner_id FROM playlists WHERE id = $1",
 		playlistID,
 	).Scan(
+		&p.ID,
 		&p.Name,
 		&p.Description,
 		&p.Photo,

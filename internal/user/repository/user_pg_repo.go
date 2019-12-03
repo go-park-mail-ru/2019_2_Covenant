@@ -28,9 +28,9 @@ func (ur *UserRepository) Store(newUser *models.User) error {
 func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE email = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password, role, access FROM users WHERE email = $1",
 		email,
-	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password, &u.Role, &u.Access); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -44,9 +44,9 @@ func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
 func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE id = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password, role, access FROM users WHERE id = $1",
 		usrID,
-	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password, &u.Role, &u.Access); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -60,9 +60,9 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password FROM users WHERE nickname = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password, role, access FROM users WHERE nickname = $1",
 		nickname,
-	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password); err != nil {
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password, &u.Role, &u.Access); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -76,7 +76,7 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	var users []*models.User
 
-	rows, err := ur.db.Query("SELECT id, nickname, email, avatar, password FROM users LIMIT $1", count)
+	rows, err := ur.db.Query("SELECT id, nickname, email, avatar, password, role, access FROM users LIMIT $1", count)
 	if err != nil {
 		return nil, err
 	}
@@ -84,25 +84,13 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var (
-			id       uint64
-			nickname string
-			email    string
-			avatar   string
-			password string
-		)
+		u := &models.User{}
 
-		if err := rows.Scan(&id, &nickname, &email, &avatar, &password); err != nil {
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password, &u.Role, &u.Access); err != nil {
 			return nil, err
 		}
 
-		users = append(users, &models.User{
-			ID:       id,
-			Nickname: nickname,
-			Avatar:   avatar,
-			Email:    email,
-			Password: password,
-		})
+		users = append(users, u)
 	}
 
 	if err := rows.Err(); err != nil {

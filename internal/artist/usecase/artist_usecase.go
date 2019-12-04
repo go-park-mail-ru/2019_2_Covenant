@@ -9,7 +9,7 @@ type ArtistUsecase struct {
 	artistRepo artist.Repository
 }
 
-func NewAlbumUsecase(repo artist.Repository) artist.Usecase {
+func NewArtistUsecase(repo artist.Repository) artist.Usecase {
 	return &ArtistUsecase{
 		artistRepo: repo,
 	}

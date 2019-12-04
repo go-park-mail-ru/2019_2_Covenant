@@ -23,8 +23,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//TODO: уточнить у Марселя по поводу валидации. Сейчас не протестировано
-
 //go:generate mockgen -source=../usecase.go -destination=../mocks/mock_usecase.go -package=mock
 //go:generate mockgen -source=../../session/usecase.go -destination=../../session/mocks/mock_usecase.go -package=mock
 

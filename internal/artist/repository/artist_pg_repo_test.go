@@ -29,16 +29,16 @@ func TestArtistRepository_FindLike(t *testing.T) {
 
 		columns := []string{"id", "name"}
 		rows := sqlmock.NewRows(columns).
-			AddRow(1, "News of the World").
-			AddRow(2, "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?").
-			AddRow(3, "Love at First Sting")
+			AddRow(1, "Asammuel").
+			AddRow(2, "QUEEN").
+			AddRow(3, "Scorpions")
 
 		mock.ExpectQuery("select").WithArgs(name, count).WillReturnRows(rows)
 
-		tracks, err := artistRepo.FindLike(name, count)
+		artists, err := artistRepo.FindLike(name, count)
 
-		if tracks == nil || err != nil {
-			fmt.Println("Tracks -> expected not nil, got: ", tracks)
+		if artists == nil || err != nil {
+			fmt.Println("Artists -> expected not nil, got: ", artists)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t1.Fail()
 		}
@@ -55,10 +55,10 @@ func TestArtistRepository_FindLike(t *testing.T) {
 
 		mock.ExpectQuery("select").WithArgs(name, count).WillReturnError(fmt.Errorf("some error"))
 
-		tracks, err := artistRepo.FindLike(name, count)
+		artists, err := artistRepo.FindLike(name, count)
 
-		if tracks != nil || err == nil {
-			fmt.Println("Tracks -> expected nil, got: ", tracks)
+		if artists != nil || err == nil {
+			fmt.Println("Artists -> expected nil, got: ", artists)
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t2.Fail()
 		}
@@ -66,6 +66,26 @@ func TestArtistRepository_FindLike(t *testing.T) {
 		if err = mock.ExpectationsWereMet(); err != nil {
 			fmt.Println("unmet expectation error: ", err)
 			t2.Fail()
+		}
+	})
+
+	t.Run("OK no rows", func(t3 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		mock.ExpectQuery("select").WithArgs(name, count).WillReturnError(sql.ErrNoRows)
+
+		artists, err := artistRepo.FindLike(name, count)
+
+		if artists != nil || err != nil {
+			fmt.Println("Artists -> expected nil, got: ", artists)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t3.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t3.Fail()
 		}
 	})
 
@@ -80,10 +100,10 @@ func TestArtistRepository_FindLike(t *testing.T) {
 
 		mock.ExpectQuery("select").WillReturnRows(rows)
 
-		tracks, err := artistRepo.FindLike(name, count)
+		artists, err := artistRepo.FindLike(name, count)
 
-		if tracks != nil || err == nil {
-			fmt.Println("Tracks -> expected nil, got: ", tracks)
+		if artists != nil || err == nil {
+			fmt.Println("Artists -> expected nil, got: ", artists)
 			fmt.Println("Error -> expected not nil, got: ", err)
 			t4.Fail()
 		}
@@ -104,10 +124,10 @@ func TestArtistRepository_FindLike(t *testing.T) {
 
 		mock.ExpectQuery("select").WillReturnRows(rows)
 
-		tracks, err := artistRepo.FindLike(name, count)
+		artists, err := artistRepo.FindLike(name, count)
 
-		if tracks != nil || err == nil {
-			fmt.Println("Tracks -> expected nil, got: ", tracks)
+		if artists != nil || err == nil {
+			fmt.Println("Artists -> expected nil, got: ", artists)
 			fmt.Println("Error -> expected nil, got: ", err)
 			t5.Fail()
 		}

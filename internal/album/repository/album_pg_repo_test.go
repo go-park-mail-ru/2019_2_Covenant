@@ -70,6 +70,26 @@ func TestAlbumRepository_FindLike(t *testing.T) {
 		}
 	})
 
+	t.Run("OK no rows", func(t3 *testing.T) {
+		name := "a"
+		count := uint64(3)
+
+		mock.ExpectQuery("select").WithArgs(name, count).WillReturnError(sql.ErrNoRows)
+
+		tracks, err := albumRepo.FindLike(name, count)
+
+		if tracks != nil || err != nil {
+			fmt.Println("Tracks -> expected nil, got: ", tracks)
+			fmt.Println("Error -> expected not nil, got: ", err)
+			t3.Fail()
+		}
+
+		if err = mock.ExpectationsWereMet(); err != nil {
+			fmt.Println("unmet expectation error: ", err)
+			t3.Fail()
+		}
+	})
+
 	t.Run("Test with error of rows", func(t4 *testing.T) {
 		name := "a"
 		count := uint64(3)

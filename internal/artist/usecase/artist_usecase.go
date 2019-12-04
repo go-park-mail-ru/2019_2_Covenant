@@ -66,3 +66,11 @@ func (aUC *ArtistUsecase) Fetch(count uint64, offset uint64) ([]*models.Artist, 
 
 	return artists, total, nil
 }
+
+func (aUC *ArtistUsecase) CreateAlbum(album *models.Album) error {
+	if err := aUC.artistRepo.CreateAlbum(album); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -1,13 +1,15 @@
 package apiserver
 
 import (
+	_albumDelivery "2019_2_Covenant/internal/album/delivery"
+	_albumUsecase "2019_2_Covenant/internal/album/usecase"
 	"2019_2_Covenant/internal/app/storage"
-	_artistHandler "2019_2_Covenant/internal/artist/delivery"
+	_artistDelivery "2019_2_Covenant/internal/artist/delivery"
 	_artistUsecase "2019_2_Covenant/internal/artist/usecase"
 	"2019_2_Covenant/internal/middlewares"
 	_playlistDelivery "2019_2_Covenant/internal/playlist/delivery"
 	_playlistUsecase "2019_2_Covenant/internal/playlist/usecase"
-	_searchHandler "2019_2_Covenant/internal/search/delivery"
+	_searchDelivery "2019_2_Covenant/internal/search/delivery"
 	_searchUsecase "2019_2_Covenant/internal/search/usecase"
 	_sessionDelivery "2019_2_Covenant/internal/session/delivery"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
@@ -67,6 +69,7 @@ func (api *APIServer) configureRouter() {
 	playlistUsecase := _playlistUsecase.NewPlaylistUsecase(api.storage.Playlist())
 	searchUsecase := _searchUsecase.NewSearchUsecase(api.storage.Track(), api.storage.Album(), api.storage.Artist())
 	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
+	albumUsecase := _albumUsecase.NewAlbumUsecase(api.storage.Album())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
@@ -85,11 +88,14 @@ func (api *APIServer) configureRouter() {
 	playlistHandler := _playlistDelivery.NewPlaylistHandler(playlistUsecase, middlewareManager, api.logger)
 	playlistHandler.Configure(api.router)
 
-	searchHandler := _searchHandler.NewSearchHandler(searchUsecase, middlewareManager, api.logger)
+	searchHandler := _searchDelivery.NewSearchHandler(searchUsecase, middlewareManager, api.logger)
 	searchHandler.Configure(api.router)
 
-	artistHandler := _artistHandler.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
+	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
+
+	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)
+	albumHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

@@ -126,3 +126,9 @@ func (ar *ArtistRepository) UpdateByID(id uint64, name string) error {
 
 	return nil
 }
+
+func (ar *ArtistRepository) CreateAlbum(album *models.Album) error {
+	return ar.db.QueryRow("INSERT INTO albums (artist_id, name, year) VALUES ($1, $2, $3) RETURNING id, photo",
+		album.ArtistID, album.Name, album.Year,
+	).Scan(&album.ID, &album.Photo)
+}

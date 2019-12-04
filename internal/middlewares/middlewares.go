@@ -76,7 +76,7 @@ func (m *MiddlewareManager) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFu
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
-		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE")
+		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS, DELETE")
 		c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Response().Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 

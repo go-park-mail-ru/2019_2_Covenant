@@ -39,10 +39,10 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/artists", ah.CreateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.DELETE("/api/v1/artists/:id", ah.DeleteArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.PUT("/api/v1/artists/:id", ah.UpdateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	//e.PUT("/api/v1/artists/:id/photo", ah.SetPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	//TODO: e.PUT("/api/v1/artists/:id/photo", ah.SetPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists", ah.GetArtists())
 	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	//e.GET("/api/v1/artists/:id/albums", ah.GetAlbums())
+	//TODO: e.GET("/api/v1/artists/:id/albums", ah.GetAlbums())
 }
 
 func (ah *ArtistHandler) CreateAlbum() echo.HandlerFunc {
@@ -52,21 +52,20 @@ func (ah *ArtistHandler) CreateAlbum() echo.HandlerFunc {
 	}
 
 	correctData := func(req interface{}) bool {
-		timeNow := time.Now()
-		date := time_parser.StringToTime(req.(*Request).Year)
-		diffTime := date.Sub(timeNow)
-
-		if diffTime > 0 {
-			return false
-		}
-
 		reg, err := regexp.Compile("^[0-9-]*$")
 
-		if err != nil {
+		if err != nil || !reg.MatchString(req.(*Request).Year) {
 			return false
 		}
 
-		return reg.MatchString(req.(*Request).Year)
+		timeNow := time.Now()
+		date := time_parser.StringToTime(req.(*Request).Year)
+
+		if date.Sub(timeNow) > 0 {
+			return false
+		}
+
+		return true
 	}
 
 	return func(c echo.Context) error {
@@ -151,7 +150,7 @@ func (ah *ArtistHandler) DeleteArtist() echo.HandlerFunc {
 		}
 
 		if err := ah.AUsecase.DeleteByID(uint64(aID)); err != nil {
-			ah.Logger.Log(c, "info", "Error while remove playlist.", err)
+			ah.Logger.Log(c, "info", "Error while deleting artist.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})

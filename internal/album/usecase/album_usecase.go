@@ -68,3 +68,11 @@ func (aUC *AlbumUsecase) GetByID(id uint64) (*models.Album, uint64, error) {
 
 	return a, amountOfTracks, nil
 }
+
+func (aUC *AlbumUsecase) AddTrack(albumID uint64, track *models.Track) error {
+	if err := aUC.albumRepo.AddTrack(albumID, track); err != nil {
+		return err
+	}
+
+	return nil
+}

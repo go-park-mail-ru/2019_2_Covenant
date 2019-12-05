@@ -3,6 +3,7 @@ package delivery
 import (
 	"2019_2_Covenant/internal/album"
 	"2019_2_Covenant/internal/middlewares"
+	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
@@ -39,6 +40,8 @@ func (ah *AlbumHandler) Configure(e *echo.Echo) {
 	e.PUT("/api/v1/albums/:id", ah.UpdateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/albums", ah.GetAlbums())
 	e.GET("/api/v1/albums/:id", ah.GetSingleAlbum())
+	e.POST("/api/v1/albums/:id/tracks", ah.AddToAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	//TODO: e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum())
 }
 
 func (ah *AlbumHandler) DeleteAlbum() echo.HandlerFunc {
@@ -177,9 +180,63 @@ func (ah *AlbumHandler) GetSingleAlbum() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
-				"album": a,
+				"album":            a,
 				"amount_of_tracks": amountOfTracks,
 			},
+		})
+	}
+}
+
+func (ah *AlbumHandler) AddToAlbum() echo.HandlerFunc {
+	type Request struct {
+		Name     string `json:"name" validate:"required"`
+		Duration string `json:"duration" validate:"required"`
+	}
+
+	correctData := func(req interface{}) bool {
+		reg, err := regexp.Compile("^[0-9:]*$")
+
+		if err != nil {
+			return false
+		}
+
+		return reg.MatchString(req.(*Request).Duration)
+	}
+
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ah.ReqReader.Read(c, request, correctData); err != nil {
+			ah.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		t := &models.Track{
+			AlbumID:  uint64(aID),
+			Name:     request.Name,
+			Duration: request.Duration,
+		}
+
+		if err := ah.AUsecase.AddTrack(uint64(aID), t); err != nil {
+			ah.Logger.Log(c, "error", "Error while adding track to album.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrAlreadyExist.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Message: "success",
 		})
 	}
 }

@@ -157,3 +157,21 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 
 	return a, amountOfTracks, nil
 }
+
+func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
+	if err := ar.db.QueryRow("SELECT id FROM tracks WHERE album_id = $1",
+		albumID,
+	).Scan(); err == nil {
+		return ErrAlreadyExist
+	}
+
+	if _, err := ar.db.Exec("INSERT INTO tracks (album_id, name, duration) VALUES ($1, $2, $3)",
+		track.AlbumID,
+		track.Name,
+		track.Duration,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}

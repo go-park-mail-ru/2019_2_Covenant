@@ -4,6 +4,8 @@ import (
 	"2019_2_Covenant/internal/app/storage"
 	_artistHandler "2019_2_Covenant/internal/artist/delivery"
 	_artistUsecase "2019_2_Covenant/internal/artist/usecase"
+	_followerHandler "2019_2_Covenant/internal/follower/delivery"
+	_followerUsecase "2019_2_Covenant/internal/follower/usecase"
 	"2019_2_Covenant/internal/middlewares"
 	_playlistDelivery "2019_2_Covenant/internal/playlist/delivery"
 	_playlistUsecase "2019_2_Covenant/internal/playlist/usecase"
@@ -67,6 +69,7 @@ func (api *APIServer) configureRouter() {
 	playlistUsecase := _playlistUsecase.NewPlaylistUsecase(api.storage.Playlist())
 	searchUsecase := _searchUsecase.NewSearchUsecase(api.storage.Track(), api.storage.Album(), api.storage.Artist())
 	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
+	followerUsecase := _followerUsecase.NewFollowerUsecase(api.storage.Follower())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
@@ -90,6 +93,9 @@ func (api *APIServer) configureRouter() {
 
 	artistHandler := _artistHandler.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
+
+	followerHandler := _followerHandler.NewFollowerHandler(followerUsecase, middlewareManager, api.logger)
+	followerHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

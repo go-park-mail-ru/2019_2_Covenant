@@ -33,6 +33,7 @@ func NewFollowerHandler(fUC follower.Usecase,
 }
 
 func (fh *FollowerHandler) Configure(e *echo.Echo) {
+	e.GET("/api/v1/profile/:id", fh.GetProfile(), fh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/:id", fh.Subscribe(), fh.MManager.CheckAuth)
 	e.DELETE("/api/v1/profile/:id", fh.Unsubscribe(), fh.MManager.CheckAuth)
 }
@@ -99,6 +100,34 @@ func (fh *FollowerHandler) Unsubscribe() echo.HandlerFunc {
 
 		return c.JSON(http.StatusOK, Response{
 			Message: "success",
+		})
+	}
+}
+
+func (fh *FollowerHandler) GetProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		uID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			fh.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		usr, err := fh.FUsecase.GetProfile(uint64(uID))
+
+		if err != nil {
+			fh.Logger.Log(c, "info", "Error while unsubscribing.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"user": usr,
+			},
 		})
 	}
 }

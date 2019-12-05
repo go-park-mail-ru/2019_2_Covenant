@@ -5,6 +5,8 @@ import (
 	_albumRepo "2019_2_Covenant/internal/album/repository"
 	"2019_2_Covenant/internal/artist"
 	_artistRepo "2019_2_Covenant/internal/artist/repository"
+	"2019_2_Covenant/internal/follower"
+	_followerRepo "2019_2_Covenant/internal/follower/repository"
 	"2019_2_Covenant/internal/playlist"
 	_playlistRepo "2019_2_Covenant/internal/playlist/repository"
 	"2019_2_Covenant/internal/session"
@@ -30,6 +32,7 @@ type PGStorage struct {
 	playlistRepo playlist.Repository
 	albumRepo    album.Repository
 	artistRepo   artist.Repository
+	followerRepo follower.Repository
 }
 
 func NewPGStorage(conf *Config) Storage {
@@ -118,4 +121,14 @@ func (s *PGStorage) Artist() artist.Repository {
 	s.artistRepo = _artistRepo.NewArtistRepository(s.db)
 
 	return s.artistRepo
+}
+
+func (s *PGStorage) Follower() follower.Repository {
+	if s.followerRepo != nil {
+		return s.followerRepo
+	}
+
+	s.followerRepo = _followerRepo.NewFollowerRepository(s.db)
+
+	return s.followerRepo
 }

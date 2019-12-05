@@ -4,8 +4,6 @@ import (
 	"2019_2_Covenant/internal/app/storage"
 	_artistHandler "2019_2_Covenant/internal/artist/delivery"
 	_artistUsecase "2019_2_Covenant/internal/artist/usecase"
-	_followerHandler "2019_2_Covenant/internal/follower/delivery"
-	_followerUsecase "2019_2_Covenant/internal/follower/usecase"
 	"2019_2_Covenant/internal/middlewares"
 	_playlistDelivery "2019_2_Covenant/internal/playlist/delivery"
 	_playlistUsecase "2019_2_Covenant/internal/playlist/usecase"
@@ -13,6 +11,8 @@ import (
 	_searchUsecase "2019_2_Covenant/internal/search/usecase"
 	_sessionDelivery "2019_2_Covenant/internal/session/delivery"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
+	_subscriptionDelivery "2019_2_Covenant/internal/subscriptions/delivery"
+	_subscriptionUsecase "2019_2_Covenant/internal/subscriptions/usecase"
 	_trackDelivery "2019_2_Covenant/internal/track/delivery"
 	_trackUsecase "2019_2_Covenant/internal/track/usecase"
 	_userDelivery "2019_2_Covenant/internal/user/delivery"
@@ -69,7 +69,7 @@ func (api *APIServer) configureRouter() {
 	playlistUsecase := _playlistUsecase.NewPlaylistUsecase(api.storage.Playlist())
 	searchUsecase := _searchUsecase.NewSearchUsecase(api.storage.Track(), api.storage.Album(), api.storage.Artist())
 	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
-	followerUsecase := _followerUsecase.NewFollowerUsecase(api.storage.Follower())
+	subscriptionUsecase := _subscriptionUsecase.NewSubscriptionUsecase(api.storage.Subscription())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
@@ -94,8 +94,8 @@ func (api *APIServer) configureRouter() {
 	artistHandler := _artistHandler.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
 
-	followerHandler := _followerHandler.NewFollowerHandler(followerUsecase, middlewareManager, api.logger)
-	followerHandler.Configure(api.router)
+	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, middlewareManager, api.logger)
+	subscriptionHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

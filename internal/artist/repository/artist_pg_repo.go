@@ -132,3 +132,34 @@ func (ar *ArtistRepository) CreateAlbum(album *models.Album) error {
 		album.ArtistID, album.Name, album.Year,
 	).Scan(&album.ID, &album.Photo)
 }
+
+func (ar *ArtistRepository) GetByID(id uint64) (*models.Artist, uint64, error) {
+	a := &models.Artist{}
+	var amountOfAlbums uint64
+
+	if err := ar.db.QueryRow("SELECT id, name, photo FROM artists WHERE id = $1",
+		id,
+	).Scan(
+		&a.ID,
+		&a.Name,
+		&a.Photo,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, amountOfAlbums, ErrNotFound
+		}
+
+		return nil, amountOfAlbums, err
+	}
+
+	if err := ar.db.QueryRow("SELECT COUNT(*) FROM albums WHERE artist_id = $1",
+		id,
+	).Scan(&amountOfAlbums); err != nil {
+		if err == sql.ErrNoRows {
+			return a, amountOfAlbums, nil
+		}
+
+		return nil, amountOfAlbums, err
+	}
+
+	return a, amountOfAlbums, nil
+}

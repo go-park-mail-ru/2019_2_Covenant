@@ -41,6 +41,7 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.PUT("/api/v1/artists/:id", ah.UpdateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	//TODO: e.PUT("/api/v1/artists/:id/photo", ah.SetPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists", ah.GetArtists())
+	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
 	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	//TODO: e.GET("/api/v1/artists/:id/albums", ah.GetAlbums())
 }
@@ -228,6 +229,35 @@ func (ah *ArtistHandler) GetArtists() echo.HandlerFunc {
 			Body: &Body{
 				"artists": artists,
 				"total": total,
+			},
+		})
+	}
+}
+
+func (ah *ArtistHandler) GetSingleArtist() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		pID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		a, amountOfAlbums, err := ah.AUsecase.GetByID(uint64(pID))
+
+		if err != nil {
+			ah.Logger.Log(c, "info", "Error while getting playlist.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"artist": a,
+				"amount_of_albums": amountOfAlbums,
 			},
 		})
 	}

@@ -74,3 +74,13 @@ func (aUC *ArtistUsecase) CreateAlbum(album *models.Album) error {
 
 	return nil
 }
+
+func (aUC *ArtistUsecase) GetByID(id uint64) (*models.Artist, uint64, error) {
+	a, amountOfAlbums, err := aUC.artistRepo.GetByID(id)
+
+	if err != nil {
+		return nil, amountOfAlbums, err
+	}
+
+	return a, amountOfAlbums, nil
+}

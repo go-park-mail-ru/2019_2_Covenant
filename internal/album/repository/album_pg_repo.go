@@ -159,8 +159,9 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 }
 
 func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
-	if err := ar.db.QueryRow("SELECT id FROM tracks WHERE album_id = $1",
+	if err := ar.db.QueryRow("SELECT id FROM tracks WHERE album_id = $1 AND name = $2",
 		albumID,
+		track.Name,
 	).Scan(); err == nil {
 		return ErrAlreadyExist
 	}

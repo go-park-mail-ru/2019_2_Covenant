@@ -8,10 +8,13 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
+	"2019_2_Covenant/tools/time_parser"
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"regexp"
 	"strconv"
+	"time"
 )
 
 type ArtistHandler struct {
@@ -36,8 +39,70 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/artists", ah.CreateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.DELETE("/api/v1/artists/:id", ah.DeleteArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.PUT("/api/v1/artists/:id", ah.UpdateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	//e.PUT("/api/v1/artists/:id/photo", ah.SetPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	//TODO: e.PUT("/api/v1/artists/:id/photo", ah.SetPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists", ah.GetArtists())
+	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
+	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	//TODO: e.GET("/api/v1/artists/:id/albums", ah.GetAlbums())
+}
+
+func (ah *ArtistHandler) CreateAlbum() echo.HandlerFunc {
+	type Request struct {
+		Name     string `json:"name" validate:"required"`
+		Year     string `json:"year" validate:"required"`
+	}
+
+	correctData := func(req interface{}) bool {
+		reg, err := regexp.Compile("^[0-9-]*$")
+
+		if err != nil || !reg.MatchString(req.(*Request).Year) {
+			return false
+		}
+
+		timeNow := time.Now()
+		date := time_parser.StringToTime(req.(*Request).Year)
+
+		if date.Sub(timeNow) > 0 {
+			return false
+		}
+
+		return true
+	}
+
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ah.ReqReader.Read(c, request, correctData); err != nil {
+			ah.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		a := models.NewAlbum(request.Name, request.Year, uint64(aID))
+
+		if err := ah.AUsecase.CreateAlbum(a); err != nil {
+			ah.Logger.Log(c, "info", "Error while storing album.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"album": a,
+			},
+		})
+	}
 }
 
 func (ah *ArtistHandler) CreateArtist() echo.HandlerFunc {
@@ -86,7 +151,7 @@ func (ah *ArtistHandler) DeleteArtist() echo.HandlerFunc {
 		}
 
 		if err := ah.AUsecase.DeleteByID(uint64(aID)); err != nil {
-			ah.Logger.Log(c, "info", "Error while remove playlist.", err)
+			ah.Logger.Log(c, "info", "Error while deleting artist.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
@@ -164,6 +229,35 @@ func (ah *ArtistHandler) GetArtists() echo.HandlerFunc {
 			Body: &Body{
 				"artists": artists,
 				"total": total,
+			},
+		})
+	}
+}
+
+func (ah *ArtistHandler) GetSingleArtist() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		pID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		a, amountOfAlbums, err := ah.AUsecase.GetByID(uint64(pID))
+
+		if err != nil {
+			ah.Logger.Log(c, "info", "Error while getting playlist.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"artist": a,
+				"amount_of_albums": amountOfAlbums,
 			},
 		})
 	}

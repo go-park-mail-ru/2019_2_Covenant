@@ -58,3 +58,13 @@ func (aUC *AlbumUsecase) Fetch(count uint64, offset uint64) ([]*models.Album, ui
 
 	return albums, total, nil
 }
+
+func (aUC *AlbumUsecase) GetByID(id uint64) (*models.Album, uint64, error) {
+	a, amountOfTracks, err := aUC.albumRepo.GetByID(id)
+
+	if err != nil {
+		return nil, amountOfTracks, err
+	}
+
+	return a, amountOfTracks, nil
+}

@@ -124,3 +124,36 @@ func (ar *AlbumRepository) Fetch(count uint64, offset uint64) ([]*models.Album, 
 
 	return albums, total, nil
 }
+
+func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
+	a := &models.Album{}
+	var amountOfTracks uint64
+
+	if err := ar.db.QueryRow("SELECT id, artist_id, name, photo, year FROM albums WHERE id = $1",
+		id,
+	).Scan(
+		&a.ID,
+		&a.ArtistID,
+		&a.Name,
+		&a.Photo,
+		&a.Year,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, amountOfTracks, ErrNotFound
+		}
+
+		return nil, amountOfTracks, err
+	}
+
+	if err := ar.db.QueryRow("SELECT COUNT(*) FROM tracks WHERE album_id = $1",
+		id,
+	).Scan(&amountOfTracks); err != nil {
+		if err == sql.ErrNoRows {
+			return a, amountOfTracks, nil
+		}
+
+		return nil, amountOfTracks, err
+	}
+
+	return a, amountOfTracks, nil
+}

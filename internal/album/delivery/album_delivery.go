@@ -38,6 +38,7 @@ func (ah *AlbumHandler) Configure(e *echo.Echo) {
 	e.DELETE("/api/v1/albums/:id", ah.DeleteAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.PUT("/api/v1/albums/:id", ah.UpdateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/albums", ah.GetAlbums())
+	e.GET("/api/v1/albums/:id", ah.GetSingleAlbum())
 }
 
 func (ah *AlbumHandler) DeleteAlbum() echo.HandlerFunc {
@@ -149,6 +150,35 @@ func (ah *AlbumHandler) GetAlbums() echo.HandlerFunc {
 			Body: &Body{
 				"albums": albums,
 				"total":  total,
+			},
+		})
+	}
+}
+
+func (ah *AlbumHandler) GetSingleAlbum() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		a, amountOfTracks, err := ah.AUsecase.GetByID(uint64(aID))
+
+		if err != nil {
+			ah.Logger.Log(c, "info", "Error while getting album", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"album": a,
+				"amount_of_tracks": amountOfTracks,
 			},
 		})
 	}

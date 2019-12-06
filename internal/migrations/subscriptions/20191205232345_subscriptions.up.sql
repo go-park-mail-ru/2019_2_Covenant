@@ -3,5 +3,6 @@ create table subscriptions (
    user_id bigint not null references users(id) on delete cascade,
    subscribed_to bigint not null references users(id) on delete cascade,
    created_at timestamp not null default now(),
-   unique (user_id, subscribed_to)
+   unique (user_id, subscribed_to),
+   check (user_id != subscribed_to)
 )

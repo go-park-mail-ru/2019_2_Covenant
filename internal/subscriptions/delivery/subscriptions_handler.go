@@ -38,7 +38,7 @@ func (sh *SubscriptionHandler) Configure(e *echo.Echo) {
 
 func (sh *SubscriptionHandler) Subscribe() echo.HandlerFunc {
 	type Request struct {
-		UserID uint64 `json:"user_id" validate:"required"`
+		SubscriptionID uint64 `json:"subscription_id" validate:"required"`
 	}
 
 	return func(c echo.Context) error {
@@ -60,10 +60,10 @@ func (sh *SubscriptionHandler) Subscribe() echo.HandlerFunc {
 			})
 		}
 
-		if err := sh.SUsecase.Subscribe(request.UserID, sess.UserID); err != nil {
-			sh.Logger.Log(c, "error", "Error while subscribing.", err)
+		if err := sh.SUsecase.Subscribe(sess.UserID, request.SubscriptionID); err != nil {
+			sh.Logger.Log(c, "info", "Error while subscribing.", err)
 			return c.JSON(http.StatusBadRequest, Response{
-				Error: ErrAlreadyExist.Error(),
+				Error: err.Error(),
 			})
 		}
 
@@ -75,7 +75,7 @@ func (sh *SubscriptionHandler) Subscribe() echo.HandlerFunc {
 
 func (sh *SubscriptionHandler) Unsubscribe() echo.HandlerFunc {
 	type Request struct {
-		UserID uint64 `json:"user_id" validate:"required"`
+		SubscriptionID uint64 `json:"subscription_id" validate:"required"`
 	}
 
 	return func(c echo.Context) error {
@@ -97,7 +97,7 @@ func (sh *SubscriptionHandler) Unsubscribe() echo.HandlerFunc {
 			})
 		}
 
-		if err := sh.SUsecase.Unsubscribe(request.UserID, sess.UserID); err != nil {
+		if err := sh.SUsecase.Unsubscribe(sess.ID, request.SubscriptionID); err != nil {
 			sh.Logger.Log(c, "info", "Error while unsubscribing.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),

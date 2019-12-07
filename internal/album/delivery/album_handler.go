@@ -41,7 +41,37 @@ func (ah *AlbumHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/albums", ah.GetAlbums())
 	e.GET("/api/v1/albums/:id", ah.GetSingleAlbum())
 	e.POST("/api/v1/albums/:id/tracks", ah.AddToAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	//TODO: e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum())
+	e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum())
+}
+
+func (ah *AlbumHandler) GetTracksFromAlbum() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		tracks, err := ah.AUsecase.GetTracksFrom(uint64(aID))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Error while fetching tracks.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"tracks": tracks,
+			},
+		})
+	}
 }
 
 func (ah *AlbumHandler) DeleteAlbum() echo.HandlerFunc {

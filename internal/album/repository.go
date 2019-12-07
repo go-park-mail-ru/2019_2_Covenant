@@ -9,4 +9,5 @@ type Repository interface {
 	Fetch(count uint64, offset uint64) ([]*models.Album, uint64, error)
 	GetByID(id uint64) (*models.Album, uint64, error)
 	AddTrack(albumID uint64, track *models.Track) error
+	GetTracksFrom(albumID uint64) ([]*models.Track, error)
 }

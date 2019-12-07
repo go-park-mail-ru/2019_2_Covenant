@@ -1,1 +1,1 @@
-drop table tracks;
+drop table tracks cascade;

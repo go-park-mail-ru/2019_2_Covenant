@@ -176,3 +176,35 @@ func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
 
 	return nil
 }
+
+func (ar *AlbumRepository) GetTracksFrom(albumID uint64) ([]*models.Track, error) {
+	var tracks []*models.Track
+
+	rows, err := ar.db.Query(
+		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name from tracks T " +
+			"join albums Al ON T.album_id=Al.id " +
+			"join artists Ar ON Al.artist_id=Ar.id where Al.id = $1;",
+		albumID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		t := &models.Track{}
+
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album); err != nil {
+			return nil, err
+		}
+
+		tracks = append(tracks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
+}

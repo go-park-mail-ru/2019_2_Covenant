@@ -76,3 +76,17 @@ func (aUC *AlbumUsecase) AddTrack(albumID uint64, track *models.Track) error {
 
 	return nil
 }
+
+func (aUC *AlbumUsecase) GetTracksFrom(albumID uint64) ([]*models.Track, error) {
+	tracks, err := aUC.albumRepo.GetTracksFrom(albumID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tracks == nil {
+		tracks = []*models.Track{}
+	}
+
+	return tracks, nil
+}

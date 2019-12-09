@@ -10,10 +10,8 @@ import (
 	"2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
 	. "2019_2_Covenant/tools/vars"
-	"fmt"
 	"github.com/labstack/echo/v4"
-	"io/ioutil"
-	"mime"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -48,7 +46,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
-	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
+	e.POST("/api/v1/profile/avatar", uh.UploadAvatar(), uh.MManager.CheckAuth)
 }
 
 // @Tags User
@@ -294,14 +292,11 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 // @Failure 401 object Response
 // @Failure 500 object Response
 // @Router /api/v1/profile/avatar [post]
-func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
+func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 	rootPath, _ := os.Getwd()
-	avatarsPath := "/resources/avatars/"
-	destPath := filepath.Join(rootPath, avatarsPath)
 
 	return func(c echo.Context) error {
 		file, err := c.FormFile("avatar")
-
 		if err != nil {
 			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
 			return c.JSON(http.StatusBadRequest, Response{
@@ -310,7 +305,6 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		}
 
 		src, err := file.Open()
-
 		if err != nil {
 			uh.Logger.Log(c, "error", "Can't open file.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
@@ -320,56 +314,35 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		defer src.Close()
 
-		if _, err := os.Stat(destPath); os.IsNotExist(err) {
-			uh.Logger.Log(c, "error", "There is no dir for avatars.")
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
+		filePath := AVATARS_PATH + file.Filename
 
-		bytes, err := ioutil.ReadAll(src)
-
+		dest, err := os.Create(filepath.Join(rootPath, filePath))
 		if err != nil {
-			uh.Logger.Log(c, "error", "Can't read file.", err)
+			uh.Logger.Log(c, "error", "Can't create file.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		fileType := http.DetectContentType(bytes)
-		extensions, _ := mime.ExtensionsByType(fileType)
+		defer dest.Close()
+
+		if _, err = io.Copy(dest, src); err != nil {
+			uh.Logger.Log(c, "error", "Can't copy file.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
 
 		sess, ok := c.Get("session").(*models.Session)
 
 		if !ok {
-			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
-		destFile, err := os.Create(filepath.Join(destPath, avatarName))
-
-		if err != nil {
-			uh.Logger.Log(c, "error", "Can't create avatar file.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
-
-		defer destFile.Close()
-
-		_, err = destFile.Write(bytes)
-
-		if err != nil {
-			uh.Logger.Log(c, "error", "Error while writing bytes in destFile.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
-
-		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filepath.Join(avatarsPath, avatarName))
+		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filePath)
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while updating user avatar.", err)

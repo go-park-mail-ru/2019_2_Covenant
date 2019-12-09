@@ -21,7 +21,8 @@ func NewAlbumRepository(db *sql.DB) album.Repository {
 func (ar *AlbumRepository) FindLike(name string, count uint64) ([]*models.Album, error) {
 	var albums []*models.Album
 
-	rows, err := ar.db.Query("select id, artist_id, name, photo, year from albums where lower(name) like '%' || $1 || '%' limit $2",
+	rows, err := ar.db.Query("select Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"from albums Al join artists Ar on Al.artist_id = Ar.id where lower(Al.name) like '%' || $1 || '%' limit $2",
 		strings.ToLower(name),
 		count)
 
@@ -38,7 +39,7 @@ func (ar *AlbumRepository) FindLike(name string, count uint64) ([]*models.Album,
 	for rows.Next() {
 		a := &models.Album{}
 
-		if err := rows.Scan(&a.ID, &a.ArtistID, &a.Name, &a.Photo, &a.Year); err != nil {
+		if err := rows.Scan(&a.ID, &a.ArtistID, &a.Name, &a.Photo, &a.Year, &a.Artist); err != nil {
 			return nil, err
 		}
 
@@ -91,7 +92,8 @@ func (ar *AlbumRepository) Fetch(count uint64, offset uint64) ([]*models.Album, 
 		return nil, total, err
 	}
 
-	rows, err := ar.db.Query("SELECT id, artist_id, name, photo, year FROM albums ORDER BY name LIMIT $1 OFFSET $2",
+	rows, err := ar.db.Query("SELECT Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"FROM albums Al JOIN artists Ar ON Al.artist_id = Ar.id ORDER BY Al.name LIMIT $1 OFFSET $2",
 		count,
 		offset,
 	)
@@ -111,6 +113,7 @@ func (ar *AlbumRepository) Fetch(count uint64, offset uint64) ([]*models.Album, 
 			&a.Name,
 			&a.Photo,
 			&a.Year,
+			&a.Artist,
 		); err != nil {
 			return nil, total, err
 		}
@@ -129,7 +132,8 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 	a := &models.Album{}
 	var amountOfTracks uint64
 
-	if err := ar.db.QueryRow("SELECT id, artist_id, name, photo, year FROM albums WHERE id = $1",
+	if err := ar.db.QueryRow("SELECT Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"FROM albums Al JOIN artists Ar ON Al.artist_id = Ar.id WHERE Al.id = $1",
 		id,
 	).Scan(
 		&a.ID,
@@ -137,6 +141,7 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 		&a.Name,
 		&a.Photo,
 		&a.Year,
+		&a.Artist,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, amountOfTracks, ErrNotFound

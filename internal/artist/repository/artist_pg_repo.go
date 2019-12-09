@@ -61,7 +61,7 @@ func (ar *ArtistRepository) Fetch(count uint64, offset uint64) ([]*models.Artist
 func (ar *ArtistRepository) FindLike(name string, count uint64) ([]*models.Artist, error) {
 	var artists []*models.Artist
 
-	rows, err := ar.db.Query("select id, name from artists where lower(name) like '%' || $1 || '%' limit $2",
+	rows, err := ar.db.Query("select id, name, photo from artists where lower(name) like '%' || $1 || '%' limit $2",
 		strings.ToLower(name),
 		count)
 
@@ -78,7 +78,7 @@ func (ar *ArtistRepository) FindLike(name string, count uint64) ([]*models.Artis
 	for rows.Next() {
 		a := &models.Artist{}
 
-		if err := rows.Scan(&a.ID, &a.Name); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Photo); err != nil {
 			return nil, err
 		}
 

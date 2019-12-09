@@ -296,7 +296,7 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 	rootPath, _ := os.Getwd()
 
 	return func(c echo.Context) error {
-		file, err := c.FormFile("avatar")
+		file, err := c.FormFile("file")
 		if err != nil {
 			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
 			return c.JSON(http.StatusBadRequest, Response{

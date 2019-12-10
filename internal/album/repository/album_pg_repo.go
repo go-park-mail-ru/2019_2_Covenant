@@ -171,10 +171,11 @@ func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
 		return ErrAlreadyExist
 	}
 
-	if _, err := ar.db.Exec("INSERT INTO tracks (album_id, name, duration) VALUES ($1, $2, $3)",
+	if _, err := ar.db.Exec("INSERT INTO tracks (album_id, name, duration, path) VALUES ($1, $2, $3, $4)",
 		track.AlbumID,
 		track.Name,
 		track.Duration,
+		track.Path,
 	); err != nil {
 		return err
 	}

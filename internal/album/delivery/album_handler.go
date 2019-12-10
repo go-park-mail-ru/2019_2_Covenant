@@ -10,8 +10,12 @@ import (
 	. "2019_2_Covenant/tools/response"
 	"2019_2_Covenant/tools/time_parser"
 	. "2019_2_Covenant/tools/vars"
+	"encoding/json"
 	"github.com/labstack/echo/v4"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -64,7 +68,9 @@ func (ah *AlbumHandler) GetTracksFromAlbum() echo.HandlerFunc {
 			})
 		}
 
-		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
+		for _, item := range tracks {
+			item.Duration = time_parser.GetDuration(item.Duration)
+		}
 
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
@@ -218,22 +224,61 @@ func (ah *AlbumHandler) GetSingleAlbum() echo.HandlerFunc {
 }
 
 func (ah *AlbumHandler) AddToAlbum() echo.HandlerFunc {
+	rootPath, _ := os.Getwd()
+
 	type Request struct {
-		Name     string `json:"name" validate:"required"`
-		Duration string `json:"duration" validate:"required"`
-	}
-
-	correctData := func(req interface{}) bool {
-		reg, err := regexp.Compile("^[0-9:]*$")
-
-		if err != nil {
-			return false
-		}
-
-		return reg.MatchString(req.(*Request).Duration)
+		Name string `json:"name" validate:"required"`
 	}
 
 	return func(c echo.Context) error {
+		file, err := c.FormFile("file")
+		if err != nil {
+			ah.Logger.Log(c, "info", "Can't extract file from request.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: ErrRetrievingError.Error(),
+			})
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			ah.Logger.Log(c, "error", "Can't open file.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		defer src.Close()
+
+		filePath := TRACKS_PATH + file.Filename
+		absolutePath := filepath.Join(rootPath, filePath)
+
+		dest, err := os.Create(absolutePath)
+		if err != nil {
+			ah.Logger.Log(c, "error", "Can't create file.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		defer dest.Close()
+
+		if _, err = io.Copy(dest, src); err != nil {
+			ah.Logger.Log(c, "error", "Can't copy file.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		form, _ := c.MultipartForm()
+		request := &Request{}
+
+		if err := json.Unmarshal([]byte(form.Value["request"][0]), request); err != nil {
+			ah.Logger.Log(c, "info", "Error while parsing JSON.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
 		aID, err := strconv.Atoi(c.Param("id"))
 
 		if err != nil {
@@ -243,10 +288,16 @@ func (ah *AlbumHandler) AddToAlbum() echo.HandlerFunc {
 			})
 		}
 
-		request := &Request{}
-
-		if err := ah.ReqReader.Read(c, request, correctData); err != nil {
+		if err := ah.ReqReader.Read(c, request, nil); err != nil {
 			ah.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		duration, err := time_parser.TrackDuration(absolutePath)
+		if err != nil {
+			ah.Logger.Log(c, "info", "Error while getting track duration.", err.Error())
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
@@ -255,7 +306,8 @@ func (ah *AlbumHandler) AddToAlbum() echo.HandlerFunc {
 		t := &models.Track{
 			AlbumID:  uint64(aID),
 			Name:     request.Name,
-			Duration: request.Duration,
+			Duration: duration,
+			Path:     filePath,
 		}
 
 		if err := ah.AUsecase.AddTrack(uint64(aID), t); err != nil {

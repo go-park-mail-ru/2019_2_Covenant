@@ -6,6 +6,7 @@ type Album struct {
 	Name     string    `json:"name"`
 	Photo    string    `json:"photo"`
 	Year     string    `json:"year"`
+	Artist   string    `json:"artist"`
 }
 
 func NewAlbum(name string, year string, artistID uint64) *Album {

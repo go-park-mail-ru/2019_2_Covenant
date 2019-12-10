@@ -21,7 +21,8 @@ func NewAlbumRepository(db *sql.DB) album.Repository {
 func (ar *AlbumRepository) FindLike(name string, count uint64) ([]*models.Album, error) {
 	var albums []*models.Album
 
-	rows, err := ar.db.Query("select id, artist_id, name, photo, year from albums where lower(name) like '%' || $1 || '%' limit $2",
+	rows, err := ar.db.Query("select Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"from albums Al join artists Ar on Al.artist_id = Ar.id where lower(Al.name) like '%' || $1 || '%' limit $2",
 		strings.ToLower(name),
 		count)
 
@@ -38,7 +39,7 @@ func (ar *AlbumRepository) FindLike(name string, count uint64) ([]*models.Album,
 	for rows.Next() {
 		a := &models.Album{}
 
-		if err := rows.Scan(&a.ID, &a.ArtistID, &a.Name, &a.Photo, &a.Year); err != nil {
+		if err := rows.Scan(&a.ID, &a.ArtistID, &a.Name, &a.Photo, &a.Year, &a.Artist); err != nil {
 			return nil, err
 		}
 
@@ -91,7 +92,8 @@ func (ar *AlbumRepository) Fetch(count uint64, offset uint64) ([]*models.Album, 
 		return nil, total, err
 	}
 
-	rows, err := ar.db.Query("SELECT id, artist_id, name, photo, year FROM albums ORDER BY name LIMIT $1 OFFSET $2",
+	rows, err := ar.db.Query("SELECT Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"FROM albums Al JOIN artists Ar ON Al.artist_id = Ar.id ORDER BY Al.name LIMIT $1 OFFSET $2",
 		count,
 		offset,
 	)
@@ -111,6 +113,7 @@ func (ar *AlbumRepository) Fetch(count uint64, offset uint64) ([]*models.Album, 
 			&a.Name,
 			&a.Photo,
 			&a.Year,
+			&a.Artist,
 		); err != nil {
 			return nil, total, err
 		}
@@ -129,7 +132,8 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 	a := &models.Album{}
 	var amountOfTracks uint64
 
-	if err := ar.db.QueryRow("SELECT id, artist_id, name, photo, year FROM albums WHERE id = $1",
+	if err := ar.db.QueryRow("SELECT Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
+		"FROM albums Al JOIN artists Ar ON Al.artist_id = Ar.id WHERE Al.id = $1",
 		id,
 	).Scan(
 		&a.ID,
@@ -137,6 +141,7 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 		&a.Name,
 		&a.Photo,
 		&a.Year,
+		&a.Artist,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, amountOfTracks, ErrNotFound
@@ -156,4 +161,71 @@ func (ar *AlbumRepository) GetByID(id uint64) (*models.Album, uint64, error) {
 	}
 
 	return a, amountOfTracks, nil
+}
+
+func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
+	if err := ar.db.QueryRow("SELECT id FROM tracks WHERE album_id = $1 AND name = $2",
+		albumID,
+		track.Name,
+	).Scan(); err == nil {
+		return ErrAlreadyExist
+	}
+
+	if _, err := ar.db.Exec("INSERT INTO tracks (album_id, name, duration, path) VALUES ($1, $2, $3, $4)",
+		track.AlbumID,
+		track.Name,
+		track.Duration,
+		track.Path,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ar *AlbumRepository) GetTracksFrom(albumID uint64) ([]*models.Track, error) {
+	var tracks []*models.Track
+
+	rows, err := ar.db.Query(
+		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name from tracks T " +
+			"join albums Al ON T.album_id=Al.id " +
+			"join artists Ar ON Al.artist_id=Ar.id where Al.id = $1;",
+		albumID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		t := &models.Track{}
+
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album); err != nil {
+			return nil, err
+		}
+
+		tracks = append(tracks, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
+}
+
+func (ar *AlbumRepository) UpdatePhoto(albumID uint64, path string) error {
+	if err := ar.db.QueryRow("UPDATE albums SET photo = $1 WHERE id = $2 RETURNING id",
+		path,
+		albumID,
+	).Scan(&albumID); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
 }

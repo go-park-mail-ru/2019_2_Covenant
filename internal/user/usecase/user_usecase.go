@@ -26,6 +26,16 @@ func (uUC *userUsecase) Fetch(count uint64) ([]*models.User, error) {
 	return users, nil
 }
 
+func (uUC *userUsecase) FetchFollowing(userId uint64, count uint64, offset uint64) ([]*models.User, error) {
+	users, err := uUC.userRepo.FetchFollowing(userId, count, offset)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (uUC *userUsecase) Store(newUser *models.User) error {
 	exist, _ := uUC.userRepo.GetByEmail(newUser.Email)
 

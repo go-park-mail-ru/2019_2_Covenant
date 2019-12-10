@@ -48,6 +48,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile/avatar", uh.UploadAvatar(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/profile/following", uh.GetFollowing(), uh.MManager.CheckAuth)
 
 	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
 }
@@ -145,7 +146,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 // @Failure 401 object Response
 // @Failure 409 object Response
 // @Failure 500 object Response
-// @Router /api/v1/profile [post]
+// @Router /api/v1/profile [put]
 func (uh *UserHandler) UpdateUser() echo.HandlerFunc {
 	type Request struct {
 		Email    string `json:"email" validate:"required,email"`
@@ -258,7 +259,6 @@ func (uh *UserHandler) UpdatePassword() echo.HandlerFunc {
 // @Summary Get Profile Route
 // @Description Get user profile
 // @ID get-profile
-// @Accept json
 // @Produce json
 // @Success 200 object models.User
 // @Failure 401 object Response
@@ -362,6 +362,15 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 	}
 }
 
+// @Tags Profile
+// @Summary Get Other Profile Route
+// @Description Getting other profile
+// @ID get-other-profile
+// @Produce json
+// @Success 200 object models.User
+// @Failure 400 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/profile/following [get]
 func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		uNickname := c.Param("nickname")
@@ -378,6 +387,58 @@ func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"user": usr,
+			},
+		})
+	}
+}
+
+// @Tags Profile
+// @Summary Get Following Route
+// @Description Getting following users
+// @ID get-following
+// @Accept json
+// @Produce json
+// @Success 200 object []models.User
+// @Failure 400 object ResponseError
+// @Failure 500 object ResponseError
+// @Router /api/v1/profile/following [get]
+func (uh *UserHandler) GetFollowing() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := uh.ReqReader.Read(c, request, nil); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		users, err := uh.UUsecase.FetchFollowing(sess.UserID, request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while fetching users.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"users": users,
 			},
 		})
 	}

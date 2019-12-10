@@ -173,3 +173,35 @@ func (ur *UserRepository) Update(id uint64, nickname string, email string) (*mod
 
 	return u, nil
 }
+
+func (ur *UserRepository) FetchFollowing(userId uint64, count uint64, offset uint64) ([]*models.User, error) {
+	var users []*models.User
+
+	rows, err := ur.db.Query("SELECT u.id, u.nickname, u.avatar FROM subscriptions s " +
+										"JOIN users u ON s.subscribed_to = u.id " +
+										"WHERE s.user_id = $1 LIMIT $2 OFFSET $3",
+		userId,
+		count,
+		offset)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		u := &models.User{}
+
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Avatar); err != nil {
+			return nil, err
+		}
+
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}

@@ -61,7 +61,7 @@ func (ar *ArtistRepository) Fetch(count uint64, offset uint64) ([]*models.Artist
 func (ar *ArtistRepository) FindLike(name string, count uint64) ([]*models.Artist, error) {
 	var artists []*models.Artist
 
-	rows, err := ar.db.Query("select id, name from artists where lower(name) like '%' || $1 || '%' limit $2",
+	rows, err := ar.db.Query("select id, name, photo from artists where lower(name) like '%' || $1 || '%' limit $2",
 		strings.ToLower(name),
 		count)
 
@@ -78,7 +78,7 @@ func (ar *ArtistRepository) FindLike(name string, count uint64) ([]*models.Artis
 	for rows.Next() {
 		a := &models.Artist{}
 
-		if err := rows.Scan(&a.ID, &a.Name); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Photo); err != nil {
 			return nil, err
 		}
 
@@ -117,6 +117,58 @@ func (ar *ArtistRepository) UpdateByID(id uint64, name string) error {
 		name,
 		id,
 	).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (ar *ArtistRepository) CreateAlbum(album *models.Album) error {
+	return ar.db.QueryRow("INSERT INTO albums (artist_id, name, year) VALUES ($1, $2, $3) RETURNING id, photo",
+		album.ArtistID, album.Name, album.Year,
+	).Scan(&album.ID, &album.Photo)
+}
+
+func (ar *ArtistRepository) GetByID(id uint64) (*models.Artist, uint64, error) {
+	a := &models.Artist{}
+	var amountOfAlbums uint64
+
+	if err := ar.db.QueryRow("SELECT id, name, photo FROM artists WHERE id = $1",
+		id,
+	).Scan(
+		&a.ID,
+		&a.Name,
+		&a.Photo,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, amountOfAlbums, ErrNotFound
+		}
+
+		return nil, amountOfAlbums, err
+	}
+
+	if err := ar.db.QueryRow("SELECT COUNT(*) FROM albums WHERE artist_id = $1",
+		id,
+	).Scan(&amountOfAlbums); err != nil {
+		if err == sql.ErrNoRows {
+			return a, amountOfAlbums, nil
+		}
+
+		return nil, amountOfAlbums, err
+	}
+
+	return a, amountOfAlbums, nil
+}
+
+func (ar *ArtistRepository) UpdatePhoto(artistID uint64, path string) error {
+	if err := ar.db.QueryRow("UPDATE artists SET photo = $1 WHERE id = $2 RETURNING id",
+		path,
+		artistID,
+	).Scan(&artistID); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrNotFound
 		}

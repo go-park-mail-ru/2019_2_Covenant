@@ -84,3 +84,11 @@ func (aUC *ArtistUsecase) GetByID(id uint64) (*models.Artist, uint64, error) {
 
 	return a, amountOfAlbums, nil
 }
+
+func (aUC *ArtistUsecase) UpdatePhoto(artistID uint64, path string) error {
+	if err := aUC.artistRepo.UpdatePhoto(artistID, path); err != nil {
+		return err
+	}
+
+	return nil
+}

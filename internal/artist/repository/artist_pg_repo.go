@@ -163,3 +163,18 @@ func (ar *ArtistRepository) GetByID(id uint64) (*models.Artist, uint64, error) {
 
 	return a, amountOfAlbums, nil
 }
+
+func (ar *ArtistRepository) UpdatePhoto(artistID uint64, path string) error {
+	if err := ar.db.QueryRow("UPDATE artists SET photo = $1 WHERE id = $2 RETURNING id",
+		path,
+		artistID,
+	).Scan(&artistID); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}

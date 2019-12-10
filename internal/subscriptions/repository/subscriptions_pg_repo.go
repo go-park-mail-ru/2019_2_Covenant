@@ -16,17 +16,17 @@ func NewSubscriptionRepository(db *sql.DB) subscriptions.Repository {
 	}
 }
 
-func (ssR *SubscriptionRepository) Subscribe(userID uint64, subscribedID uint64) error {
+func (ssR *SubscriptionRepository) Subscribe(userID uint64, subscriptionID uint64) error {
 	if err := ssR.db.QueryRow("SELECT id FROM subscriptions WHERE user_id = $1 AND subscribed_to = $2",
 		userID,
-		subscribedID,
+		subscriptionID,
 	).Scan(); err == nil {
 		return ErrAlreadyExist
 	}
 
 	if _, err := ssR.db.Exec("INSERT INTO subscriptions (user_id, subscribed_to) VALUES ($1, $2)",
 		userID,
-		subscribedID,
+		subscriptionID,
 	); err != nil {
 			return err
 	}
@@ -34,10 +34,10 @@ func (ssR *SubscriptionRepository) Subscribe(userID uint64, subscribedID uint64)
 	return nil
 }
 
-func (ssR *SubscriptionRepository) Unsubscribe(userID uint64, subscribedID uint64) error {
+func (ssR *SubscriptionRepository) Unsubscribe(userID uint64, subscriptionID uint64) error {
 	res, err := ssR.db.Exec("DELETE FROM subscriptions WHERE user_id = $1 AND subscribed_to = $2",
 		userID,
-		subscribedID,
+		subscriptionID,
 	)
 
 	if err != nil {

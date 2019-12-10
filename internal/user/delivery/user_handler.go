@@ -50,7 +50,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
 	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
 
-	e.POST("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
 }
 
 // @Tags User

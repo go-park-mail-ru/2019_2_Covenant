@@ -90,3 +90,11 @@ func (aUC *AlbumUsecase) GetTracksFrom(albumID uint64) ([]*models.Track, error) 
 
 	return tracks, nil
 }
+
+func (aUC *AlbumUsecase) UpdatePhoto(albumID uint64, path string) error {
+	if err := aUC.albumRepo.UpdatePhoto(albumID, path); err != nil {
+		return err
+	}
+
+	return nil
+}

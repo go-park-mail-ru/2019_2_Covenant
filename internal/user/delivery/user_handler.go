@@ -10,6 +10,7 @@ import (
 	"2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
 	. "2019_2_Covenant/tools/vars"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
@@ -296,6 +297,15 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 	rootPath, _ := os.Getwd()
 
 	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
 		file, err := c.FormFile("file")
 		if err != nil {
 			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
@@ -314,7 +324,7 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 
 		defer src.Close()
 
-		filePath := AVATARS_PATH + file.Filename
+		filePath := fmt.Sprintf("%s%d-%s", AVATARS_PATH, sess.UserID, file.Filename)
 
 		dest, err := os.Create(filepath.Join(rootPath, filePath))
 		if err != nil {
@@ -328,15 +338,6 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 
 		if _, err = io.Copy(dest, src); err != nil {
 			uh.Logger.Log(c, "error", "Can't copy file.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
-
-		sess, ok := c.Get("session").(*models.Session)
-
-		if !ok {
-			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})

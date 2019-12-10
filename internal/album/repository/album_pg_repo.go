@@ -214,3 +214,18 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64) ([]*models.Track, error
 
 	return tracks, nil
 }
+
+func (ar *AlbumRepository) UpdatePhoto(albumID uint64, path string) error {
+	if err := ar.db.QueryRow("UPDATE albums SET photo = $1 WHERE id = $2 RETURNING id",
+		path,
+		albumID,
+	).Scan(&albumID); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}

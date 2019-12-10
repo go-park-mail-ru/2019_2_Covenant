@@ -10,4 +10,5 @@ type Usecase interface {
 	GetByID(id uint64) (*models.Album, uint64, error)
 	AddTrack(albumID uint64, track *models.Track) error
 	GetTracksFrom(albumID uint64) ([]*models.Track, error)
+	UpdatePhoto(albumID uint64, path string) error
 }

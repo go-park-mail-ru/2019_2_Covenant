@@ -68,7 +68,7 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
+		tracks, total, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -82,6 +82,7 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"tracks": tracks,
+				"total": total,
 			},
 		})
 	}

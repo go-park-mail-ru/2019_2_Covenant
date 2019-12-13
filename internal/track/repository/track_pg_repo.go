@@ -18,8 +18,13 @@ func NewTrackRepository(db *sql.DB) track.Repository {
 	}
 }
 
-func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, error) {
+func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, uint64, error) {
 	var tracks []*models.Track
+	var total uint64
+
+	if err := tr.db.QueryRow("SELECT COUNT(*) FROM tracks").Scan(&total); err != nil {
+		return nil, total, err
+	}
 
 	rows, err := tr.db.Query(
 		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
@@ -29,7 +34,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 		offset)
 
 	if err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
 	defer rows.Close()
@@ -40,17 +45,17 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64) ([]*models.Track, 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
 			&t.Photo, &t.Artist, &t.Album, &t.Path,
 		); err != nil {
-			return nil, err
+			return nil, total, err
 		}
 
 		tracks = append(tracks, t)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, total, err
 	}
 
-	return tracks, nil
+	return tracks, total, nil
 }
 
 func (tr *TrackRepository) StoreFavourite(userID uint64, trackID uint64) error {

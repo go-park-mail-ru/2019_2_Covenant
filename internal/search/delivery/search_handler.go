@@ -7,6 +7,7 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
+	"2019_2_Covenant/tools/time_parser"
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -57,6 +58,8 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 				Error: ErrNotFound.Error(),
 			})
 		}
+
+		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
 
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{

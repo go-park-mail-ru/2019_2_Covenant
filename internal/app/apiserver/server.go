@@ -13,6 +13,8 @@ import (
 	_searchUsecase "2019_2_Covenant/internal/search/usecase"
 	_sessionDelivery "2019_2_Covenant/internal/session/delivery"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
+	_subscriptionDelivery "2019_2_Covenant/internal/subscriptions/delivery"
+	_subscriptionUsecase "2019_2_Covenant/internal/subscriptions/usecase"
 	_trackDelivery "2019_2_Covenant/internal/track/delivery"
 	_trackUsecase "2019_2_Covenant/internal/track/usecase"
 	_userDelivery "2019_2_Covenant/internal/user/delivery"
@@ -70,6 +72,7 @@ func (api *APIServer) configureRouter() {
 	searchUsecase := _searchUsecase.NewSearchUsecase(api.storage.Track(), api.storage.Album(), api.storage.Artist())
 	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
 	albumUsecase := _albumUsecase.NewAlbumUsecase(api.storage.Album())
+	subscriptionUsecase := _subscriptionUsecase.NewSubscriptionUsecase(api.storage.Subscription())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
@@ -93,6 +96,9 @@ func (api *APIServer) configureRouter() {
 
 	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
+
+	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, middlewareManager, api.logger)
+	subscriptionHandler.Configure(api.router)
 
 	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)
 	albumHandler.Configure(api.router)

@@ -23,6 +23,10 @@ func (uUC *userUsecase) Fetch(count uint64) ([]*models.User, error) {
 		return nil, err
 	}
 
+	if users == nil {
+		users = []*models.User{}
+	}
+
 	return users, nil
 }
 

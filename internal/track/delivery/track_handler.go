@@ -8,11 +8,9 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	"2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
-	"2019_2_Covenant/tools/time_parser"
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strings"
 )
 
 type TrackHandler struct {
@@ -68,7 +66,7 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
+		tracks, total, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -77,11 +75,10 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			})
 		}
 
-		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
-
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"tracks": tracks,
+				"total": total,
 			},
 		})
 	}
@@ -193,12 +190,6 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
-		}
-
-		for _, item := range tracks {
-			start := strings.Index(item.Duration, "T")
-			end := strings.Index(item.Duration, "Z")
-			item.Duration = item.Duration[start+1 : end]
 		}
 
 		return c.JSON(http.StatusOK, Response{

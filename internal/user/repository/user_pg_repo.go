@@ -60,9 +60,9 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, password, role, access FROM users WHERE nickname = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, role, access FROM users WHERE nickname = $1",
 		nickname,
-	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Password, &u.Role, &u.Access); err != nil {
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}

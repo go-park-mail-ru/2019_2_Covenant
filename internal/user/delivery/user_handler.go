@@ -44,6 +44,8 @@ func NewUserHandler(uUC user.Usecase,
 func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
+	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
+
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
@@ -349,6 +351,27 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 			uh.Logger.Log(c, "error", "Error while updating user avatar.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"user": usr,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		uNickname := c.Param("nickname")
+
+		usr, err := uh.UUsecase.GetByNickname(uNickname)
+
+		if err != nil {
+			uh.Logger.Log(c, "info", "Error while getting other profile.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
 			})
 		}
 

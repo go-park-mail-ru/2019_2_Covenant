@@ -48,7 +48,50 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/artists", ah.GetArtists())
 	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
 	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	//TODO: e.GET("/api/v1/artists/:id/albums", ah.GetAlbums())
+	e.GET("/api/v1/artists/:id/albums", ah.GetArtistAlbums())
+}
+
+func (ah *ArtistHandler) GetArtistAlbums() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ah.ReqReader.Read(c, request, nil); err != nil {
+			ah.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		albums, total, err := ah.AUsecase.GetArtistAlbums(uint64(aID), request.Count, request.Offset)
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Error while fetching artist's albums", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"albums": albums,
+				"total": total,
+			},
+		})
+	}
 }
 
 func (ah *ArtistHandler) UploadArtistPhoto() echo.HandlerFunc {

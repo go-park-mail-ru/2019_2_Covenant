@@ -45,6 +45,8 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
 	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
+	//TODO: e.GET("/api/v1/users/:nickname/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuth)
+	//TODO: e.GET("/api/v1/users/:nickname/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuth)
 
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)

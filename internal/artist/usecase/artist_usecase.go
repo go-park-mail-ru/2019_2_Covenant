@@ -92,3 +92,19 @@ func (aUC *ArtistUsecase) UpdatePhoto(artistID uint64, path string) error {
 
 	return nil
 }
+
+func (aUC *ArtistUsecase) GetArtistAlbums(artistID uint64, count uint64, offset uint64) ([]*models.Album, uint64, error) {
+	albums, total, err := aUC.artistRepo.GetArtistAlbums(artistID, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if albums == nil {
+		albums = []*models.Album{}
+	}
+
+	for _, a := range albums { a.Year = a.Year[:4] }
+
+	return albums, total, nil
+}

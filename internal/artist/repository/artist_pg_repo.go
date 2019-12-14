@@ -178,3 +178,48 @@ func (ar *ArtistRepository) UpdatePhoto(artistID uint64, path string) error {
 
 	return nil
 }
+
+func (ar *ArtistRepository) GetArtistAlbums(artistID uint64, count uint64, offset uint64) ([]*models.Album, uint64, error) {
+	var albums []*models.Album
+	var total uint64
+
+	if err := ar.db.QueryRow("SELECT COUNT(*) FROM albums WHERE artist_id = $1",
+		artistID,
+	).Scan(&total); err != nil {
+		return nil, total, err
+	}
+
+	rows, err := ar.db.Query("SELECT id, name, photo, year FROM albums " +
+		"WHERE artist_id = $1 ORDER BY name LIMIT $2 OFFSET $3",
+		artistID,
+		count,
+		offset,
+	)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		a := &models.Album{}
+
+		if err := rows.Scan(
+			&a.ID,
+			&a.Name,
+			&a.Photo,
+			&a.Year,
+		); err != nil {
+			return nil, total, err
+		}
+
+		albums = append(albums, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, total, err
+	}
+
+	return albums, total, nil
+}

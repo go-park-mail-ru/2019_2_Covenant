@@ -3,6 +3,7 @@ package delivery
 import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/search"
+	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/pkg/logger"
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
@@ -16,9 +17,10 @@ import (
 type SearchHandler struct {
 	BaseHandler
 	SUsecase search.Usecase
+	UUsecase user.Usecase
 }
 
-func NewSearchHandler(sUC search.Usecase,
+func NewSearchHandler(sUC search.Usecase, uUC user.Usecase,
 	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *SearchHandler {
 	return &SearchHandler{
@@ -28,6 +30,7 @@ func NewSearchHandler(sUC search.Usecase,
 			ReqReader: reader.NewReqReader(),
 		},
 		SUsecase: sUC,
+		UUsecase: uUC,
 	}
 }
 
@@ -40,6 +43,14 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 		Search  string `query:"s"`
 	}
 
+	isUserSearching := func(req *Request) bool {
+		if req.Search[0] == '@' {
+			req.Search = req.Search[1:]
+			return true
+		}
+		return false
+	}
+
 	return func(c echo.Context) error {
 		request := &Request{}
 
@@ -50,23 +61,44 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 			})
 		}
 
-		tracks, albums, artists, err := sh.SUsecase.Search(request.Search, 10)
 
-		if err != nil {
-			sh.Logger.Log(c, "info", "Error while searching.", err)
-			return c.JSON(http.StatusNotFound, Response{
-				Error: ErrNotFound.Error(),
-			})
+		body := &Body{}
+
+		if isUserSearching(request) {
+			usr, err := sh.UUsecase.GetByNickname(request.Search)
+			if err != nil {
+				sh.Logger.Log(c, "info", "Error while searching user.", err)
+				return c.JSON(http.StatusNotFound, Response{
+					Error: ErrNotFound.Error(),
+				})
+			}
+
+			body = &Body{
+				"user": usr,
+			}
+		} else {
+			tracks, albums, artists, err := sh.SUsecase.Search(request.Search, 10)
+
+			if err != nil {
+				sh.Logger.Log(c, "info", "Error while searching.", err)
+				return c.JSON(http.StatusNotFound, Response{
+					Error: ErrNotFound.Error(),
+				})
+			}
+
+			for _, item := range tracks {
+				item.Duration = time_parser.GetDuration(item.Duration)
+			}
+
+			body = &Body{
+				"tracks": tracks,
+				"albums": albums,
+				"artists": artists,
+			}
 		}
 
-		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
-
 		return c.JSON(http.StatusOK, Response{
-			Body: &Body{
-				"tracks":  tracks,
-				"albums":  albums,
-				"artists": artists,
-			},
+			Body: body,
 		})
 	}
 }

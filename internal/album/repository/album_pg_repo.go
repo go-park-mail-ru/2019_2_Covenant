@@ -22,7 +22,8 @@ func (ar *AlbumRepository) FindLike(name string, count uint64) ([]*models.Album,
 	var albums []*models.Album
 
 	rows, err := ar.db.Query("select Al.id, Al.artist_id, Al.name, Al.photo, Al.year, Ar.name " +
-		"from albums Al join artists Ar on Al.artist_id = Ar.id where lower(Al.name) like '%' || $1 || '%' limit $2",
+		"from albums Al join artists Ar on Al.artist_id = Ar.id where lower(Al.name) like '%' || $1 || '%' " +
+		"OR lower(Ar.name) like '%' || $1 || '%' limit $2",
 		strings.ToLower(name),
 		count)
 

@@ -3,6 +3,7 @@ package usecase
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/track"
+	"2019_2_Covenant/tools/time_parser"
 )
 
 type trackUsecase struct {
@@ -25,6 +26,8 @@ func (tUC *trackUsecase) FetchPopular(count uint64, offset uint64) ([]*models.Tr
 	if tracks == nil {
 		tracks = []*models.Track{}
 	}
+
+	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
 
 	return tracks, total, nil
 }
@@ -56,6 +59,8 @@ func (tUC *trackUsecase) FetchFavourites(userID uint64, count uint64, offset uin
 		tracks = []*models.Track{}
 	}
 
+	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
+
 	return tracks, total, nil
 }
 
@@ -69,6 +74,8 @@ func (tUC *trackUsecase) FindLike(name string, count uint64) ([]*models.Track, e
 	if tracks == nil {
 		tracks = []*models.Track{}
 	}
+
+	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
 
 	return tracks, nil
 }

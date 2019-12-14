@@ -88,7 +88,7 @@ func (api *APIServer) configureRouter() {
 	playlistHandler := _playlistDelivery.NewPlaylistHandler(playlistUsecase, middlewareManager, api.logger)
 	playlistHandler.Configure(api.router)
 
-	searchHandler := _searchDelivery.NewSearchHandler(searchUsecase, middlewareManager, api.logger)
+	searchHandler := _searchDelivery.NewSearchHandler(searchUsecase, userUsecase, middlewareManager, api.logger)
 	searchHandler.Configure(api.router)
 
 	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)

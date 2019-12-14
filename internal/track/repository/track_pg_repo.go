@@ -151,7 +151,8 @@ func (tr *TrackRepository) FindLike(name string, count uint64) ([]*models.Track,
 	rows, err := tr.db.Query(
 		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
 			"JOIN albums Al ON T.album_id = Al.id " +
-			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE lower(T.name) like '%' || $1 || '%' LIMIT $2",
+			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE lower(T.name) like '%' || $1 || '%' " +
+			"OR lower(Ar.name) like '%' || $1 || '%' LIMIT $2",
 			strings.ToLower(name),
 			count)
 

@@ -26,6 +26,8 @@ func (aUC *AlbumUsecase) FindLike(name string, count uint64) ([]*models.Album, e
 		albums = []*models.Album{}
 	}
 
+	for _, a := range albums { a.Year = a.Year[:4] }
+
 	return albums, nil
 }
 
@@ -56,6 +58,8 @@ func (aUC *AlbumUsecase) Fetch(count uint64, offset uint64) ([]*models.Album, ui
 		albums = []*models.Album{}
 	}
 
+	for _, a := range albums { a.Year = a.Year[:4] }
+
 	return albums, total, nil
 }
 
@@ -65,6 +69,8 @@ func (aUC *AlbumUsecase) GetByID(id uint64) (*models.Album, uint64, error) {
 	if err != nil {
 		return nil, amountOfTracks, err
 	}
+
+	a.Year = a.Year[:4]
 
 	return a, amountOfTracks, nil
 }

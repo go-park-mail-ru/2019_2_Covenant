@@ -79,7 +79,7 @@ func (api *APIServer) configureRouter() {
 	api.router.Use(middlewareManager.PanicRecovering)
 	api.router.Use(middlewareManager.CORSMiddleware)
 
-	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager, api.logger)
+	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, playlistUsecase, middlewareManager, api.logger)
 	userHandler.Configure(api.router)
 
 	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager, api.logger)
@@ -97,7 +97,7 @@ func (api *APIServer) configureRouter() {
 	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
 
-	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, middlewareManager, api.logger)
+	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, userUsecase, middlewareManager, api.logger)
 	subscriptionHandler.Configure(api.router)
 
 	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)

@@ -111,3 +111,31 @@ func (uUC *userUsecase) Update(id uint64, nickname string, email string) (*model
 
 	return usr, nil
 }
+
+func (uUC *userUsecase) GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	following, total, err := uUC.userRepo.GetFollowing(id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if following == nil {
+		following = []*models.User{}
+	}
+
+	return following, total, nil
+}
+
+func (uUC *userUsecase) GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	followers, total, err := uUC.userRepo.GetFollowers(id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if followers == nil {
+		followers = []*models.User{}
+	}
+
+	return followers, total, nil
+}

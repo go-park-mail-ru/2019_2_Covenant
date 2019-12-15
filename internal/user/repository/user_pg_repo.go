@@ -173,3 +173,77 @@ func (ur *UserRepository) Update(id uint64, nickname string, email string) (*mod
 
 	return u, nil
 }
+
+func (ur *UserRepository) GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	var users []*models.User
+	var total uint64
+
+	if err := ur.db.QueryRow("select count(*) from subscriptions where subscribed_to=$1",
+		id,
+	).Scan(&total); err != nil {
+		return nil, total, err
+	}
+
+	rows, err := ur.db.Query("SELECT U.id, U.nickname, U.email, U.avatar, U.role, U.access FROM users U " +
+		"JOIN subscriptions S ON U.id=S.user_id WHERE S.subscribed_to=$1 " +
+		"ORDER BY U.nickname LIMIT $2 OFFSET $3", id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		u := &models.User{}
+
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
+			return nil, total, err
+		}
+
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, total, err
+	}
+
+	return users, total, nil
+}
+
+func (ur *UserRepository) GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	var users []*models.User
+	var total uint64
+
+	if err := ur.db.QueryRow("select count(*) from subscriptions where user_id=$1",
+		id,
+	).Scan(&total); err != nil {
+		return nil, total, err
+	}
+
+	rows, err := ur.db.Query("SELECT U.id, U.nickname, U.email, U.avatar, U.role, U.access FROM users U " +
+		"JOIN subscriptions S ON U.id=S.subscribed_to WHERE S.user_id=$1 " +
+		"ORDER BY U.nickname LIMIT $2 OFFSET $3", id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		u := &models.User{}
+
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
+			return nil, total, err
+		}
+
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, total, err
+	}
+
+	return users, total, nil
+}

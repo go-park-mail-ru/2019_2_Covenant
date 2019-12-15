@@ -42,13 +42,13 @@ func NewAlbumHandler(aUC album.Usecase,
 }
 
 func (ah *AlbumHandler) Configure(e *echo.Echo) {
-	e.DELETE("/api/v1/albums/:id", ah.DeleteAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	e.PUT("/api/v1/albums/:id", ah.UpdateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	e.DELETE("/api/v1/albums/:id", ah.DeleteAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
+	e.PUT("/api/v1/albums/:id", ah.UpdateAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/albums", ah.GetAlbums())
 	e.GET("/api/v1/albums/:id", ah.GetSingleAlbum())
-	e.POST("/api/v1/albums/:id/tracks", ah.AddToAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	e.POST("/api/v1/albums/:id/tracks", ah.AddToAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum())
-	e.PUT("/api/v1/albums/:id/photo", ah.UploadAlbumPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	e.PUT("/api/v1/albums/:id/photo", ah.UploadAlbumPhoto(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 }
 
 func (ah *AlbumHandler) UploadAlbumPhoto() echo.HandlerFunc {

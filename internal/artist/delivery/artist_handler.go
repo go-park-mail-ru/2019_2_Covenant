@@ -41,13 +41,13 @@ func NewArtistHandler(aUC artist.Usecase,
 }
 
 func (ah *ArtistHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/artists", ah.CreateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	e.DELETE("/api/v1/artists/:id", ah.DeleteArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	e.PUT("/api/v1/artists/:id", ah.UpdateArtist(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
-	e.PUT("/api/v1/artists/:id/photo", ah.UploadArtistPhoto(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	e.POST("/api/v1/artists", ah.CreateArtist(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
+	e.DELETE("/api/v1/artists/:id", ah.DeleteArtist(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
+	e.PUT("/api/v1/artists/:id", ah.UpdateArtist(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
+	e.PUT("/api/v1/artists/:id/photo", ah.UploadArtistPhoto(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists", ah.GetArtists())
 	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
-	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
+	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists/:id/albums", ah.GetArtistAlbums())
 	e.GET("/api/v1/artists/:id/tracks", ah.GetArtistTracks())
 }

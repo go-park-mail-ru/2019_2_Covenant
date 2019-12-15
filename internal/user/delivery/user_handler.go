@@ -49,14 +49,14 @@ func NewUserHandler(uUC user.Usecase,
 func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
-	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
-	e.GET("/api/v1/users/:id/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuth)
-	e.GET("/api/v1/users/:id/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/users/:id/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/users/:id/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuthStrictly)
 
-	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
-	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
-	e.PUT("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
-	e.PUT("/api/v1/profile/avatar", uh.UploadAvatar(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile/avatar", uh.UploadAvatar(), uh.MManager.CheckAuthStrictly)
 }
 
 // @Tags User

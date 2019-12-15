@@ -16,8 +16,8 @@ func NewTrackUsecase(tr track.Repository) track.Usecase {
 	}
 }
 
-func (tUC *trackUsecase) FetchPopular(count uint64, offset uint64) ([]*models.Track, uint64, error) {
-	tracks, total, err := tUC.trackRepo.Fetch(count, offset)
+func (tUC *trackUsecase) FetchPopular(count uint64, offset uint64, authID uint64) ([]*models.Track, uint64, error) {
+	tracks, total, err := tUC.trackRepo.Fetch(count, offset, authID)
 
 	if err != nil {
 		return nil, total, err

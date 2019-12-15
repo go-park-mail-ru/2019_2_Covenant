@@ -32,11 +32,11 @@ func NewTrackHandler(tUC track.Usecase,
 }
 
 func (th *TrackHandler) Configure(e *echo.Echo) {
-	e.GET("/api/v1/tracks/popular", th.GetPopularTracks())
+	e.GET("/api/v1/tracks/popular", th.GetPopularTracks(), th.MManager.CheckAuth)
 
-	e.GET("/api/v1/tracks/favourite", th.GetFavourites(), th.MManager.CheckAuth)
-	e.POST("/api/v1/tracks/favourite", th.AddToFavourites(), th.MManager.CheckAuth)
-	e.DELETE("/api/v1/tracks/favourite", th.RemoveFavourite(), th.MManager.CheckAuth)
+	e.GET("/api/v1/tracks/favourite", th.GetFavourites(), th.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/tracks/favourite", th.AddToFavourites(), th.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/tracks/favourite", th.RemoveFavourite(), th.MManager.CheckAuthStrictly)
 }
 
 // @Tags Track
@@ -66,7 +66,12 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			})
 		}
 
-		tracks, total, err := th.TUsecase.FetchPopular(request.Count, request.Offset)
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, total, err := th.TUsecase.FetchPopular(request.Count, request.Offset, authID)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)

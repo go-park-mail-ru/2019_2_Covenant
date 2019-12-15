@@ -5,6 +5,8 @@ import (
 	"2019_2_Covenant/internal/user"
 	. "2019_2_Covenant/tools/vars"
 	"database/sql"
+	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 type UserRepository struct {
@@ -18,11 +20,17 @@ func NewUserRepository(db *sql.DB) user.Repository {
 }
 
 func (ur *UserRepository) Store(newUser *models.User) error {
-	return ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
+	err := ur.db.QueryRow("INSERT INTO users (nickname, email, password) VALUES ($1, $2, $3) RETURNING id, avatar",
 		newUser.Nickname,
 		newUser.Email,
 		newUser.Password,
 	).Scan(&newUser.ID, &newUser.Avatar)
+
+	if err != nil {
+		logrus.Info("DB (store user):", err)
+	}
+
+	return err
 }
 
 func (ur *UserRepository) GetByEmail(email string) (*models.User, error) {
@@ -60,7 +68,8 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	u := &models.User{}
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, role, access FROM users WHERE nickname = $1",
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, role, access " +
+		"FROM users WHERE nickname = $1" ,
 		nickname,
 	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
 		if err == sql.ErrNoRows {
@@ -71,6 +80,41 @@ func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
 	}
 
 	return u, nil
+}
+
+func (ur *UserRepository) FindLike(name string, count uint64) ([]*models.User, error) {
+	var users []*models.User
+
+	rows, err := ur.db.Query("SELECT id, nickname, email, avatar, role, access " +
+		"FROM users WHERE lower(nickname) like '%' || $1 || '%' LIMIT $2" ,
+		strings.ToLower(name), count,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		u := &models.User{}
+
+		if err := rows.Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
+			return nil, err
+		}
+
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {

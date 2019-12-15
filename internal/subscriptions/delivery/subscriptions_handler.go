@@ -36,9 +36,9 @@ func NewSubscriptionHandler(sUC subscriptions.Usecase,
 }
 
 func (sh *SubscriptionHandler) Configure(e *echo.Echo) {
-	e.GET("/api/v1/subscriptions", sh.GetSubscriptions(), sh.MManager.CheckAuth)
-	e.POST("/api/v1/subscriptions", sh.Subscribe(), sh.MManager.CheckAuth)
-	e.DELETE("/api/v1/subscriptions", sh.Unsubscribe(), sh.MManager.CheckAuth)
+	e.GET("/api/v1/subscriptions", sh.GetSubscriptions(), sh.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/subscriptions", sh.Subscribe(), sh.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/subscriptions", sh.Unsubscribe(), sh.MManager.CheckAuthStrictly)
 }
 
 func (sh *SubscriptionHandler) GetSubscriptions() echo.HandlerFunc {

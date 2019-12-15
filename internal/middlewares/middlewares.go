@@ -106,6 +106,26 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		cookie, err := c.Cookie("Covenant")
 
 		if err != nil {
+			return next(c)
+		}
+
+		sess, err := m.sUC.Get(cookie.Value)
+
+		if err != nil {
+			return next(c)
+		}
+
+		c.Set("session", sess)
+
+		return next(c)
+	}
+}
+
+func (m *MiddlewareManager) CheckAuthStrictly(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("Covenant")
+
+		if err != nil {
 			m.logger.Log(c, "info", "There is no cookies.")
 			return c.JSON(http.StatusUnauthorized, Response{
 				Error: ErrUnathorized.Error(),

@@ -9,3 +9,5 @@ create table users (
     created_at timestamp not null default now(),
     updated_at timestamp not null default now()
 );
+
+CREATE UNIQUE INDEX nickname_unique_index on users (LOWER(nickname));

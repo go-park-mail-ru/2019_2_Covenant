@@ -13,4 +13,5 @@ type Usecase interface {
 	UpdatePassword(id uint64, plainPassword string) error
 	GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
 	GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
+	FindLike(name string, count uint64) ([]*models.User, error)
 }

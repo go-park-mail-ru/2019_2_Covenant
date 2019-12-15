@@ -34,13 +34,13 @@ func NewPlaylistHandler(pUC playlist.Usecase,
 }
 
 func (ph *PlaylistHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuth)
-	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
-	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
-	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuth)
+	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuthStrictly)
 }
 
 func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {

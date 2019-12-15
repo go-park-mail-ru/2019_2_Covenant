@@ -110,8 +110,8 @@ func (aUC *ArtistUsecase) GetArtistAlbums(artistID uint64, count uint64, offset 
 	return albums, total, nil
 }
 
-func (aUC *ArtistUsecase) GetTracks(artistID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
-	tracks, total, err := aUC.artistRepo.GetTracks(artistID, count, offset)
+func (aUC *ArtistUsecase) GetTracks(artistID uint64, count uint64, offset uint64, authID uint64) ([]*models.Track, uint64, error) {
+	tracks, total, err := aUC.artistRepo.GetTracks(artistID, count, offset, authID)
 
 	if err != nil {
 		return nil, total, err

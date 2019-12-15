@@ -12,5 +12,5 @@ type Repository interface {
 	GetByID(id uint64) (*models.Artist, uint64, error)
 	UpdatePhoto(artistID uint64, path string) error
 	GetArtistAlbums(artistID uint64, count uint64, offset uint64) ([]*models.Album, uint64, error)
-	GetTracks(artistID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error)
+	GetTracks(artistID uint64, count uint64, offset uint64, authID uint64) ([]*models.Track, uint64, error)
 }

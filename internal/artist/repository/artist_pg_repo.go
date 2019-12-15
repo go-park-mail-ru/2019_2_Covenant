@@ -189,7 +189,7 @@ func (ar *ArtistRepository) GetArtistAlbums(artistID uint64, count uint64, offse
 		return nil, total, err
 	}
 
-	rows, err := ar.db.Query("SELECT id, name, photo, year FROM albums " +
+	rows, err := ar.db.Query("SELECT id, name, photo, year FROM albums "+
 		"WHERE artist_id = $1 ORDER BY name LIMIT $2 OFFSET $3",
 		artistID,
 		count,
@@ -224,21 +224,22 @@ func (ar *ArtistRepository) GetArtistAlbums(artistID uint64, count uint64, offse
 	return albums, total, nil
 }
 
-func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
+func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint64, authID uint64) ([]*models.Track, uint64, error) {
 	var tracks []*models.Track
 	var total uint64
 
-	if err := ar.db.QueryRow("SELECT COUNT(*) FROM tracks T JOIN albums Al ON T.album_id=Al.id " +
+	if err := ar.db.QueryRow("SELECT COUNT(*) FROM tracks T JOIN albums Al ON T.album_id=Al.id "+
 		"JOIN artists Ar ON Al.artist_id=Ar.id WHERE Ar.id = $1", artistID).Scan(&total); err != nil {
 		return nil, total, err
 	}
 
 	rows, err := ar.db.Query(
-		"SELECT T.id, T.album_id, T.name, T.duration, Al.photo, Al.name, T.path FROM tracks T " +
-			"JOIN albums Al ON T.album_id = Al.id " +
-			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE Ar.id = $1 LIMIT $2 OFFSET $3",
-			artistID, count, offset,
-		)
+		"SELECT T.id, T.album_id, T.name, T.duration, Al.photo, Al.name, T.path, "+
+			"T.id in (select track_id from favourites where user_id = $1) as favourite FROM tracks T "+
+			"JOIN albums Al ON T.album_id = Al.id "+
+			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE Ar.id = $2 LIMIT $3 OFFSET $4",
+		authID, artistID, count, offset,
+	)
 
 	if err != nil {
 		return nil, total, err
@@ -249,7 +250,7 @@ func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint
 	for rows.Next() {
 		t := &models.Track{}
 
-		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo, &t.Album, &t.Path); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo, &t.Album, &t.Path, &t.IsFavourite); err != nil {
 			return nil, total, err
 		}
 

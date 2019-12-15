@@ -97,7 +97,7 @@ func (api *APIServer) configureRouter() {
 	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
 	artistHandler.Configure(api.router)
 
-	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, middlewareManager, api.logger)
+	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, userUsecase, middlewareManager, api.logger)
 	subscriptionHandler.Configure(api.router)
 
 	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)

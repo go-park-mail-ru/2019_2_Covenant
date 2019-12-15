@@ -11,4 +11,6 @@ type Usecase interface {
 	UpdateAvatar(id uint64, avatarPath string) (*models.User, error)
 	Update(id uint64, nickname string, email string) (*models.User, error)
 	UpdatePassword(id uint64, plainPassword string) error
+	GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
+	GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
 }

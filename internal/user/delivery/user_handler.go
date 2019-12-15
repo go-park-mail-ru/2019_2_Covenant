@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -45,7 +46,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
 	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
-	//TODO: e.GET("/api/v1/users/:nickname/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/users/:id/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuth)
 	//TODO: e.GET("/api/v1/users/:nickname/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuth)
 
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
@@ -380,6 +381,60 @@ func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"user": usr,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := uh.ReqReader.Read(c, request, nil); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		followers, totalFollowers, err := uh.UUsecase.GetFollowers(uint64(aID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting followers.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		following, totalFollowing, err := uh.UUsecase.GetFollowing(uint64(aID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting following.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"followers": followers,
+				"total_followers": totalFollowers,
+				"following": following,
+				"total_following": totalFollowing,
 			},
 		})
 	}

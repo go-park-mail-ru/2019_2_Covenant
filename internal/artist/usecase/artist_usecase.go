@@ -3,6 +3,7 @@ package usecase
 import (
 	"2019_2_Covenant/internal/artist"
 	"2019_2_Covenant/internal/models"
+	"2019_2_Covenant/tools/time_parser"
 )
 
 type ArtistUsecase struct {
@@ -107,4 +108,20 @@ func (aUC *ArtistUsecase) GetArtistAlbums(artistID uint64, count uint64, offset 
 	for _, a := range albums { a.Year = a.Year[:4] }
 
 	return albums, total, nil
+}
+
+func (aUC *ArtistUsecase) GetTracks(artistID uint64, count uint64, offset uint64) ([]*models.Track, uint64, error) {
+	tracks, total, err := aUC.artistRepo.GetTracks(artistID, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if tracks == nil {
+		tracks = []*models.Track{}
+	}
+
+	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
+
+	return tracks, total, nil
 }

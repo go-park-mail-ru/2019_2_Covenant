@@ -49,6 +49,50 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
 	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuth, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists/:id/albums", ah.GetArtistAlbums())
+	e.GET("/api/v1/artists/:id/tracks", ah.GetArtistTracks())
+}
+
+func (ah *ArtistHandler) GetArtistTracks() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		aID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := ah.ReqReader.Read(c, request, nil); err != nil {
+			ah.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		tracks, total, err := ah.AUsecase.GetTracks(uint64(aID), request.Count, request.Offset)
+
+		if err != nil {
+			ah.Logger.Log(c, "error", "Error while getting artist tracks.", err)
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"tracks": tracks,
+				"total": total,
+			},
+		})
+	}
 }
 
 func (ah *ArtistHandler) GetArtistAlbums() echo.HandlerFunc {

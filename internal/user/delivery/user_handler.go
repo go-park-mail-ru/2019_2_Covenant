@@ -324,7 +324,11 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 
 		defer src.Close()
 
-		filePath := fmt.Sprintf("%s%d-%s", AVATARS_PATH, sess.UserID, file.Filename)
+		filePath := strings.ReplaceAll(
+			fmt.Sprintf("%s%d-%s", AVATARS_PATH, sess.UserID, file.Filename),
+			" ",
+			"",
+		)
 
 		dest, err := os.Create(filepath.Join(rootPath, filePath))
 		if err != nil {

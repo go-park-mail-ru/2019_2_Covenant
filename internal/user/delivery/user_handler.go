@@ -3,6 +3,7 @@ package delivery
 import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/playlist"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/pkg/logger"
@@ -25,10 +26,12 @@ type UserHandler struct {
 	base_handler.BaseHandler
 	UUsecase user.Usecase
 	SUsecase session.Usecase
+	PUsecase playlist.Usecase
 }
 
 func NewUserHandler(uUC user.Usecase,
 	sUC session.Usecase,
+	pUC playlist.Usecase,
 	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *UserHandler {
 	return &UserHandler{
@@ -39,6 +42,7 @@ func NewUserHandler(uUC user.Usecase,
 		},
 		UUsecase: uUC,
 		SUsecase: sUC,
+		PUsecase: pUC,
 	}
 }
 
@@ -47,7 +51,7 @@ func (uh *UserHandler) Configure(e *echo.Echo) {
 
 	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuth)
 	e.GET("/api/v1/users/:id/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuth)
-	//TODO: e.GET("/api/v1/users/:nickname/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/users/:id/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuth)
 
 	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
 	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
@@ -393,7 +397,7 @@ func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
 	}
 
 	return func(c echo.Context) error {
-		aID, err := strconv.Atoi(c.Param("id"))
+		uID, err := strconv.Atoi(c.Param("id"))
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Atoi error.", err.Error())
@@ -411,7 +415,7 @@ func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
 			})
 		}
 
-		followers, totalFollowers, err := uh.UUsecase.GetFollowers(uint64(aID), request.Count, request.Offset)
+		followers, totalFollowers, err := uh.UUsecase.GetFollowers(uint64(uID), request.Count, request.Offset)
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while getting followers.", err.Error())
@@ -420,7 +424,7 @@ func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
 			})
 		}
 
-		following, totalFollowing, err := uh.UUsecase.GetFollowing(uint64(aID), request.Count, request.Offset)
+		following, totalFollowing, err := uh.UUsecase.GetFollowing(uint64(uID), request.Count, request.Offset)
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while getting following.", err.Error())
@@ -435,6 +439,49 @@ func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
 				"total_followers": totalFollowers,
 				"following": following,
 				"total_following": totalFollowing,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetUserPlaylists() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		uID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := uh.ReqReader.Read(c, request, nil); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		playlists, total, err := uh.PUsecase.Fetch(uint64(uID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting playlists.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"playlists": playlists,
+				"total": total,
 			},
 		})
 	}

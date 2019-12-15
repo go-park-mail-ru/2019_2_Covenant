@@ -79,7 +79,7 @@ func (api *APIServer) configureRouter() {
 	api.router.Use(middlewareManager.PanicRecovering)
 	api.router.Use(middlewareManager.CORSMiddleware)
 
-	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager, api.logger)
+	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, playlistUsecase, middlewareManager, api.logger)
 	userHandler.Configure(api.router)
 
 	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager, api.logger)

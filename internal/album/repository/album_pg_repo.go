@@ -184,14 +184,15 @@ func (ar *AlbumRepository) AddTrack(albumID uint64, track *models.Track) error {
 	return nil
 }
 
-func (ar *AlbumRepository) GetTracksFrom(albumID uint64) ([]*models.Track, error) {
+func (ar *AlbumRepository) GetTracksFrom(albumID uint64, authID uint64) ([]*models.Track, error) {
 	var tracks []*models.Track
 
 	rows, err := ar.db.Query(
-		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name from tracks T " +
+		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name, " +
+			"T.id in (select track_id from favourites where user_id = $1) as favourite from tracks T " +
 			"join albums Al ON T.album_id=Al.id " +
-			"join artists Ar ON Al.artist_id=Ar.id where Al.id = $1;",
-		albumID)
+			"join artists Ar ON Al.artist_id=Ar.id where Al.id = $2;",
+			authID, albumID)
 
 	if err != nil {
 		return nil, err
@@ -202,7 +203,7 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64) ([]*models.Track, error
 	for rows.Next() {
 		t := &models.Track{}
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album); err != nil {
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album, &t.IsFavourite); err != nil {
 			return nil, err
 		}
 

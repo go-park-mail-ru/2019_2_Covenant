@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"2019_2_Covenant/internal/middlewares"
+	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/search"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/pkg/logger"
@@ -35,7 +36,7 @@ func NewSearchHandler(sUC search.Usecase, uUC user.Usecase,
 }
 
 func (sh *SearchHandler) Configure(e *echo.Echo) {
-	e.GET("/api/v1/search", sh.Search())
+	e.GET("/api/v1/search", sh.Search(), sh.MManager.CheckAuth)
 }
 
 func (sh *SearchHandler) Search() echo.HandlerFunc {
@@ -65,7 +66,7 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 		body := &Body{}
 
 		if isUserSearching(request) {
-			usr, err := sh.UUsecase.GetByNickname(request.Search)
+			usr, err := sh.UUsecase.FindLike(request.Search, 10)
 			if err != nil {
 				sh.Logger.Log(c, "info", "Error while searching user.", err)
 				return c.JSON(http.StatusNotFound, Response{
@@ -77,7 +78,12 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 				"user": usr,
 			}
 		} else {
-			tracks, albums, artists, err := sh.SUsecase.Search(request.Search, 10)
+			var authID uint64
+			if sess, ok := c.Get("session").(*models.Session); ok {
+				authID = sess.UserID
+			}
+
+			tracks, albums, artists, err := sh.SUsecase.Search(request.Search, 10, authID)
 
 			if err != nil {
 				sh.Logger.Log(c, "info", "Error while searching.", err)

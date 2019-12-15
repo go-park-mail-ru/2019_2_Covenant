@@ -19,4 +19,5 @@ type Repository interface {
 	Update(id uint64, nickname string, email string) (*models.User, error)
 	GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
 	GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error)
+	FindLike(name string, count uint64) ([]*models.User, error)
 }

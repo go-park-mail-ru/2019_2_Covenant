@@ -10,5 +10,5 @@ type Track struct {
 	Artist      string `json:"artist,omitempty"`
 	Album       string `json:"album"`
 	Path        string `json:"path"`
-	IsFavourite bool   `json:"is_favourite"`
+	IsFavourite bool   `json:"is_favourite,omitempty"`
 }

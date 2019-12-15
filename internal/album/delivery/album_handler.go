@@ -47,7 +47,7 @@ func (ah *AlbumHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/albums", ah.GetAlbums())
 	e.GET("/api/v1/albums/:id", ah.GetSingleAlbum())
 	e.POST("/api/v1/albums/:id/tracks", ah.AddToAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
-	e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum())
+	e.GET("/api/v1/albums/:id/tracks", ah.GetTracksFromAlbum(), ah.MManager.CheckAuth)
 	e.PUT("/api/v1/albums/:id/photo", ah.UploadAlbumPhoto(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 }
 
@@ -125,7 +125,12 @@ func (ah *AlbumHandler) GetTracksFromAlbum() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := ah.AUsecase.GetTracksFrom(uint64(aID))
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, err := ah.AUsecase.GetTracksFrom(uint64(aID), authID)
 
 		if err != nil {
 			ah.Logger.Log(c, "error", "Error while fetching tracks.", err)

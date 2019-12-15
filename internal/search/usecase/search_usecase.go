@@ -23,8 +23,8 @@ func NewSearchUsecase(tR track.Repository, alR album.Repository, arR artist.Repo
 	}
 }
 
-func (su *SearchUsecase) Search(text string, count uint64) ([]*models.Track, []*models.Album, []*models.Artist, error) {
-	tracks, err := su.trackRepo.FindLike(text, count)
+func (su *SearchUsecase) Search(text string, count uint64, authID uint64) ([]*models.Track, []*models.Album, []*models.Artist, error) {
+	tracks, err := su.trackRepo.FindLike(text, count, authID)
 	if err != nil {
 		return nil, nil, nil, err
 	}

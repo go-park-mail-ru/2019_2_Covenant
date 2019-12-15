@@ -94,19 +94,10 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 			})
 		}
 
-		usr, err := uh.UUsecase.GetByEmail(request.Email)
-
-		if err == nil {
-			uh.Logger.Log(c, "info", "Already exists.", "User ID:", usr.ID)
-			return c.JSON(http.StatusBadRequest, Response{
-				Error: ErrAlreadyExist.Error(),
-			})
-		}
-
 		newUser := models.NewUser(request.Email, request.Nickname, request.Password)
 
-		if err = uh.UUsecase.Store(newUser); err != nil {
-			uh.Logger.Log(c, "error", "User store error.", err)
+		if err := uh.UUsecase.Store(newUser); err != nil {
+			uh.Logger.Log(c, "info", "User store error.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
@@ -115,7 +106,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 		sess, cookie := models.NewSession(newUser.ID)
 		c.SetCookie(cookie)
 
-		if err = uh.SUsecase.Store(sess); err != nil {
+		if err := uh.SUsecase.Store(sess); err != nil {
 			uh.Logger.Log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),

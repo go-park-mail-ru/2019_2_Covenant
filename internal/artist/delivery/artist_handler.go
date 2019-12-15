@@ -49,7 +49,7 @@ func (ah *ArtistHandler) Configure(e *echo.Echo) {
 	e.GET("/api/v1/artists/:id", ah.GetSingleArtist())
 	e.POST("/api/v1/artists/:id/albums", ah.CreateAlbum(), ah.MManager.CheckAuthStrictly, ah.MManager.CheckAdmin)
 	e.GET("/api/v1/artists/:id/albums", ah.GetArtistAlbums())
-	e.GET("/api/v1/artists/:id/tracks", ah.GetArtistTracks())
+	e.GET("/api/v1/artists/:id/tracks", ah.GetArtistTracks(), ah.MManager.CheckAuth)
 }
 
 func (ah *ArtistHandler) GetArtistTracks() echo.HandlerFunc {
@@ -77,7 +77,12 @@ func (ah *ArtistHandler) GetArtistTracks() echo.HandlerFunc {
 			})
 		}
 
-		tracks, total, err := ah.AUsecase.GetTracks(uint64(aID), request.Count, request.Offset)
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, total, err := ah.AUsecase.GetTracks(uint64(aID), request.Count, request.Offset, authID)
 
 		if err != nil {
 			ah.Logger.Log(c, "error", "Error while getting artist tracks.", err)

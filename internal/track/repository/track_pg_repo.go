@@ -46,7 +46,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64, authID uint64) ([]
 		t := &models.Track{}
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
 		); err != nil {
 			return nil, total, err
 		}
@@ -176,7 +176,7 @@ func (tr *TrackRepository) FindLike(name string, count uint64, authID uint64) ([
 		t := &models.Track{}
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
 		); err != nil {
 			return nil, err
 		}

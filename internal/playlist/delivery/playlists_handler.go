@@ -254,7 +254,14 @@ func (ph *PlaylistHandler) GetTracksFromPlaylist() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := ph.PUsecase.GetTracksFrom(uint64(pID))
+		// TODO: Strictly
+
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, err := ph.PUsecase.GetTracksFrom(uint64(pID), authID)
 
 		if err != nil {
 			ph.Logger.Log(c, "error", "Error while fetching tracks.", err)

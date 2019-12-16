@@ -9,5 +9,5 @@ type Repository interface {
 	AddToPlaylist(playlistID uint64, trackID uint64) error
 	RemoveFromPlaylist(playlistID uint64, trackID uint64) error
 	GetSinglePlaylist(playlistID uint64) (*models.Playlist, uint64, error)
-	GetTracksFrom(playlistID uint64) ([]*models.Track, error)
+	GetTracksFrom(playlistID uint64, authID uint64) ([]*models.Track, error)
 }

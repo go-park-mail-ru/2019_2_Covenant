@@ -159,7 +159,9 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64) ([]*models.Track
 	var tracks []*models.Track
 
 	rows, err := plR.db.Query(
-		"select T.id, T.name, T.duration, T.path, Ar.name from playlist_track PT " +
+		"select T.id, T.name, T.duration, T.path, Ar.name, " +
+			"T.id in (select track_id from favourite where user_id = %1) AS favourite, " +
+			"T.id in (select track_id from likes where user_id = %1) AS liked from playlist_track PT " +
 			"join tracks T ON PT.track_id=T.id join albums Al ON T.album_id=Al.id " +
 			"join artists Ar ON Al.artist_id=Ar.id where PT.playlist_id = $1;",
 		playlistID)

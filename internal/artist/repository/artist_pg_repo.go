@@ -235,7 +235,8 @@ func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint
 
 	rows, err := ar.db.Query(
 		"SELECT T.id, T.album_id, T.name, T.duration, Al.photo, Al.name, T.path, "+
-			"T.id in (select track_id from favourites where user_id = $1) as favourite FROM tracks T "+
+			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
+			"T.id in (select track_id from likes where user_id = %1) AS liked FROM tracks T "+
 			"JOIN albums Al ON T.album_id = Al.id "+
 			"JOIN artists Ar ON Al.artist_id = Ar.id WHERE Ar.id = $2 LIMIT $3 OFFSET $4",
 		authID, artistID, count, offset,

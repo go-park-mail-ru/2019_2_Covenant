@@ -156,7 +156,7 @@ func (sh *SubscriptionHandler) Unsubscribe() echo.HandlerFunc {
 			})
 		}
 
-		if err := sh.SUsecase.Unsubscribe(sess.ID, request.SubscriptionID); err != nil {
+		if err := sh.SUsecase.Unsubscribe(sess.UserID, request.SubscriptionID); err != nil {
 			sh.Logger.Log(c, "info", "Error while unsubscribing.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),

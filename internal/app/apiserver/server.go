@@ -6,6 +6,8 @@ import (
 	"2019_2_Covenant/internal/app/storage"
 	_artistDelivery "2019_2_Covenant/internal/artist/delivery"
 	_artistUsecase "2019_2_Covenant/internal/artist/usecase"
+	_likesDelivery "2019_2_Covenant/internal/likes/delivery"
+	_likesUsecase "2019_2_Covenant/internal/likes/usecase"
 	"2019_2_Covenant/internal/middlewares"
 	_playlistDelivery "2019_2_Covenant/internal/playlist/delivery"
 	_playlistUsecase "2019_2_Covenant/internal/playlist/usecase"
@@ -73,6 +75,7 @@ func (api *APIServer) configureRouter() {
 	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
 	albumUsecase := _albumUsecase.NewAlbumUsecase(api.storage.Album())
 	subscriptionUsecase := _subscriptionUsecase.NewSubscriptionUsecase(api.storage.Subscription())
+	likesUsecase := _likesUsecase.NewLikesUsecase(api.storage.Like())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
@@ -102,6 +105,9 @@ func (api *APIServer) configureRouter() {
 
 	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)
 	albumHandler.Configure(api.router)
+
+	likesHandler := _likesDelivery.NewLikesHandler(likesUsecase, userUsecase, middlewareManager, api.logger)
+	likesHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

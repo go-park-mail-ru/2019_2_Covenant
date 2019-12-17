@@ -155,7 +155,7 @@ func (plR *PlaylistRepository) GetSinglePlaylist(playlistID uint64) (*models.Pla
 	return p, amountOfTracks, nil
 }
 
-func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64) ([]*models.Track, error) {
+func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64, authID uint64) ([]*models.Track, error) {
 	var tracks []*models.Track
 
 	rows, err := plR.db.Query(
@@ -163,7 +163,8 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64) ([]*models.Track
 			"T.id in (select track_id from favourite where user_id = %1) AS favourite, " +
 			"T.id in (select track_id from likes where user_id = %1) AS liked from playlist_track PT " +
 			"join tracks T ON PT.track_id=T.id join albums Al ON T.album_id=Al.id " +
-			"join artists Ar ON Al.artist_id=Ar.id where PT.playlist_id = $1;",
+			"join artists Ar ON Al.artist_id=Ar.id where PT.playlist_id = $2;",
+			authID,
 		playlistID)
 
 	if err != nil {
@@ -175,7 +176,7 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64) ([]*models.Track
 	for rows.Next() {
 		t := &models.Track{}
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist); err != nil {
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.IsFavourite, &t.IsLiked); err != nil {
 			return nil, err
 		}
 

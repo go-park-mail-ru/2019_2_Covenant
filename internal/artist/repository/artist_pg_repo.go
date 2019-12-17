@@ -251,7 +251,7 @@ func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint
 	for rows.Next() {
 		t := &models.Track{}
 
-		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo, &t.Album, &t.Path, &t.IsFavourite); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked); err != nil {
 			return nil, total, err
 		}
 

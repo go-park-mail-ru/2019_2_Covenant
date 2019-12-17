@@ -29,7 +29,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64, authID uint64) ([]
 	rows, err := tr.db.Query(
 		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path, " +
 			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
-			"T.id in (select track_id from likes where user_id = %1) AS liked FROM tracks T " +
+			"T.id in (select track_id from likes where user_id = $1) AS liked FROM tracks T " +
 		"JOIN albums Al ON T.album_id = Al.id " +
 		"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $2 OFFSET $3",
 		authID,
@@ -46,7 +46,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64, authID uint64) ([]
 		t := &models.Track{}
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
 		); err != nil {
 			return nil, total, err
 		}
@@ -176,7 +176,7 @@ func (tr *TrackRepository) FindLike(name string, count uint64, authID uint64) ([
 		t := &models.Track{}
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
 		); err != nil {
 			return nil, err
 		}

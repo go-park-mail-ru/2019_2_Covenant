@@ -204,7 +204,7 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64, authID uint64) ([]*mode
 	for rows.Next() {
 		t := &models.Track{}
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album, &t.IsFavourite); err != nil {
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album, &t.IsFavourite, &t.IsLiked); err != nil {
 			return nil, err
 		}
 

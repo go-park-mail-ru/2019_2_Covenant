@@ -29,6 +29,18 @@ func (tUC *trackUsecase) FetchPopular(count uint64, offset uint64, authID uint64
 
 	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
 
+	if authID != 0 {
+		for _, item := range tracks {
+			if item.IsFavourite != true {
+				item.IsFavourite = false
+			}
+
+			if item.IsLiked != true {
+				item.IsLiked = false
+			}
+		}
+	}
+
 	return tracks, total, nil
 }
 
@@ -76,6 +88,18 @@ func (tUC *trackUsecase) FindLike(name string, count uint64, authID uint64) ([]*
 	}
 
 	for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
+
+	if authID != 0 {
+		for _, item := range tracks {
+			if item.IsFavourite != true {
+				item.IsFavourite = false
+			}
+
+			if item.IsLiked != true {
+				item.IsLiked = false
+			}
+		}
+	}
 
 	return tracks, nil
 }

@@ -77,7 +77,7 @@ func (m *MiddlewareManager) CORSMiddleware(next echo.HandlerFunc) echo.HandlerFu
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
-		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE")
+		c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS, DELETE")
 		c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Response().Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
@@ -103,6 +103,26 @@ func (m *MiddlewareManager) PanicRecovering(next echo.HandlerFunc) echo.HandlerF
 }
 
 func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie("Covenant")
+
+		if err != nil {
+			return next(c)
+		}
+
+		sess, err := m.sUC.Get(cookie.Value)
+
+		if err != nil {
+			return next(c)
+		}
+
+		c.Set("session", sess)
+
+		return next(c)
+	}
+}
+
+func (m *MiddlewareManager) CheckAuthStrictly(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("Covenant")
 
@@ -133,6 +153,28 @@ func (m *MiddlewareManager) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		c.Set("session", sess)
 		c.Set("user", usr)
+
+		return next(c)
+	}
+}
+
+func (m *MiddlewareManager) CheckAdmin(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		usr, ok := c.Get("user").(*models.User)
+
+		if !ok {
+			m.logger.Log(c, "error", "Can't extract user from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		if usr.Role != ADMIN {
+			m.logger.Log(c, "info", "Not an admin.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrPermissionDenied.Error(),
+			})
+		}
 
 		return next(c)
 	}

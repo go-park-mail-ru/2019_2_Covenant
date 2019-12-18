@@ -23,22 +23,20 @@ func (uUC *userUsecase) Fetch(count uint64) ([]*models.User, error) {
 		return nil, err
 	}
 
+	if users == nil {
+		users = []*models.User{}
+	}
+
 	return users, nil
 }
 
 func (uUC *userUsecase) Store(newUser *models.User) error {
-	exist, _ := uUC.userRepo.GetByEmail(newUser.Email)
-
-	if exist != nil {
-		return ErrAlreadyExist
-	}
-
 	if err := newUser.BeforeStore(); err != nil {
 		return ErrInternalServerError
 	}
 
 	if err := uUC.userRepo.Store(newUser); err != nil {
-		return ErrInternalServerError
+		return ErrAlreadyExist
 	}
 
 	return nil
@@ -106,4 +104,46 @@ func (uUC *userUsecase) Update(id uint64, nickname string, email string) (*model
 	}
 
 	return usr, nil
+}
+
+func (uUC *userUsecase) GetFollowing(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	following, total, err := uUC.userRepo.GetFollowing(id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if following == nil {
+		following = []*models.User{}
+	}
+
+	return following, total, nil
+}
+
+func (uUC *userUsecase) GetFollowers(id uint64, count uint64, offset uint64) ([]*models.User, uint64, error) {
+	followers, total, err := uUC.userRepo.GetFollowers(id, count, offset)
+
+	if err != nil {
+		return nil, total, err
+	}
+
+	if followers == nil {
+		followers = []*models.User{}
+	}
+
+	return followers, total, nil
+}
+
+func (uUC *userUsecase) FindLike(name string, count uint64) ([]*models.User, error) {
+	users, err := uUC.userRepo.FindLike(name, count)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if users == nil {
+		users = []*models.User{}
+	}
+
+	return users, nil
 }

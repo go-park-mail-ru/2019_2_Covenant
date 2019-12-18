@@ -3,6 +3,7 @@ package delivery
 import (
 	"2019_2_Covenant/internal/middlewares"
 	"2019_2_Covenant/internal/models"
+	"2019_2_Covenant/internal/playlist"
 	"2019_2_Covenant/internal/session"
 	"2019_2_Covenant/internal/user"
 	"2019_2_Covenant/pkg/logger"
@@ -12,11 +13,11 @@ import (
 	. "2019_2_Covenant/tools/vars"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	"io/ioutil"
-	"mime"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -25,10 +26,12 @@ type UserHandler struct {
 	base_handler.BaseHandler
 	UUsecase user.Usecase
 	SUsecase session.Usecase
+	PUsecase playlist.Usecase
 }
 
 func NewUserHandler(uUC user.Usecase,
 	sUC session.Usecase,
+	pUC playlist.Usecase,
 	mManager *middlewares.MiddlewareManager,
 	logger *logger.LogrusLogger) *UserHandler {
 	return &UserHandler{
@@ -39,16 +42,21 @@ func NewUserHandler(uUC user.Usecase,
 		},
 		UUsecase: uUC,
 		SUsecase: sUC,
+		PUsecase: pUC,
 	}
 }
 
 func (uh *UserHandler) Configure(e *echo.Echo) {
 	e.POST("/api/v1/users", uh.CreateUser())
 
-	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuth)
-	e.POST("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuth)
-	e.POST("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuth)
-	e.POST("/api/v1/profile/avatar", uh.SetAvatar(), uh.MManager.CheckAuth)
+	e.GET("/api/v1/users/:nickname", uh.GetOtherProfile(), uh.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/users/:id/subscriptions", uh.GetUserSubscriptions(), uh.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/users/:id/playlists", uh.GetUserPlaylists(), uh.MManager.CheckAuthStrictly)
+
+	e.GET("/api/v1/profile", uh.GetProfile(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile", uh.UpdateUser(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile/password", uh.UpdatePassword(), uh.MManager.CheckAuthStrictly)
+	e.PUT("/api/v1/profile/avatar", uh.UploadAvatar(), uh.MManager.CheckAuthStrictly)
 }
 
 // @Tags User
@@ -86,19 +94,10 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 			})
 		}
 
-		usr, err := uh.UUsecase.GetByEmail(request.Email)
-
-		if err == nil {
-			uh.Logger.Log(c, "info", "Already exists.", "User ID:", usr.ID)
-			return c.JSON(http.StatusBadRequest, Response{
-				Error: ErrAlreadyExist.Error(),
-			})
-		}
-
 		newUser := models.NewUser(request.Email, request.Nickname, request.Password)
 
-		if err = uh.UUsecase.Store(newUser); err != nil {
-			uh.Logger.Log(c, "error", "User store error.", err)
+		if err := uh.UUsecase.Store(newUser); err != nil {
+			uh.Logger.Log(c, "info", "User store error.", err)
 			return c.JSON(http.StatusBadRequest, Response{
 				Error: err.Error(),
 			})
@@ -107,7 +106,7 @@ func (uh *UserHandler) CreateUser() echo.HandlerFunc {
 		sess, cookie := models.NewSession(newUser.ID)
 		c.SetCookie(cookie)
 
-		if err = uh.SUsecase.Store(sess); err != nil {
+		if err := uh.SUsecase.Store(sess); err != nil {
 			uh.Logger.Log(c, "error", "Session store error.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: err.Error(),
@@ -294,14 +293,20 @@ func (uh *UserHandler) GetProfile() echo.HandlerFunc {
 // @Failure 401 object Response
 // @Failure 500 object Response
 // @Router /api/v1/profile/avatar [post]
-func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
+func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 	rootPath, _ := os.Getwd()
-	avatarsPath := "/resources/avatars/"
-	destPath := filepath.Join(rootPath, avatarsPath)
 
 	return func(c echo.Context) error {
-		file, err := c.FormFile("avatar")
+		sess, ok := c.Get("session").(*models.Session)
 
+		if !ok {
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		file, err := c.FormFile("file")
 		if err != nil {
 			uh.Logger.Log(c, "info", "Can't extract file from request.", err)
 			return c.JSON(http.StatusBadRequest, Response{
@@ -310,7 +315,6 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		}
 
 		src, err := file.Open()
-
 		if err != nil {
 			uh.Logger.Log(c, "error", "Can't open file.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
@@ -320,56 +324,30 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 
 		defer src.Close()
 
-		if _, err := os.Stat(destPath); os.IsNotExist(err) {
-			uh.Logger.Log(c, "error", "There is no dir for avatars.")
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
+		filePath := strings.ReplaceAll(
+			fmt.Sprintf("%s%d-%s", AVATARS_PATH, sess.UserID, file.Filename),
+			" ",
+			"",
+		)
 
-		bytes, err := ioutil.ReadAll(src)
-
+		dest, err := os.Create(filepath.Join(rootPath, filePath))
 		if err != nil {
-			uh.Logger.Log(c, "error", "Can't read file.", err)
+			uh.Logger.Log(c, "error", "Can't create file.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		fileType := http.DetectContentType(bytes)
-		extensions, _ := mime.ExtensionsByType(fileType)
+		defer dest.Close()
 
-		sess, ok := c.Get("session").(*models.Session)
-
-		if !ok {
-			uh.Logger.Log(c, "info", "Can't extract session from echo.Context.")
+		if _, err = io.Copy(dest, src); err != nil {
+			uh.Logger.Log(c, "error", "Can't copy file.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
 		}
 
-		avatarName := filepath.Join(fmt.Sprint(sess.UserID) + "_avatar" + extensions[0])
-		destFile, err := os.Create(filepath.Join(destPath, avatarName))
-
-		if err != nil {
-			uh.Logger.Log(c, "error", "Can't create avatar file.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
-
-		defer destFile.Close()
-
-		_, err = destFile.Write(bytes)
-
-		if err != nil {
-			uh.Logger.Log(c, "error", "Error while writing bytes in destFile.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
-			})
-		}
-
-		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filepath.Join(avatarsPath, avatarName))
+		usr, err := uh.UUsecase.UpdateAvatar(sess.UserID, filePath)
 
 		if err != nil {
 			uh.Logger.Log(c, "error", "Error while updating user avatar.", err)
@@ -381,6 +359,124 @@ func (uh *UserHandler) SetAvatar() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"user": usr,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		uNickname := c.Param("nickname")
+
+		usr, err := uh.UUsecase.GetByNickname(uNickname)
+
+		if err != nil {
+			uh.Logger.Log(c, "info", "Error while getting other profile.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"user": usr,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetUserSubscriptions() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		uID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := uh.ReqReader.Read(c, request, nil); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		followers, totalFollowers, err := uh.UUsecase.GetFollowers(uint64(uID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting followers.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		following, totalFollowing, err := uh.UUsecase.GetFollowing(uint64(uID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting following.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"followers": followers,
+				"total_followers": totalFollowers,
+				"following": following,
+				"total_following": totalFollowing,
+			},
+		})
+	}
+}
+
+func (uh *UserHandler) GetUserPlaylists() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
+	return func(c echo.Context) error {
+		uID, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Atoi error.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		request := &Request{}
+
+		if err := uh.ReqReader.Read(c, request, nil); err != nil {
+			uh.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		playlists, total, err := uh.PUsecase.Fetch(uint64(uID), request.Count, request.Offset)
+
+		if err != nil {
+			uh.Logger.Log(c, "error", "Error while getting playlists.", err.Error())
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
+		return c.JSON(http.StatusOK, Response{
+			Body: &Body{
+				"playlists": playlists,
+				"total": total,
 			},
 		})
 	}

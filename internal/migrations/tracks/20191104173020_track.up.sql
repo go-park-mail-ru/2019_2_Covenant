@@ -3,5 +3,6 @@ create table tracks (
     album_id bigint not null references albums(id) on delete cascade,
     name varchar not null,
     duration time not null,
-    path varchar not null default varchar '/resources/music/default.mp3'
+    path varchar not null default varchar '/resources/music/default.mp3',
+    unique (album_id, name)
 );

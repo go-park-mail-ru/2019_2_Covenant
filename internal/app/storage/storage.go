@@ -5,10 +5,14 @@ import (
 	_albumRepo "2019_2_Covenant/internal/album/repository"
 	"2019_2_Covenant/internal/artist"
 	_artistRepo "2019_2_Covenant/internal/artist/repository"
+	"2019_2_Covenant/internal/likes"
+	_likesRepo "2019_2_Covenant/internal/likes/repository"
 	"2019_2_Covenant/internal/playlist"
 	_playlistRepo "2019_2_Covenant/internal/playlist/repository"
 	"2019_2_Covenant/internal/session"
 	_sessRepo "2019_2_Covenant/internal/session/repository"
+	"2019_2_Covenant/internal/subscriptions"
+	_subscriptionRepo "2019_2_Covenant/internal/subscriptions/repository"
 	"2019_2_Covenant/internal/track"
 	_trackRepo "2019_2_Covenant/internal/track/repository"
 	"2019_2_Covenant/internal/user"
@@ -24,12 +28,14 @@ type BaseStorage struct {
 
 type PGStorage struct {
 	BaseStorage
-	userRepo     user.Repository
-	sessRepo     session.Repository
-	trackRepo    track.Repository
-	playlistRepo playlist.Repository
-	albumRepo    album.Repository
-	artistRepo   artist.Repository
+	userRepo         user.Repository
+	sessRepo         session.Repository
+	trackRepo        track.Repository
+	playlistRepo     playlist.Repository
+	albumRepo        album.Repository
+	artistRepo       artist.Repository
+	subscriptionRepo subscriptions.Repository
+	likesRepo        likes.Repository
 }
 
 func NewPGStorage(conf *Config) Storage {
@@ -118,4 +124,24 @@ func (s *PGStorage) Artist() artist.Repository {
 	s.artistRepo = _artistRepo.NewArtistRepository(s.db)
 
 	return s.artistRepo
+}
+
+func (s *PGStorage) Subscription() subscriptions.Repository {
+	if s.subscriptionRepo != nil {
+		return s.subscriptionRepo
+	}
+
+	s.subscriptionRepo = _subscriptionRepo.NewSubscriptionRepository(s.db)
+
+	return s.subscriptionRepo
+}
+
+func (s *PGStorage) Like() likes.Repository {
+	if s.likesRepo != nil {
+		return s.likesRepo
+	}
+
+	s.likesRepo = _likesRepo.NewLikesRepository(s.db)
+
+	return s.likesRepo
 }

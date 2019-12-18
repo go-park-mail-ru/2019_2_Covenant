@@ -3,6 +3,7 @@ package usecase
 import (
 	"2019_2_Covenant/internal/models"
 	"2019_2_Covenant/internal/playlist"
+	. "2019_2_Covenant/tools/vars"
 )
 
 type PlaylistUsecase struct {
@@ -46,16 +47,28 @@ func (pUC *PlaylistUsecase) DeleteByID(playlistID uint64) error {
 }
 
 func (pUC *PlaylistUsecase) AddToPlaylist(playlistID uint64, trackID uint64) error {
-	if err := pUC.playlistRepo.AddToPlaylist(playlistID, trackID); err != nil {
+	err := pUC.playlistRepo.AddToPlaylist(playlistID, trackID)
+
+	if err == ErrAlreadyExist {
 		return err
+	}
+
+	if err != nil {
+		return ErrInternalServerError
 	}
 
 	return nil
 }
 
 func (pUC *PlaylistUsecase) RemoveFromPlaylist(playlistID uint64, trackID uint64) error {
-	if err := pUC.playlistRepo.RemoveFromPlaylist(playlistID, trackID); err != nil {
+	err := pUC.playlistRepo.RemoveFromPlaylist(playlistID, trackID)
+
+	if err == ErrNotFound {
 		return err
+	}
+
+	if err != nil {
+		return ErrInternalServerError
 	}
 
 	return nil
@@ -71,8 +84,8 @@ func (pUC *PlaylistUsecase) GetSinglePlaylist(playlistID uint64) (*models.Playli
 	return p, amountOfTracks, nil
 }
 
-func (pUC *PlaylistUsecase) GetTracksFrom(playlistID uint64) ([]*models.Track, error) {
-	tracks, err := pUC.playlistRepo.GetTracksFrom(playlistID)
+func (pUC *PlaylistUsecase) GetTracksFrom(playlistID uint64, authID uint64) ([]*models.Track, error) {
+	tracks, err := pUC.playlistRepo.GetTracksFrom(playlistID, authID)
 
 	if err != nil {
 		return nil, err
@@ -80,6 +93,18 @@ func (pUC *PlaylistUsecase) GetTracksFrom(playlistID uint64) ([]*models.Track, e
 
 	if tracks == nil {
 		tracks = []*models.Track{}
+	}
+
+	if authID != 0 {
+		for _, item := range tracks {
+			if item.IsFavourite != true {
+				item.IsFavourite = false
+			}
+
+			if item.IsLiked != true {
+				item.IsLiked = false
+			}
+		}
 	}
 
 	return tracks, nil

@@ -1,14 +1,22 @@
 package apiserver
 
 import (
+	_albumDelivery "2019_2_Covenant/internal/album/delivery"
+	_albumUsecase "2019_2_Covenant/internal/album/usecase"
 	"2019_2_Covenant/internal/app/storage"
+	_artistDelivery "2019_2_Covenant/internal/artist/delivery"
+	_artistUsecase "2019_2_Covenant/internal/artist/usecase"
+	_likesDelivery "2019_2_Covenant/internal/likes/delivery"
+	_likesUsecase "2019_2_Covenant/internal/likes/usecase"
 	"2019_2_Covenant/internal/middlewares"
 	_playlistDelivery "2019_2_Covenant/internal/playlist/delivery"
 	_playlistUsecase "2019_2_Covenant/internal/playlist/usecase"
-	_searchHandler "2019_2_Covenant/internal/search/delivery"
+	_searchDelivery "2019_2_Covenant/internal/search/delivery"
 	_searchUsecase "2019_2_Covenant/internal/search/usecase"
 	_sessionDelivery "2019_2_Covenant/internal/session/delivery"
 	_sessionUsecase "2019_2_Covenant/internal/session/usecase"
+	_subscriptionDelivery "2019_2_Covenant/internal/subscriptions/delivery"
+	_subscriptionUsecase "2019_2_Covenant/internal/subscriptions/usecase"
 	_trackDelivery "2019_2_Covenant/internal/track/delivery"
 	_trackUsecase "2019_2_Covenant/internal/track/usecase"
 	_userDelivery "2019_2_Covenant/internal/user/delivery"
@@ -64,13 +72,17 @@ func (api *APIServer) configureRouter() {
 	trackUsecase := _trackUsecase.NewTrackUsecase(api.storage.Track())
 	playlistUsecase := _playlistUsecase.NewPlaylistUsecase(api.storage.Playlist())
 	searchUsecase := _searchUsecase.NewSearchUsecase(api.storage.Track(), api.storage.Album(), api.storage.Artist())
+	artistUsecase := _artistUsecase.NewArtistUsecase(api.storage.Artist())
+	albumUsecase := _albumUsecase.NewAlbumUsecase(api.storage.Album())
+	subscriptionUsecase := _subscriptionUsecase.NewSubscriptionUsecase(api.storage.Subscription())
+	likesUsecase := _likesUsecase.NewLikesUsecase(api.storage.Like())
 
 	middlewareManager := middlewares.NewMiddlewareManager(userUsecase, sessionUsecase, api.logger)
 	api.router.Use(middlewareManager.AccessLogMiddleware)
 	api.router.Use(middlewareManager.PanicRecovering)
 	api.router.Use(middlewareManager.CORSMiddleware)
 
-	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, middlewareManager, api.logger)
+	userHandler := _userDelivery.NewUserHandler(userUsecase, sessionUsecase, playlistUsecase, middlewareManager, api.logger)
 	userHandler.Configure(api.router)
 
 	trackHandler := _trackDelivery.NewTrackHandler(trackUsecase, middlewareManager, api.logger)
@@ -82,8 +94,20 @@ func (api *APIServer) configureRouter() {
 	playlistHandler := _playlistDelivery.NewPlaylistHandler(playlistUsecase, middlewareManager, api.logger)
 	playlistHandler.Configure(api.router)
 
-	searchHandler := _searchHandler.NewSearchHandler(searchUsecase, middlewareManager, api.logger)
+	searchHandler := _searchDelivery.NewSearchHandler(searchUsecase, userUsecase, middlewareManager, api.logger)
 	searchHandler.Configure(api.router)
+
+	artistHandler := _artistDelivery.NewArtistHandler(artistUsecase, middlewareManager, api.logger)
+	artistHandler.Configure(api.router)
+
+	subscriptionHandler := _subscriptionDelivery.NewSubscriptionHandler(subscriptionUsecase, userUsecase, middlewareManager, api.logger)
+	subscriptionHandler.Configure(api.router)
+
+	albumHandler := _albumDelivery.NewAlbumHandler(albumUsecase, middlewareManager, api.logger)
+	albumHandler.Configure(api.router)
+
+	likesHandler := _likesDelivery.NewLikesHandler(likesUsecase, userUsecase, middlewareManager, api.logger)
+	likesHandler.Configure(api.router)
 }
 
 func (api *APIServer) configureStorage() error {

@@ -11,7 +11,6 @@ import (
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strings"
 )
 
 type TrackHandler struct {
@@ -33,11 +32,11 @@ func NewTrackHandler(tUC track.Usecase,
 }
 
 func (th *TrackHandler) Configure(e *echo.Echo) {
-	e.GET("/api/v1/tracks/popular", th.GetPopularTracks())
+	e.GET("/api/v1/tracks/popular", th.GetPopularTracks(), th.MManager.CheckAuth)
 
-	e.GET("/api/v1/tracks/favourite", th.GetFavourites(), th.MManager.CheckAuth)
-	e.POST("/api/v1/tracks/favourite", th.AddToFavourites(), th.MManager.CheckAuth)
-	e.DELETE("/api/v1/tracks/favourite", th.RemoveFavourite(), th.MManager.CheckAuth)
+	e.GET("/api/v1/tracks/favourite", th.GetFavourites(), th.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/tracks/favourite", th.AddToFavourites(), th.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/tracks/favourite", th.RemoveFavourite(), th.MManager.CheckAuthStrictly)
 }
 
 // @Tags Track
@@ -52,8 +51,27 @@ func (th *TrackHandler) Configure(e *echo.Echo) {
 // @Failure 500 object ResponseError
 // @Router /api/v1/tracks/popular [post]
 func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
+	type Request struct {
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
+	}
+
 	return func(c echo.Context) error {
-		tracks, err := th.TUsecase.FetchPopular(50, 0)
+		request := &Request{}
+
+		if err := th.ReqReader.Read(c, request, nil); err != nil {
+			th.Logger.Log(c, "info", "Invalid request.", err.Error())
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
+			})
+		}
+
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, total, err := th.TUsecase.FetchPopular(request.Count, request.Offset, authID)
 
 		if err != nil {
 			th.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -62,15 +80,10 @@ func (th *TrackHandler) GetPopularTracks() echo.HandlerFunc {
 			})
 		}
 
-		for _, item := range tracks {
-			start := strings.Index(item.Duration, "T")
-			end := strings.Index(item.Duration, "Z")
-			item.Duration = item.Duration[start+1 : end]
-		}
-
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{
 				"tracks": tracks,
+				"total": total,
 			},
 		})
 	}
@@ -103,7 +116,7 @@ func (th *TrackHandler) AddToFavourites() echo.HandlerFunc {
 		if err := th.TUsecase.StoreFavourite(sess.UserID, request.TrackID); err != nil {
 			th.Logger.Log(c, "error", "Error while storing favourite track.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: err.Error(),
+				Error: ErrAlreadyExist.Error(),
 			})
 		}
 
@@ -152,8 +165,8 @@ func (th *TrackHandler) RemoveFavourite() echo.HandlerFunc {
 
 func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 	type Request struct {
-		Count  uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
 	}
 
 	return func(c echo.Context) error {
@@ -182,12 +195,6 @@ func (th *TrackHandler) GetFavourites() echo.HandlerFunc {
 			return c.JSON(http.StatusInternalServerError, Response{
 				Error: ErrInternalServerError.Error(),
 			})
-		}
-
-		for _, item := range tracks {
-			start := strings.Index(item.Duration, "T")
-			end := strings.Index(item.Duration, "Z")
-			item.Duration = item.Duration[start+1 : end]
 		}
 
 		return c.JSON(http.StatusOK, Response{

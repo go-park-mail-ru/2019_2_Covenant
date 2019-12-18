@@ -8,11 +8,11 @@ import (
 	"2019_2_Covenant/pkg/reader"
 	. "2019_2_Covenant/tools/base_handler"
 	. "2019_2_Covenant/tools/response"
+	"2019_2_Covenant/tools/time_parser"
 	. "2019_2_Covenant/tools/vars"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type PlaylistHandler struct {
@@ -34,13 +34,13 @@ func NewPlaylistHandler(pUC playlist.Usecase,
 }
 
 func (ph *PlaylistHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuth)
-	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuth)
-	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuth)
-	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuth)
-	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuth)
+	e.POST("/api/v1/playlists", ph.CreatePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists", ph.GetPlaylists(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists/:id", ph.GetSinglePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.GET("/api/v1/playlists/:id/tracks", ph.GetTracksFromPlaylist(), ph.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/playlists/:id", ph.DeletePlaylist(), ph.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/playlists/:id/tracks", ph.AddToPlaylist(), ph.MManager.CheckAuthStrictly)
+	e.DELETE("/api/v1/playlists/:playlist_id/tracks/:track_id", ph.RemoveFromPlaylist(), ph.MManager.CheckAuthStrictly)
 }
 
 func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
@@ -87,8 +87,8 @@ func (ph *PlaylistHandler) CreatePlaylist() echo.HandlerFunc {
 
 func (ph *PlaylistHandler) GetPlaylists() echo.HandlerFunc {
 	type Request struct {
-		Count  uint64 `json:"count" validate:"required"`
-		Offset uint64 `json:"offset"`
+		Count  uint64 `query:"count" validate:"required"`
+		Offset uint64 `query:"offset"`
 	}
 
 	return func(c echo.Context) error {
@@ -179,7 +179,7 @@ func (ph *PlaylistHandler) AddToPlaylist() echo.HandlerFunc {
 		if err := ph.PUsecase.AddToPlaylist(uint64(pID), request.TrackID); err != nil {
 			ph.Logger.Log(c, "error", "Error while adding track to playlist.", err)
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: err.Error(),
+				Error: ErrAlreadyExist.Error(),
 			})
 		}
 
@@ -228,9 +228,9 @@ func (ph *PlaylistHandler) GetSinglePlaylist() echo.HandlerFunc {
 		p, amountOfTracks, err := ph.PUsecase.GetSinglePlaylist(uint64(pID))
 
 		if err != nil {
-			ph.Logger.Log(c, "error", "Error while getting playlist.", err.Error())
+			ph.Logger.Log(c, "info", "Error while getting playlist.", err.Error())
 			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrInternalServerError.Error(),
+				Error: err.Error(),
 			})
 		}
 
@@ -254,7 +254,14 @@ func (ph *PlaylistHandler) GetTracksFromPlaylist() echo.HandlerFunc {
 			})
 		}
 
-		tracks, err := ph.PUsecase.GetTracksFrom(uint64(pID))
+		// TODO: Strictly
+
+		var authID uint64
+		if sess, ok := c.Get("session").(*models.Session); ok {
+			authID = sess.UserID
+		}
+
+		tracks, err := ph.PUsecase.GetTracksFrom(uint64(pID), authID)
 
 		if err != nil {
 			ph.Logger.Log(c, "error", "Error while fetching tracks.", err)
@@ -263,11 +270,7 @@ func (ph *PlaylistHandler) GetTracksFromPlaylist() echo.HandlerFunc {
 			})
 		}
 
-		for _, item := range tracks {
-			start := strings.Index(item.Duration, "T")
-			end := strings.Index(item.Duration, "Z")
-			item.Duration = item.Duration[start+1 : end]
-		}
+		for _, item := range tracks { item.Duration = time_parser.GetDuration(item.Duration) }
 
 		return c.JSON(http.StatusOK, Response{
 			Body: &Body{

@@ -23,7 +23,7 @@ func (fUc *SubscriptionUsecase) Subscribe(userID uint64, subscriptionID uint64) 
 	}
 
 	if err != nil {
-		return ErrInternalServerError
+		return ErrNotFound
 	}
 
 	return nil
@@ -37,7 +37,7 @@ func (fUc *SubscriptionUsecase) Unsubscribe(userID uint64, subscriptionID uint64
 	}
 
 	if err != nil {
-		return ErrInternalServerError
+		return err
 	}
 
 	return nil

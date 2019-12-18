@@ -190,7 +190,7 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64, authID uint64) ([]*mode
 	rows, err := ar.db.Query(
 		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name, " +
 			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
-			"T.id in (select track_id from likes where user_id = %1) AS liked from tracks T " +
+			"T.id in (select track_id from likes where user_id = $1) AS liked from tracks T " +
 			"join albums Al ON T.album_id=Al.id " +
 			"join artists Ar ON Al.artist_id=Ar.id where Al.id = $2;",
 			authID, albumID)

@@ -62,7 +62,6 @@ func (sh *SearchHandler) Search() echo.HandlerFunc {
 			})
 		}
 
-
 		body := &Body{}
 
 		if isUserSearching(request) {

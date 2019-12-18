@@ -17,10 +17,11 @@ func NewSubscriptionRepository(db *sql.DB) subscriptions.Repository {
 }
 
 func (ssR *SubscriptionRepository) Subscribe(userID uint64, subscriptionID uint64) error {
+	var id int
 	if err := ssR.db.QueryRow("SELECT id FROM subscriptions WHERE user_id = $1 AND subscribed_to = $2",
 		userID,
 		subscriptionID,
-	).Scan(); err == nil {
+	).Scan(&id); err == nil {
 		return ErrAlreadyExist
 	}
 

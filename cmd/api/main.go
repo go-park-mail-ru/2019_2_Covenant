@@ -7,6 +7,8 @@ import (
 	"flag"
 	"github.com/BurntSushi/toml"
 	"log"
+	"fmt"
+	"os"
 )
 
 var (
@@ -31,7 +33,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fmt.Println(os.Getenv("APP_ENV"))
 	storageConfig := storage.NewConfig("dev")
+	fmt.Println(storageConfig.GetURL())
 	if _, err := toml.DecodeFile(storageConfPath, storageConfig); err != nil {
 		log.Fatal(err)
 	}

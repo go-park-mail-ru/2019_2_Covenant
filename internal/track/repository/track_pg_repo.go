@@ -44,11 +44,18 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64, authID uint64) ([]
 
 	for rows.Next() {
 		t := &models.Track{}
+		isFavourite := new(bool)
+		isLiked := new(bool)
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, isFavourite, isLiked,
 		); err != nil {
 			return nil, total, err
+		}
+
+		if authID != 0 {
+			t.IsFavourite = isFavourite
+			t.IsLiked = isLiked
 		}
 
 		tracks = append(tracks, t)
@@ -174,11 +181,18 @@ func (tr *TrackRepository) FindLike(name string, count uint64, authID uint64) ([
 
 	for rows.Next() {
 		t := &models.Track{}
+		isFavourite := new(bool)
+		isLiked := new(bool)
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsFavourite, &t.IsLiked,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, isFavourite, isLiked,
 		); err != nil {
 			return nil, err
+		}
+
+		if authID != 0 {
+			t.IsFavourite = isFavourite
+			t.IsLiked = isLiked
 		}
 
 		tracks = append(tracks, t)

@@ -94,18 +94,6 @@ func (aUC *AlbumUsecase) GetTracksFrom(albumID uint64, authID uint64) ([]*models
 		tracks = []*models.Track{}
 	}
 
-	if authID != 0 {
-		for _, item := range tracks {
-			if item.IsFavourite != true {
-				item.IsFavourite = false
-			}
-
-			if item.IsLiked != true {
-				item.IsLiked = false
-			}
-		}
-	}
-
 	return tracks, nil
 }
 

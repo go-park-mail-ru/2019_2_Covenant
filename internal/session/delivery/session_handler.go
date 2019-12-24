@@ -37,8 +37,8 @@ func NewSessionHandler(sUC session.Usecase,
 }
 
 func (sh *SessionHandler) Configure(e *echo.Echo) {
-	e.POST("/api/v1/session", sh.CreateSession())
-	e.DELETE("/api/v1/session", sh.DeleteSession(), sh.MManager.CheckAuthStrictly)
+	e.POST("/api/v1/sessions", sh.CreateSession())
+	e.DELETE("/api/v1/sessions", sh.DeleteSession(), sh.MManager.CheckAuthStrictly)
 
 	e.GET("/api/v1/csrf", sh.GetCSRF(), sh.MManager.CheckAuthStrictly)
 }

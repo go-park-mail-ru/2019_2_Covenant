@@ -189,8 +189,9 @@ func (ar *ArtistRepository) GetArtistAlbums(artistID uint64, count uint64, offse
 		return nil, total, err
 	}
 
-	rows, err := ar.db.Query("SELECT id, name, photo, year FROM albums "+
-		"WHERE artist_id = $1 ORDER BY name LIMIT $2 OFFSET $3",
+	rows, err := ar.db.Query("SELECT Al.id, Al.name, Al.photo, Al.year, Ar.name FROM albums Al " +
+		"JOIN artists Ar ON Al.artist_id = Ar.id "+
+		"WHERE artist_id = $1 ORDER BY Al.name LIMIT $2 OFFSET $3",
 		artistID,
 		count,
 		offset,
@@ -210,6 +211,7 @@ func (ar *ArtistRepository) GetArtistAlbums(artistID uint64, count uint64, offse
 			&a.Name,
 			&a.Photo,
 			&a.Year,
+			&a.Artist,
 		); err != nil {
 			return nil, total, err
 		}
@@ -234,7 +236,7 @@ func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint
 	}
 
 	rows, err := ar.db.Query(
-		"SELECT T.id, T.album_id, T.name, T.duration, Al.photo, Al.name, T.path, "+
+		"SELECT T.id, T.album_id, T.name, T.duration, Al.photo, Al.name, T.path, Ar.name, "+
 			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
 			"T.id in (select track_id from likes where user_id = $1) AS liked FROM tracks T "+
 			"JOIN albums Al ON T.album_id = Al.id "+
@@ -253,7 +255,8 @@ func (ar *ArtistRepository) GetTracks(artistID uint64, count uint64, offset uint
 		isFavourite := new(bool)
 		isLiked := new(bool)
 
-		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo, &t.Album, &t.Path, isFavourite, isLiked); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Photo,
+			&t.Album, &t.Path, &t.Artist, isFavourite, isLiked); err != nil {
 			return nil, total, err
 		}
 

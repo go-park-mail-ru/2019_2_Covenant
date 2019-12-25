@@ -62,8 +62,8 @@ func (uUC *userUsecase) GetByID(userID uint64) (*models.User, error) {
 	return usr, nil
 }
 
-func (uUC *userUsecase) GetByNickname(nickname string) (*models.User, error) {
-	usr, err := uUC.userRepo.GetByNickname(nickname)
+func (uUC *userUsecase) GetByNickname(nickname string, authID uint64) (*models.User, error) {
+	usr, err := uUC.userRepo.GetByNickname(nickname, authID)
 
 	if err != nil {
 		return nil, ErrNotFound

@@ -366,9 +366,18 @@ func (uh *UserHandler) UploadAvatar() echo.HandlerFunc {
 
 func (uh *UserHandler) GetOtherProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		sess, ok := c.Get("session").(*models.Session)
+
+		if !ok {
+			uh.Logger.Log(c, "error", "Can't extract session from echo.Context.")
+			return c.JSON(http.StatusInternalServerError, Response{
+				Error: ErrInternalServerError.Error(),
+			})
+		}
+
 		uNickname := c.Param("nickname")
 
-		usr, err := uh.UUsecase.GetByNickname(uNickname)
+		usr, err := uh.UUsecase.GetByNickname(uNickname, sess.UserID)
 
 		if err != nil {
 			uh.Logger.Log(c, "info", "Error while getting other profile.", err)

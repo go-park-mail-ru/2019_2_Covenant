@@ -15,6 +15,7 @@ type User struct {
 	Avatar        string `json:"avatar"`
 	Role          int8   `json:"role"`   // 0 - user; 1 - admin;
 	Access        int8   `json:"access"` // 0 - public; 1 - private;
+	Subscription  *bool  `json:"subscription,omitempty"`
 }
 
 func NewUser(email string, nickname string, plainPassword string) *User {

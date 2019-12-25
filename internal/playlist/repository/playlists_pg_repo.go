@@ -175,9 +175,16 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64, authID uint64) (
 
 	for rows.Next() {
 		t := &models.Track{}
+		isFavourite := new(bool)
+		isLiked := new(bool)
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.IsFavourite, &t.IsLiked); err != nil {
+		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, isFavourite, isLiked); err != nil {
 			return nil, err
+		}
+
+		if authID != 0 {
+			t.IsFavourite = isFavourite
+			t.IsLiked = isLiked
 		}
 
 		tracks = append(tracks, t)

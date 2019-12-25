@@ -1,3 +1,10 @@
+\c postgres;
+drop database if exists covenant_db;
+
+create database covenant_db;
+
+\c covenant_db
+
 create table users (
     id bigserial not null primary key,
     nickname varchar not null unique,
@@ -77,3 +84,12 @@ create table subscriptions (
    unique (user_id, subscribed_to),
    check (user_id != subscribed_to)
 );
+
+create table likes (
+	    id bigserial not null primary key,
+	    user_id bigint not null references users(id) on delete cascade,
+	    track_id bigint not null references tracks(id) on delete cascade,
+	    created_at timestamp not null default now(),
+	    unique (user_id, track_id)
+)
+

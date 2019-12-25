@@ -10,6 +10,6 @@ type Track struct {
 	Artist      string `json:"artist,omitempty"`
 	Album       string `json:"album"`
 	Path        string `json:"path"`
-	IsFavourite bool   `json:"is_favourite,omitempty"`
-	IsLiked     bool   `json:"is_lied,omitempty"`
+	IsFavourite *bool  `json:"is_favourite,omitempty"`
+	IsLiked     *bool  `json:"is_lied,omitempty"`
 }

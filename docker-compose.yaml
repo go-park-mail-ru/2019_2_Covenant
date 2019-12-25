@@ -1,21 +1,27 @@
-version: '3.7'
+version: '3.3'
 services:
+  db:
+    image: postgres:latest
+    volumes:
+            #- ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - /var/lib/postgresql:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=covenant_db
   goapp:
+    build: .
     image: gocovenant
     ports:
       - 8000:8000
     environment:
-      DB_NAME: covenant_db
-      DB_HOST: database
-      DB_PORT: 5432
-      DB_USER: covenant_user
-      DB_PSWD: testpass
-  database:
-    image: covenant_db
-    volumes:
-      - psql_volume:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+      - DB_NAME=covenant_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+    links:
+      - db 
 
 volumes:
-  psql_volume:
+  covenant-db:

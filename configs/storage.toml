@@ -1,1 +1,1 @@
-db_url = "user=covenant_user password=testpass host=localhost port=5432 dbname=covenant_db connect_timeout=10 sslmode=disable"
+db_url = "user=postgres host=localhost port=5432 dbname=covenant_db connect_timeout=10 sslmode=disable"

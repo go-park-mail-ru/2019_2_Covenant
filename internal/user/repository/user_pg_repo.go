@@ -65,18 +65,25 @@ func (ur *UserRepository) GetByID(usrID uint64) (*models.User, error) {
 	return u, nil
 }
 
-func (ur *UserRepository) GetByNickname(nickname string) (*models.User, error) {
+func (ur *UserRepository) GetByNickname(nickname string, authID uint64) (*models.User, error) {
 	u := &models.User{}
+	s := new(bool)
 
-	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, role, access " +
-		"FROM users WHERE nickname = $1" ,
+	if err := ur.db.QueryRow("SELECT id, nickname, email, avatar, role, access, " +
+		"id in (select subscribed_to from subscriptions where user_id=$1)" +
+		"FROM users WHERE nickname = $2",
+		authID,
 		nickname,
-	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access); err != nil {
+	).Scan(&u.ID, &u.Nickname, &u.Email, &u.Avatar, &u.Role, &u.Access, s); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
 
 		return nil, err
+	}
+
+	if authID != 0 {
+		u.Subscription = s
 	}
 
 	return u, nil
@@ -142,20 +149,6 @@ func (ur *UserRepository) Fetch(count uint64) ([]*models.User, error) {
 	}
 
 	return users, nil
-}
-
-func (ur *UserRepository) nicknameExists(nickname string) (bool, error) {
-	usr, err := ur.GetByNickname(nickname)
-
-	if err != nil {
-		return false, err
-	}
-
-	if usr != nil {
-		return true, nil
-	}
-
-	return false, nil
 }
 
 func (ur *UserRepository) UpdateAvatar(id uint64, avatarPath string) (*models.User, error) {

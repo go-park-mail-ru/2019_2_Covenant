@@ -33,7 +33,6 @@ func (c *Config) GetURL() string {
 func getFromEnv() string {
 	var (
 		user = os.Getenv("DB_USER")
-		password = os.Getenv("DB_PSWD")
 		host = os.Getenv("DB_HOST")
 		port = os.Getenv("DB_PORT")
 		dbName = os.Getenv("DB_NAME")
@@ -43,7 +42,6 @@ func getFromEnv() string {
 	url = append(
 		url,
 		fmt.Sprintf("user=%s", user),
-		fmt.Sprintf("password=%s", password),
 		fmt.Sprintf("host=%s", host),
 		fmt.Sprintf("port=%s", port),
 		fmt.Sprintf("dbname=%s", dbName),

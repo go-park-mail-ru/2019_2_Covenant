@@ -120,7 +120,8 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 	}
 
 	rows, err := tr.db.Query(
-		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path FROM tracks T " +
+		"SELECT T.id, T.album_id, Ar.id, T.name, T.duration, Al.photo, Ar.name, Al.name, T.path, " +
+			"T.id in (select track_id from likes where user_id = $1) AS liked FROM tracks T " +
 		"JOIN favourites F ON T.id = F.track_id " +
 		"JOIN albums Al ON T.album_id = Al.id " +
 		"JOIN artists Ar ON Al.artist_id = Ar.id " +
@@ -140,10 +141,13 @@ func (tr *TrackRepository) FetchFavourites(userID uint64, count uint64, offset u
 		t := &models.Track{}
 
 		if err := rows.Scan(&t.ID, &t.AlbumID, &t.ArtistID, &t.Name, &t.Duration,
-			&t.Photo, &t.Artist, &t.Album, &t.Path,
+			&t.Photo, &t.Artist, &t.Album, &t.Path, &t.IsLiked,
 		); err != nil {
 			return nil, total, err
 		}
+
+		t.IsFavourite = new(bool)
+		*t.IsFavourite = true
 
 		tracks = append(tracks, t)
 	}

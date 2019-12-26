@@ -190,7 +190,7 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64, authID uint64) ([]*mode
 	var tracks []*models.Track
 
 	rows, err := ar.db.Query(
-		"select T.id, T.name, T.duration, T.path, Ar.name, Al.name, Ar.id, " +
+		"select T.id, T.album_id, T.name, T.duration, T.path, Ar.name, Al.name, Ar.id, " +
 			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
 			"T.id in (select track_id from likes where user_id = $1) AS liked from tracks T " +
 			"join albums Al ON T.album_id=Al.id " +
@@ -208,7 +208,8 @@ func (ar *AlbumRepository) GetTracksFrom(albumID uint64, authID uint64) ([]*mode
 		isFavourite := new(bool)
 		isLiked := new(bool)
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.Album, &t.ArtistID, isFavourite, isLiked); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Path, &t.Artist,
+				&t.Album, &t.ArtistID, isFavourite, isLiked); err != nil {
 			return nil, err
 		}
 

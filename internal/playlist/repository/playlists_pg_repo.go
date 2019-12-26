@@ -159,7 +159,7 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64, authID uint64) (
 	var tracks []*models.Track
 
 	rows, err := plR.db.Query(
-		"select T.id, T.name, T.duration, T.path, Ar.name, Ar.id, " +
+		"select T.id, T.album_id, T.name, T.duration, T.path, Ar.name, Ar.id, " +
 			"T.id in (select track_id from favourites where user_id = $1) AS favourite, " +
 			"T.id in (select track_id from likes where user_id = $1) AS liked from playlist_track PT " +
 			"join tracks T ON PT.track_id=T.id join albums Al ON T.album_id=Al.id " +
@@ -178,7 +178,8 @@ func (plR *PlaylistRepository) GetTracksFrom(playlistID uint64, authID uint64) (
 		isFavourite := new(bool)
 		isLiked := new(bool)
 
-		if err := rows.Scan(&t.ID, &t.Name, &t.Duration, &t.Path, &t.Artist, &t.ArtistID, isFavourite, isLiked); err != nil {
+		if err := rows.Scan(&t.ID, &t.AlbumID, &t.Name, &t.Duration, &t.Path, &t.Artist,
+				&t.ArtistID, isFavourite, isLiked); err != nil {
 			return nil, err
 		}
 

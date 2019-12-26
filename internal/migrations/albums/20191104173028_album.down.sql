@@ -1,1 +1,1 @@
-drop table albums;
+drop table albums cascade;

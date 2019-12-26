@@ -1,8 +1,18 @@
 package storage
 
 import (
+	"2019_2_Covenant/internal/album"
+	_albumRepo "2019_2_Covenant/internal/album/repository"
+	"2019_2_Covenant/internal/artist"
+	_artistRepo "2019_2_Covenant/internal/artist/repository"
+	"2019_2_Covenant/internal/likes"
+	_likesRepo "2019_2_Covenant/internal/likes/repository"
+	"2019_2_Covenant/internal/playlist"
+	_playlistRepo "2019_2_Covenant/internal/playlist/repository"
 	"2019_2_Covenant/internal/session"
 	_sessRepo "2019_2_Covenant/internal/session/repository"
+	"2019_2_Covenant/internal/subscriptions"
+	_subscriptionRepo "2019_2_Covenant/internal/subscriptions/repository"
 	"2019_2_Covenant/internal/track"
 	_trackRepo "2019_2_Covenant/internal/track/repository"
 	"2019_2_Covenant/internal/user"
@@ -13,14 +23,19 @@ import (
 
 type BaseStorage struct {
 	config *Config
-	db *sql.DB
+	db     *sql.DB
 }
 
 type PGStorage struct {
 	BaseStorage
-	userRepo  user.Repository
-	sessRepo  session.Repository
-	trackRepo track.Repository
+	userRepo         user.Repository
+	sessRepo         session.Repository
+	trackRepo        track.Repository
+	playlistRepo     playlist.Repository
+	albumRepo        album.Repository
+	artistRepo       artist.Repository
+	subscriptionRepo subscriptions.Repository
+	likesRepo        likes.Repository
 }
 
 func NewPGStorage(conf *Config) Storage {
@@ -56,9 +71,9 @@ func (s *PGStorage) User() user.Repository {
 		return s.userRepo
 	}
 
-	 s.userRepo = _userRepo.NewUserRepository(s.db)
+	s.userRepo = _userRepo.NewUserRepository(s.db)
 
-	 return s.userRepo
+	return s.userRepo
 }
 
 func (s *PGStorage) Session() session.Repository {
@@ -79,4 +94,54 @@ func (s *PGStorage) Track() track.Repository {
 	s.trackRepo = _trackRepo.NewTrackRepository(s.db)
 
 	return s.trackRepo
+}
+
+func (s *PGStorage) Playlist() playlist.Repository {
+	if s.playlistRepo != nil {
+		return s.playlistRepo
+	}
+
+	s.playlistRepo = _playlistRepo.NewPlaylistRepository(s.db)
+
+	return s.playlistRepo
+}
+
+func (s *PGStorage) Album() album.Repository {
+	if s.albumRepo != nil {
+		return s.albumRepo
+	}
+
+	s.albumRepo = _albumRepo.NewAlbumRepository(s.db)
+
+	return s.albumRepo
+}
+
+func (s *PGStorage) Artist() artist.Repository {
+	if s.artistRepo != nil {
+		return s.artistRepo
+	}
+
+	s.artistRepo = _artistRepo.NewArtistRepository(s.db)
+
+	return s.artistRepo
+}
+
+func (s *PGStorage) Subscription() subscriptions.Repository {
+	if s.subscriptionRepo != nil {
+		return s.subscriptionRepo
+	}
+
+	s.subscriptionRepo = _subscriptionRepo.NewSubscriptionRepository(s.db)
+
+	return s.subscriptionRepo
+}
+
+func (s *PGStorage) Like() likes.Repository {
+	if s.likesRepo != nil {
+		return s.likesRepo
+	}
+
+	s.likesRepo = _likesRepo.NewLikesRepository(s.db)
+
+	return s.likesRepo
 }

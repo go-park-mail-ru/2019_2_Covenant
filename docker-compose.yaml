@@ -1,38 +1,27 @@
-version: '2.2'
+version: '3.3'
 services:
+  db:
+    image: postgres:latest
+    volumes:
+            #- ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - /var/lib/postgresql:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=covenant_db
   goapp:
-    image: gocovenant:v0.1
-    depends_on:
-      database:
-        condition: service_healthy
+    build: .
+    image: gocovenant
     ports:
       - 8000:8000
     environment:
-      DB_NAME: covenant_db
-      DB_HOST: 172.20.128.1
-      DB_PORT: 5432
-      DB_USER: covenant_user
-      DB_PSWD: testpass
-    networks:
-      static-network:
-        ipv4_address: 172.20.128.2
-  database:
-    image: postgres
-    volumes:
-      - $HOME/docker:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
-    networks:
-      static-network:
-        ipv4_address: 172.20.128.1
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-networks:
-  static-network:
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          ip_range: 172.28.5.0/24
+      - DB_NAME=covenant_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+    links:
+      - db 
+
+volumes:
+  covenant-db:

@@ -1,11 +1,13 @@
 package models
 
 import (
-	"2019_2_Covenant/internal/vars"
+	. "2019_2_Covenant/tools/vars"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +18,20 @@ type Session struct {
 	UserID  uint64
 	Expires time.Time
 	Data    string
+}
+
+func NewSession(userID uint64) (*Session, *http.Cookie) {
+	cookie := &http.Cookie{
+		Name:    "Covenant",
+		Value:   uuid.New().String(),
+		Expires: time.Now().Add(24 * time.Hour),
+	}
+
+	return &Session{
+		UserID:  userID,
+		Data:    cookie.Value,
+		Expires: cookie.Expires,
+	}, cookie
 }
 
 type CSRFTokenManager struct {
@@ -33,7 +49,7 @@ func (tk *CSRFTokenManager) Create(user_id uint64, cookie string, expires time.T
 	data := fmt.Sprintf("%d:%s:%d", user_id, cookie, expires.Unix())
 
 	if _, err := h.Write([]byte(data)); err != nil {
-		return "", vars.ErrInternalServerError
+		return "", ErrInternalServerError
 	}
 
 	token := hex.EncodeToString(h.Sum(nil)) + ":" + strconv.FormatInt(expires.Unix(), 10)
@@ -45,17 +61,17 @@ func (tk *CSRFTokenManager) Verify(user_id uint64, cookie string, token string) 
 	tokenData := strings.Split(token, ":")
 
 	if len(tokenData) != 2 {
-		return false, vars.ErrBadCSRF
+		return false, ErrBadCSRF
 	}
 
 	tokenExp, err := strconv.ParseInt(tokenData[1], 10, 64)
 
 	if err != nil {
-		return false, vars.ErrInternalServerError
+		return false, ErrInternalServerError
 	}
 
 	if tokenExp < time.Now().Unix() {
-		return false, vars.ErrBadCSRF
+		return false, ErrBadCSRF
 	}
 
 	h := hmac.New(sha1.New, tk.Secret)
@@ -66,7 +82,7 @@ func (tk *CSRFTokenManager) Verify(user_id uint64, cookie string, token string) 
 	got, err := hex.DecodeString(tokenData[0])
 
 	if err != nil {
-		return false, vars.ErrInternalServerError
+		return false, ErrInternalServerError
 	}
 
 	return hmac.Equal(expected, got), nil

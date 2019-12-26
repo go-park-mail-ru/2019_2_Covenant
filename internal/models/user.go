@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	ID            uint64 `json:"-"`
+	ID            uint64 `json:"id"`
 	Nickname      string `json:"nickname"`
 	Email         string `json:"email"`
 	PlainPassword string `json:"-"`
@@ -15,11 +15,20 @@ type User struct {
 	Avatar        string `json:"avatar"`
 	Role          int8   `json:"role"`   // 0 - user; 1 - admin;
 	Access        int8   `json:"access"` // 0 - public; 1 - private;
+	Subscription  *bool  `json:"subscription,omitempty"`
+}
+
+func NewUser(email string, nickname string, plainPassword string) *User {
+	return &User{
+		Nickname:      nickname,
+		Email:         email,
+		PlainPassword: plainPassword,
+	}
 }
 
 func (u *User) BeforeStore() error {
 	if len(u.PlainPassword) > 0 {
-		pass, err := encryptPassword(u.PlainPassword)
+		pass, err := EncryptPassword(u.PlainPassword)
 
 		if err != nil {
 			return err
@@ -31,7 +40,7 @@ func (u *User) BeforeStore() error {
 	return nil
 }
 
-func encryptPassword(plainPassword string) (string, error) {
+func EncryptPassword(plainPassword string) (string, error) {
 	salt := make([]byte, 8)
 
 	if _, err := rand.Read(salt); err != nil {

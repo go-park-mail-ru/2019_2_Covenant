@@ -3,8 +3,8 @@ package repository
 import (
 	"2019_2_Covenant/internal/collections"
 	"2019_2_Covenant/internal/models"
-	"database/sql"
 	. "2019_2_Covenant/tools/vars"
+	"database/sql"
 )
 
 type CollectionRepository struct {
@@ -42,6 +42,7 @@ func (cr *CollectionRepository) UpdateByID(collectionID uint64, name string, des
 	if err := cr.db.QueryRow("UPDATE collections SET name = $1, description = $2 WHERE id = $3 RETURNING id",
 		name,
 		description,
+		collectionID,
 	).Scan(&collectionID); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrNotFound
@@ -99,7 +100,7 @@ func (cr *CollectionRepository) SelectByID(id uint64) (*models.Collection, uint6
 	c := &models.Collection{}
 	var amountOfTracks uint64
 
-	if err := cr.db.QueryRow("SELECT id, name, description, photo WHERE id = $1",
+	if err := cr.db.QueryRow("SELECT id, name, description, photo FROM collections WHERE id = $1",
 		id,
 	).Scan(
 		&c.ID,
@@ -128,10 +129,21 @@ func (cr *CollectionRepository) SelectByID(id uint64) (*models.Collection, uint6
 }
 
 func (cr *CollectionRepository) InsertTrack(collectionID uint64, trackID uint64) error {
+	if err := cr.db.QueryRow("SELECT id FROM tracks WHERE id = $1",
+		trackID,
+	).Scan(&trackID); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	var id int
 	if err := cr.db.QueryRow("SELECT id FROM collection_track WHERE collection_id = $1 AND track_id = $2",
 		collectionID,
 		trackID,
-	).Scan(); err == nil {
+	).Scan(&id); err == nil {
 		return ErrAlreadyExist
 	}
 

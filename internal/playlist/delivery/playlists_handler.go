@@ -177,9 +177,9 @@ func (ph *PlaylistHandler) AddToPlaylist() echo.HandlerFunc {
 		}
 
 		if err := ph.PUsecase.AddToPlaylist(uint64(pID), request.TrackID); err != nil {
-			ph.Logger.Log(c, "error", "Error while adding track to playlist.", err)
-			return c.JSON(http.StatusInternalServerError, Response{
-				Error: ErrAlreadyExist.Error(),
+			ph.Logger.Log(c, "info", "Error while adding track to playlist.", err)
+			return c.JSON(http.StatusBadRequest, Response{
+				Error: err.Error(),
 			})
 		}
 

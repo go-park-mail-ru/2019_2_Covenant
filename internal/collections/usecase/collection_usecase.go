@@ -67,7 +67,7 @@ func (cu *CollectionUsecase) GetByID(id uint64) (*models.Collection, uint64, err
 func (cu *CollectionUsecase) AddTrack(collectionID uint64, trackID uint64) error {
 	err := cu.collectionRepo.InsertTrack(collectionID, trackID)
 
-	if err == ErrAlreadyExist {
+	if err == ErrAlreadyExist || err == ErrNotFound {
 		return err
 	}
 

@@ -88,10 +88,21 @@ func (plR *PlaylistRepository) DeleteByID(playlistID uint64) error {
 }
 
 func (plR *PlaylistRepository) AddToPlaylist(playlistID uint64, trackID uint64) error {
+	if err := plR.db.QueryRow("SELECT id FROM tracks WHERE id = $1",
+		trackID,
+	).Scan(&trackID); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNotFound
+		}
+
+		return err
+	}
+
+	var id int
 	if err := plR.db.QueryRow("SELECT id FROM playlist_track WHERE playlist_id = $1 AND track_id = $2",
 		playlistID,
 		trackID,
-	).Scan(); err == nil {
+	).Scan(&id); err == nil {
 		return ErrAlreadyExist
 	}
 

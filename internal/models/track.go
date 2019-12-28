@@ -8,7 +8,7 @@ type Track struct {
 	Duration    string `json:"duration"`
 	Photo       string `json:"photo,omitempty"`
 	Artist      string `json:"artist,omitempty"`
-	Album       string `json:"album"`
+	Album       string `json:"album,omitempty"`
 	Path        string `json:"path"`
 	IsFavourite *bool  `json:"is_favourite,omitempty"`
 	IsLiked     *bool  `json:"is_liked,omitempty"`

@@ -3,6 +3,7 @@ package storage
 import (
 	"2019_2_Covenant/internal/album"
 	"2019_2_Covenant/internal/artist"
+	"2019_2_Covenant/internal/collections"
 	"2019_2_Covenant/internal/likes"
 	"2019_2_Covenant/internal/subscriptions"
 	"2019_2_Covenant/internal/playlist"
@@ -22,4 +23,5 @@ type Storage interface {
 	Artist() artist.Repository
 	Subscription() subscriptions.Repository
 	Like() likes.Repository
+	Collection() collections.Repository
 }

@@ -49,7 +49,7 @@ func (pUC *PlaylistUsecase) DeleteByID(playlistID uint64) error {
 func (pUC *PlaylistUsecase) AddToPlaylist(playlistID uint64, trackID uint64) error {
 	err := pUC.playlistRepo.AddToPlaylist(playlistID, trackID)
 
-	if err == ErrAlreadyExist {
+	if err == ErrAlreadyExist || err == ErrNotFound {
 		return err
 	}
 

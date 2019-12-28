@@ -92,4 +92,3 @@ create table likes (
 	    created_at timestamp not null default now(),
 	    unique (user_id, track_id)
 )
-

@@ -2,23 +2,24 @@ package main
 
 import (
 	_ "2019_2_Covenant/docs"
-	"2019_2_Covenant/internal/app/apiserver"
-	"2019_2_Covenant/internal/app/storage"
-	"flag"
-	"github.com/BurntSushi/toml"
+	"2019_2_Covenant/pkg/api"
+	"2019_2_Covenant/pkg/auth"
+	files "2019_2_Covenant/pkg/file_processor"
+	files_repository "2019_2_Covenant/pkg/file_processor/repository"
+	"database/sql"
+	"github.com/kelseyhightower/envconfig"
+	_ "github.com/lib/pq"
+	"google.golang.org/grpc"
 	"log"
-	"fmt"
-	"os"
 )
 
-var (
-	serverConfPath  string
-	storageConfPath string
-)
-
-func init() {
-	flag.StringVar(&serverConfPath, "server", "configs/server.toml", "path to server config")
-	flag.StringVar(&storageConfPath, "storage", "configs/storage.toml", "path to storage config")
+type Config struct {
+	AuthAddress  string `required:"true" split_words:"true"`
+	APIAddress   string `required:"true" split_words:"true"`
+	FilesAddress string `required:"true" split_words:"true"`
+	FilesDirPath string `required:"true" split_words:"true"`
+	LogLevel     string `required:"true" split_words:"true"`
+	PostgresURL  string `required:"true" split_words:"true"`
 }
 
 // @title Covenant API
@@ -26,26 +27,43 @@ func init() {
 // @description Covenant backend server
 // @BasePath /api/v1
 func main() {
-	flag.Parse()
-
-	serverConfig := apiserver.NewConfig()
-	if _, err := toml.DecodeFile(serverConfPath, serverConfig); err != nil {
+	var config Config
+	err := envconfig.Process("Covenant", &config)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(os.Getenv("APP_ENV"))
-	storageConfig := storage.NewConfig("dev")
-	fmt.Println(storageConfig.GetURL())
-	if _, err := toml.DecodeFile(storageConfPath, storageConfig); err != nil {
+	database, err := sql.Open("postgres", config.PostgresURL)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	st := storage.NewPGStorage(storageConfig)
-	server := apiserver.NewAPIServer(serverConfig, st)
+	defer database.Close()
+	if err := database.Ping(); err != nil {
+		log.Fatal(err)
+	}
+	storage := api.NewPGStorage(database)
 
+	authServiceConnection, err := grpc.Dial(config.AuthAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer authServiceConnection.Close()
+	auth := auth.NewAuthClient(authServiceConnection)
+
+
+	filesServiceConnection, err := grpc.Dial(config.FilesAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer filesServiceConnection.Close()
+	files := files.NewFilesClient(filesServiceConnection)
+	file_repository := files_repository.NewFileRepository(files)
+
+	server := api.NewAPIServer(storage, auth, file_repository)
 	defer server.Stop()
 
-	if err := server.Start(); err != nil {
+	if err := server.Start(config.APIAddress, config.LogLevel, config.FilesDirPath); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package repository;
+
+import "google/protobuf/empty.proto";
+
+service Files {
+    rpc ProcessAudio(stream Chunk) returns (google.protobuf.Empty);
+    rpc ProcessImage(stream Chunk) returns (google.protobuf.Empty);
+}
+
+message Chunk {
+    bytes data = 1;
+}

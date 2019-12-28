@@ -24,7 +24,7 @@ func StringToTime(val string) time.Time {
 }
 
 func TrackDuration(path string) (string, error) {
-	out, err := exec.Command("sox", path, "-n", "stat").CombinedOutput()
+	out, err := exec.Command("sox", "-t", "mp3", path, "-n", "stat").CombinedOutput()
 	if err != nil {
 		return "", err
 	}

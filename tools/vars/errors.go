@@ -3,7 +3,7 @@ package vars
 import "errors"
 
 var (
-	ErrInternalServerError = errors.New("internal server error")
+	ErrInternalServerError = errors.New("pkg server error")
 	ErrBadParam            = errors.New("bad params")
 	ErrNotFound            = errors.New("not found")
 	ErrAlreadyExist        = errors.New("already exist")

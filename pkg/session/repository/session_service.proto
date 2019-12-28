@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package repository;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service Sessions {
+    rpc Get (GetRequest) returns (Session);
+    rpc Store (Session) returns (Session);
+    rpc DeleteByID (DeleteByIDRequest) returns (google.protobuf.Empty);
+}
+
+message GetRequest {
+    string value = 1;
+}
+
+message DeleteByIDRequest {
+    uint64 id = 1;
+}
+
+message Session {
+    uint64 id = 1;
+    uint64 userId = 2;
+    google.protobuf.Timestamp expires = 3;
+    string data = 4;
+}
+
+message SessionArray {
+    repeated Session sessions = 1;
+}

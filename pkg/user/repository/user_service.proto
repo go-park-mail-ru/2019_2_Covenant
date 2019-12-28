@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package repository;
+
+import "google/protobuf/empty.proto";
+
+service Users {
+    rpc Fetch (FetchRequest) returns (UserArray);
+    rpc GetByID (GetByIDRequest) returns (User);
+    rpc GetByEmail (GetByEmailRequest) returns (User);
+    rpc GetByNickname (GetByNicknameRequest) returns (User);
+    rpc Store (User) returns (User);
+    rpc UpdatePassword (UpdatePasswordRequest) returns (google.protobuf.Empty);
+    rpc Update (UpdateRequest) returns (User);
+    rpc GetFollowers (GetFollowRequest) returns (GetFollowResponse);
+    rpc GetFollowing (GetFollowRequest) returns (GetFollowResponse);
+    rpc FindLike (FindLikeRequest) returns (UserArray);
+}
+
+message FetchRequest {
+    uint64 count = 1;
+}
+
+message GetByIDRequest {
+    uint64 id = 1;
+}
+
+message GetByEmailRequest {
+    string email = 1;
+}
+
+message GetByNicknameRequest {
+    string nickname = 1;
+    uint64 authID = 2;
+}
+
+message UpdatePasswordRequest {
+    uint64 id = 1;
+    string password = 2;
+}
+
+message UpdateRequest {
+    uint64 id = 1;
+    string nickname = 2;
+    string email = 3;
+}
+
+message GetFollowRequest {
+    uint64 id = 1;
+    uint64 count = 2;
+    uint64 offset = 3;
+}
+
+message GetFollowResponse {
+    repeated User users = 1;
+    uint64 total = 2;
+}
+
+message FindLikeRequest {
+    string name = 1;
+    uint64 count = 2;
+}
+
+message User {
+    uint64 id = 1;
+    string nickname = 2;
+    string email = 3;
+    string plainPassword = 4;
+    string password = 5;
+    string avatar = 6;
+    int32 role = 7;
+    int32 access = 8;
+    bool subscription = 9;
+}
+
+message UserArray {
+    repeated User users = 1;
+}

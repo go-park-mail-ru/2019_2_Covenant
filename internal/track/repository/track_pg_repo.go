@@ -31,7 +31,7 @@ func (tr *TrackRepository) Fetch(count uint64, offset uint64, authID uint64) ([]
 			"T.id in (select track_id from favourites where user_id = $1) as favourite, " +
 			"T.id in (select track_id from likes where user_id = $1) AS liked FROM tracks T " +
 		"JOIN albums Al ON T.album_id = Al.id " +
-		"JOIN artists Ar ON Al.artist_id = Ar.id LIMIT $2 OFFSET $3",
+		"JOIN artists Ar ON Al.artist_id = Ar.id ORDER BY T.rating LIMIT $2 OFFSET $3",
 		authID,
 		count,
 		offset)
